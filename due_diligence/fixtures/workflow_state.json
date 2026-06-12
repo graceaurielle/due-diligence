@@ -1,0 +1,163 @@
+[
+ {
+  "doctype": "Workflow State",
+  "name": "Brouillon",
+  "workflow_state_name": "Brouillon"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "Soumis",
+  "workflow_state_name": "Soumis",
+  "style": "Primary"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En préqualification",
+  "workflow_state_name": "En préqualification",
+  "style": "Info"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En screening réglementaire",
+  "workflow_state_name": "En screening réglementaire",
+  "style": "Warning"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En analyse Compliance",
+  "workflow_state_name": "En analyse Compliance",
+  "style": "Warning"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En analyse financière",
+  "workflow_state_name": "En analyse financière",
+  "style": "Warning"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En revue juridique",
+  "workflow_state_name": "En revue juridique",
+  "style": "Warning"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En revue cybersécurité",
+  "workflow_state_name": "En revue cybersécurité",
+  "style": "Warning"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En revue DPO",
+  "workflow_state_name": "En revue DPO",
+  "style": "Warning"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En attente de documents",
+  "workflow_state_name": "En attente de documents",
+  "style": "Danger"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En attente validation métier",
+  "workflow_state_name": "En attente validation métier",
+  "style": "Warning"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En attente validation Manager",
+  "workflow_state_name": "En attente validation Manager",
+  "style": "Warning"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En attente validation Compliance",
+  "workflow_state_name": "En attente validation Compliance",
+  "style": "Warning"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En attente validation CCO",
+  "workflow_state_name": "En attente validation CCO",
+  "style": "Warning"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En attente validation DG",
+  "workflow_state_name": "En attente validation DG",
+  "style": "Warning"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En validation Manager",
+  "workflow_state_name": "En validation Manager",
+  "style": "Warning"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "En validation Direction",
+  "workflow_state_name": "En validation Direction",
+  "style": "Warning"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "Escaladé",
+  "workflow_state_name": "Escaladé",
+  "style": "Danger"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "Suspendu",
+  "workflow_state_name": "Suspendu",
+  "style": "Danger"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "Clôturé — GO",
+  "workflow_state_name": "Clôturé — GO",
+  "style": "Success"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "Clôturé — NO GO",
+  "workflow_state_name": "Clôturé — NO GO",
+  "style": "Danger"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "Clôturé — GO sous réserve",
+  "workflow_state_name": "Clôturé — GO sous réserve",
+  "style": "Success"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "Rejeté",
+  "workflow_state_name": "Rejeté",
+  "style": "Danger"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "Accepté",
+  "workflow_state_name": "Accepté",
+  "style": "Success"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "Accepté sous réserve",
+  "workflow_state_name": "Accepté sous réserve",
+  "style": "Success"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "Clôturé",
+  "workflow_state_name": "Clôturé",
+  "style": "Success"
+ },
+ {
+  "doctype": "Workflow State",
+  "name": "Sous surveillance continue",
+  "workflow_state_name": "Sous surveillance continue",
+  "style": "Info"
+ }
+]

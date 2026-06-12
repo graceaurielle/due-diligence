@@ -1,0 +1,116 @@
+
+
+{% extends "templates/web.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block page_content %}
+<style>
+:root { --sidebar-bg:#0d1b2a; --sidebar-w:230px; --primary:#0d1b2a; --accent:#4a90d9; --bg:#f0f2f5; --border:#e2e8f0; --text:#1a202c; --muted:#64748b; }
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Inter',-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+a { text-decoration:none; color:inherit; }
+.dd-layout { display:flex; min-height:100vh; }
+.dd-sidebar { width:var(--sidebar-w); background:var(--sidebar-bg); color:rgba(255,255,255,.75); display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:100; }
+.dd-sidebar-brand { padding:28px 20px 24px; border-bottom:1px solid rgba(255,255,255,.08); }
+.dd-sidebar-logo { font-size:13px; font-weight:700; color:#fff; letter-spacing:.5px; line-height:1.3; }
+.dd-sidebar-tagline { font-size:10px; color:rgba(255,255,255,.45); margin-top:4px; text-transform:uppercase; letter-spacing:.6px; }
+.dd-sidebar-nav { flex:1; padding:16px 12px; }
+.dd-nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:7px; font-size:13px; color:rgba(255,255,255,.6); margin-bottom:2px; transition:all .15s; }
+.dd-nav-item:hover { background:rgba(255,255,255,.06); color:#fff; }
+.dd-nav-item.active { background:rgba(255,255,255,.1); color:#fff; border-left:3px solid var(--accent); }
+.dd-sidebar-bottom { padding:12px; border-top:1px solid rgba(255,255,255,.08); }
+.dd-main { margin-left:var(--sidebar-w); flex:1; display:flex; align-items:center; justify-content:center; padding:40px; }
+.confirm-card {
+  background:#fff; border-radius:16px; border:1px solid var(--border);
+  padding:48px 40px; max-width:580px; width:100%; text-align:center;
+}
+.confirm-icon { width:64px; height:64px; background:#dcfce7; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 24px; }
+.confirm-title { font-size:24px; font-weight:800; margin-bottom:12px; }
+.confirm-dossier { display:inline-flex; align-items:center; gap:10px; background:#f1f5f9; border-radius:8px; padding:8px 16px; margin-bottom:24px; }
+.confirm-dossier-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
+.confirm-dossier-value { font-size:18px; font-weight:800; color:var(--primary); }
+.confirm-body { font-size:13px; color:var(--muted); line-height:1.7; margin-bottom:28px; }
+.confirm-next { background:#f8fafc; border-radius:10px; padding:16px 20px; display:flex; align-items:center; gap:12px; margin-bottom:28px; text-align:left; }
+.confirm-next-icon { width:36px; height:36px; background:var(--primary); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.confirm-next-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-bottom:2px; }
+.confirm-next-value { font-size:13px; font-weight:600; }
+.confirm-actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.btn-dark { background:var(--primary); color:#fff; padding:14px; border-radius:10px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; transition:opacity .15s; }
+.btn-dark:hover { opacity:.88; }
+.btn-outline { background:#fff; color:var(--primary); border:1.5px solid var(--border); padding:14px; border-radius:10px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; transition:background .15s; }
+.btn-outline:hover { background:#f8fafc; }
+.confirm-footer { margin-top:24px; font-size:11px; color:var(--muted); padding-top:20px; border-top:1px solid var(--border); }
+
+/* ≤1024px : sidebar repliée, contenu centré */
+@media (max-width:1024px) {
+  .dd-main { padding: 32px 24px; }
+}
+@media (max-width:767px) {
+  .dd-main { padding: 0; align-items: stretch; justify-content: flex-start; }
+  .confirm-card { margin: 14px; padding: 24px 16px; border-radius: 12px; }
+  .confirm-actions { grid-template-columns: 1fr; }
+  .confirm-icon { width: 52px; height: 52px; margin-bottom: 18px; }
+  .confirm-title { font-size: 20px; }
+}
+</style>
+
+<div class="dd-layout">
+  {% include "due_diligence/www/_sidebar.html" %}
+
+  <div class="dd-main">
+    <div class="dd-mobile-bar">
+      <button class="dd-hamburger" onclick="openSidebar()"><span></span><span></span><span></span></button>
+      Confirmation
+    </div>
+    <div class="confirm-card">
+      <div class="confirm-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h1 class="confirm-title">Votre demande a bien été soumise</h1>
+
+      {% if doc %}
+      <div class="confirm-dossier">
+        <span class="confirm-dossier-label">N° de dossier</span>
+        <span class="confirm-dossier-value">{{ doc.name }}</span>
+      </div>
+      {% endif %}
+
+      <p class="confirm-body">
+        Nous avons bien reçu vos documents et les informations relatives à votre procédure de Due Diligence.<br><br>
+        Notre équipe d'experts juridiques chez <strong>AMOAMAN &amp; ASSOCIÉS</strong> va maintenant prendre en charge votre dossier pour une analyse approfondie. Un consultant dédié vous sera assigné dans les prochaines 24 heures ouvrées.
+      </p>
+
+      <div class="confirm-next">
+        <div class="confirm-next-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div>
+          <div class="confirm-next-label">Étape suivante</div>
+          <div class="confirm-next-value">Vérification de la conformité des documents fournis</div>
+        </div>
+      </div>
+
+      <div class="confirm-actions">
+        {% if doc %}
+        <a href="/suivi?name={{ doc.name }}" class="btn-dark">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Suivre l'avancement
+        </a>
+        {% endif %}
+        <a href="/mes-demandes" class="btn-outline">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Retour au tableau de bord
+        </a>
+      </div>
+
+      <div class="confirm-footer">
+        DOCUMENT CONFIDENTIEL — AMOAMAN &amp; ASSOCIÉS &nbsp;|&nbsp;
+        <a href="#">Confidentialité</a> &nbsp;|&nbsp;
+        <a href="#">Conditions d'utilisation</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

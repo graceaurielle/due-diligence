@@ -1,0 +1,314 @@
+{
+ "actions": [],
+ "autoname": "AVIS-.YYYY.-.#####",
+ "creation": "2026-06-09 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sb_reference",
+  "dd_request",
+  "client_nom",
+  "tiers_nom",
+  "dd_type",
+  "date_soumission",
+  "cb_reference",
+  "sb_evaluation",
+  "score_final",
+  "categorie_risque",
+  "risques_identifies",
+  "cb_evaluation",
+  "sb_decision",
+  "decision",
+  "date_decision",
+  "motif_decision",
+  "reserves",
+  "recommandations",
+  "validite_avis",
+  "date_expiration",
+  "cb_decision",
+  "sb_validation",
+  "redige_par",
+  "valide_par",
+  "date_validation",
+  "signature_validateur",
+  "cb_validation",
+  "sb_mentions",
+  "mentions_confidentialite",
+  "cb_mentions"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_reference",
+   "fieldtype": "Section Break",
+   "label": "Référence"
+  },
+  {
+   "bold": 1,
+   "fieldname": "dd_request",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Dossier DD Request",
+   "options": "DD Request",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "dd_request.demandeur_nom",
+   "fetch_if_empty": 0,
+   "fieldname": "client_nom",
+   "fieldtype": "Data",
+   "label": "Client mandant",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "dd_request.tiers_nom",
+   "fetch_if_empty": 0,
+   "fieldname": "tiers_nom",
+   "fieldtype": "Data",
+   "label": "Tiers évalué",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "dd_request.dd_type",
+   "fetch_if_empty": 0,
+   "fieldname": "dd_type",
+   "fieldtype": "Link",
+   "label": "Type de Due Diligence",
+   "options": "DD Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "date_soumission",
+   "fieldtype": "Date",
+   "label": "Date de soumission",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_reference",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sb_evaluation",
+   "fieldtype": "Section Break",
+   "label": "Évaluation des risques"
+  },
+  {
+   "fieldname": "score_final",
+   "fieldtype": "Int",
+   "label": "Score de risque final",
+   "read_only": 1
+  },
+  {
+   "fieldname": "categorie_risque",
+   "fieldtype": "Select",
+   "label": "Catégorie de risque",
+   "options": "\nFaible\nModéré\nÉlevé\nCritique",
+   "read_only": 1
+  },
+  {
+   "fieldname": "risques_identifies",
+   "fieldtype": "Text",
+   "label": "Principaux risques identifiés",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_evaluation",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sb_decision",
+   "fieldtype": "Section Break",
+   "label": "Décision"
+  },
+  {
+   "bold": 1,
+   "fieldname": "decision",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Décision",
+   "options": "\nGO\nNO GO\nGO sous réserve",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "date_decision",
+   "fieldtype": "Date",
+   "label": "Date de la décision",
+   "reqd": 1
+  },
+  {
+   "fieldname": "motif_decision",
+   "fieldtype": "Text",
+   "label": "Motif et justification de la décision",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.decision=='GO sous réserve'",
+   "fieldname": "reserves",
+   "fieldtype": "Text",
+   "label": "Réserves et conditions (si GO sous réserve)"
+  },
+  {
+   "fieldname": "recommandations",
+   "fieldtype": "Text",
+   "label": "Recommandations de suivi"
+  },
+  {
+   "default": "12",
+   "fieldname": "validite_avis",
+   "fieldtype": "Int",
+   "label": "Durée de validité de l'avis (mois)"
+  },
+  {
+   "fieldname": "date_expiration",
+   "fieldtype": "Date",
+   "label": "Date d'expiration de l'avis",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_decision",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sb_validation",
+   "fieldtype": "Section Break",
+   "label": "Validation"
+  },
+  {
+   "default": "__user",
+   "fieldname": "redige_par",
+   "fieldtype": "Link",
+   "label": "Rédigé par",
+   "options": "User"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "valide_par",
+   "fieldtype": "Link",
+   "label": "Validé par",
+   "options": "User",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "date_validation",
+   "fieldtype": "Datetime",
+   "label": "Date de validation",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "signature_validateur",
+   "fieldtype": "Data",
+   "label": "Signature validateur",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_validation",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sb_mentions",
+   "fieldtype": "Section Break",
+   "label": "Mentions légales"
+  },
+  {
+   "default": "Cet avis est strictement confidentiel et destiné exclusivement au client mandant. Il ne peut être communiqué à des tiers sans l'autorisation écrite préalable du cabinet AMOAMAN & ASSOCIÉS. Toute reproduction partielle ou totale est interdite.",
+   "fieldname": "mentions_confidentialite",
+   "fieldtype": "Text",
+   "label": "Mentions de confidentialité",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_mentions",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "in_create": 0,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-06-09 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Due Diligence",
+ "name": "DD Avis Compliance",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "DD Analyste",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "DD Manager Compliance",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "DD Validateur",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "permlevel": 1,
+   "read": 1,
+   "role": "DD Validateur",
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "DD Client"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "dd_request",
+ "track_changes": 1
+}

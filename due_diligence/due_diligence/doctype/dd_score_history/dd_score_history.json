@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "creation": "2026-06-10 00:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Other",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "date_calcul",
+  "calcule_par",
+  "score_brut",
+  "score_pondere",
+  "score_residuel",
+  "categorie",
+  "delta_categorie",
+  "declencheur"
+ ],
+ "fields": [
+  {
+   "fieldname": "date_calcul",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Date du calcul",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calcule_par",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Calculé par",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "score_brut",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Score brut",
+   "read_only": 1
+  },
+  {
+   "fieldname": "score_pondere",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Score pondéré",
+   "read_only": 1
+  },
+  {
+   "fieldname": "score_residuel",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Score résiduel",
+   "read_only": 1
+  },
+  {
+   "fieldname": "categorie",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Catégorie",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delta_categorie",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Évolution catégorie",
+   "read_only": 1
+  },
+  {
+   "fieldname": "declencheur",
+   "fieldtype": "Data",
+   "label": "Déclencheur",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-06-10 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Due Diligence",
+ "name": "DD Score History",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

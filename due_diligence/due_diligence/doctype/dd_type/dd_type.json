@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "autoname": "field:type_name",
+ "creation": "2026-06-04 10:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Setup",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "type_name",
+  "criticite_moyenne",
+  "actif",
+  "column_break_1",
+  "description_metier",
+  "objectifs_controle",
+  "section_documents",
+  "documents_requis_template"
+ ],
+ "fields": [
+  {
+   "fieldname": "type_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Nom du type",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "criticite_moyenne",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Criticité moyenne",
+   "options": "\nFaible\nModéré\nÉlevé"
+  },
+  {
+   "default": "1",
+   "fieldname": "actif",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Actif"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "description_metier",
+   "fieldtype": "Small Text",
+   "label": "Description métier"
+  },
+  {
+   "fieldname": "objectifs_controle",
+   "fieldtype": "Text",
+   "label": "Objectifs de contrôle"
+  },
+  {
+   "fieldname": "section_documents",
+   "fieldtype": "Section Break",
+   "label": "Documents obligatoires"
+  },
+  {
+   "fieldname": "documents_requis_template",
+   "fieldtype": "Table",
+   "label": "Liste des documents requis",
+   "options": "DD Document Requis Template"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-04 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Due Diligence",
+ "name": "DD Type",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All"
+  }
+ ],
+ "sort_field": "type_name",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "type_name",
+ "track_changes": 0
+}

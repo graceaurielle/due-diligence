@@ -1,0 +1,343 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block page_content %}
+<style>
+:root { --sidebar-bg:#0d1b2a; --sidebar-w:230px; --primary:#0d1b2a; --accent:#4a90d9; --bg:#f0f2f5; --border:#e2e8f0; --text:#1a202c; --muted:#64748b; --success:#16a34a; --warning:#d97706; }
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Inter',-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+a { text-decoration:none; color:inherit; }
+.dd-layout { display:flex; min-height:100vh; }
+.dd-sidebar { width:var(--sidebar-w); background:var(--sidebar-bg); color:rgba(255,255,255,.75); display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:100; }
+.dd-sidebar-brand { padding:28px 20px 24px; border-bottom:1px solid rgba(255,255,255,.08); }
+.dd-sidebar-logo { font-size:13px; font-weight:700; color:#fff; letter-spacing:.5px; line-height:1.3; }
+.dd-sidebar-tagline { font-size:10px; color:rgba(255,255,255,.45); margin-top:4px; text-transform:uppercase; letter-spacing:.6px; }
+.dd-sidebar-nav { flex:1; padding:16px 12px; }
+.dd-nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:7px; font-size:13px; color:rgba(255,255,255,.6); margin-bottom:2px; transition:all .15s; }
+.dd-nav-item:hover { background:rgba(255,255,255,.06); color:#fff; }
+.dd-nav-item.active { background:rgba(255,255,255,.1); color:#fff; border-left:3px solid var(--accent); }
+.dd-sidebar-bottom { padding:12px; border-top:1px solid rgba(255,255,255,.08); }
+.dd-main { margin-left:var(--sidebar-w); flex:1; display:flex; flex-direction:column; }
+
+/* Lock banner */
+.lock-banner { background:var(--primary); color:#fff; padding:12px 32px; font-size:12px; font-weight:600; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px; letter-spacing:.3px; }
+
+/* Page header */
+.page-header { background:#fff; border-bottom:1px solid var(--border); padding:24px 32px; }
+.page-meta { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.badge-dossier { background:#dbeafe; color:#1e40af; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+.badge-role { background:#f1f5f9; color:var(--muted); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.page-title { font-size:26px; font-weight:800; margin-bottom:4px; }
+.page-tiers { font-size:14px; color:var(--muted); }
+.status-pill {
+  display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:20px;
+  font-size:12px; font-weight:700; background:#dcfce7; color:#15803d;
+}
+.status-pill.blue { background:#dbeafe; color:#1e40af; }
+.status-pill.orange { background:#ffedd5; color:#c2410c; }
+.status-pill.red { background:#fee2e2; color:#dc2626; }
+.status-dot { width:8px; height:8px; border-radius:50%; background:currentColor; }
+
+/* Content layout */
+.page-content { padding:28px 32px; display:grid; grid-template-columns:1fr 1.6fr; gap:20px; align-items:start; }
+
+/* Timeline card */
+.timeline-card { background:#fff; border-radius:12px; border:1px solid var(--border); padding:24px; }
+.timeline-card-title { font-size:14px; font-weight:700; margin-bottom:20px; }
+.timeline { position:relative; }
+.tl-item { display:flex; gap:14px; margin-bottom:24px; position:relative; }
+.tl-item:last-child { margin-bottom:0; }
+.tl-connector { display:flex; flex-direction:column; align-items:center; }
+.tl-dot {
+  width:28px; height:28px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  border:2px solid var(--border); background:#fff;
+}
+.tl-dot.done { background:var(--success); border-color:var(--success); }
+.tl-dot.active { background:var(--accent); border-color:var(--accent); }
+.tl-dot.pending { background:#fff; border-color:var(--border); }
+.tl-line { width:2px; flex:1; background:var(--border); margin:4px 0; min-height:20px; }
+.tl-line.done { background:var(--success); }
+.tl-content { padding-top:4px; }
+.tl-label { font-size:13px; font-weight:600; }
+.tl-label.done { color:var(--success); }
+.tl-label.active { color:var(--primary); }
+.tl-label.pending { color:var(--muted); }
+.tl-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+
+/* Decision card */
+.decision-card {
+  background:#f8fafc; border-radius:12px; border:1px solid var(--border); padding:24px;
+  margin-top:16px; text-align:center;
+}
+.decision-icon { width:40px; height:40px; background:#e2e8f0; border-radius:10px; display:flex; align-items:center; justify-content:justify; margin:0 auto 12px; }
+.decision-title { font-size:14px; font-weight:700; margin-bottom:6px; }
+.decision-sub { font-size:12px; color:var(--muted); }
+
+/* Avis officiel */
+.avis-card { border-radius:12px; border:2px solid; padding:24px; margin-top:16px; }
+.avis-card.go { background:#f0fdf4; border-color:#16a34a; }
+.avis-card.nogo { background:#fef2f2; border-color:#dc2626; }
+.avis-card.reserve { background:#fffbeb; border-color:#d97706; }
+.avis-badge { display:inline-block; padding:8px 22px; border-radius:24px; font-size:15px; font-weight:900; letter-spacing:1px; margin-bottom:12px; }
+.avis-badge.go { background:#dcfce7; color:#15803d; }
+.avis-badge.nogo { background:#fee2e2; color:#dc2626; }
+.avis-badge.reserve { background:#ffedd5; color:#c2410c; }
+.avis-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin:12px 0 4px; }
+.avis-text { font-size:13px; color:var(--text); line-height:1.5; background:#fff; border-radius:8px; padding:10px 12px; border:1px solid var(--border); }
+.btn-telecharger { display:inline-flex; align-items:center; gap:8px; margin-top:16px; background:var(--primary); color:#fff; padding:10px 20px; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; transition:opacity .15s; }
+.btn-telecharger:hover { opacity:.85; }
+
+/* Info + docs column */
+.info-card { background:#fff; border-radius:12px; border:1px solid var(--border); padding:24px; margin-bottom:16px; }
+.info-card-title { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; }
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.info-item-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-bottom:4px; }
+.info-item-value { background:#f8fafc; border-radius:8px; padding:10px 12px; font-size:13px; font-weight:500; min-height:38px; word-break:break-word; }
+.info-item-value.wide { grid-column:1/-1; }
+
+/* Documents */
+.docs-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.docs-count { background:var(--primary); color:#fff; border-radius:20px; padding:2px 10px; font-size:11px; font-weight:700; }
+.doc-file-item { display:flex; align-items:center; gap:12px; padding:12px; border-radius:8px; background:#f8fafc; margin-bottom:10px; }
+.doc-file-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.doc-file-icon.pdf { background:#fee2e2; }
+.doc-file-icon.xls { background:#dcfce7; }
+.doc-file-name { font-size:13px; font-weight:600; }
+.doc-file-meta { font-size:11px; color:var(--muted); margin-top:2px; }
+.doc-consult { font-size:12px; color:var(--accent); font-weight:600; margin-left:auto; }
+.security-note { margin-top:12px; padding:10px 14px; background:#f0f7ff; border-radius:8px; font-size:11px; color:#1e4d8c; display:flex; align-items:center; gap:8px; }
+
+/* Back link */
+.back-link { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); padding:12px 32px 0; }
+.back-link:hover { color:var(--primary); }
+
+/* ≤1024px : sidebar repliée, contenu pleine largeur */
+@media (max-width:1024px) {
+  .page-header { padding: 20px 24px 16px; }
+  .back-link { padding: 12px 24px 0; }
+  .page-content { padding: 20px 24px; grid-template-columns: 1fr 1.6fr; gap: 16px; }
+  .info-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width:800px) {
+  .page-content { grid-template-columns: 1fr; }
+}
+@media (max-width:767px) {
+  .page-header { padding: 14px 16px; }
+  .page-title { font-size: 18px; word-break: break-word; overflow-wrap: break-word; }
+  .page-tiers { word-break: break-word; overflow-wrap: break-word; }
+  .status-pill { font-size: 11px; padding: 5px 10px; max-width: 100%; word-break: break-word; white-space: normal; }
+  .back-link { padding: 10px 16px 0; }
+  .lock-banner { padding: 10px 16px; font-size: 11px; }
+  .page-content { padding: 14px; gap: 12px; grid-template-columns: 1fr; }
+  .info-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .timeline-card { padding: 18px; }
+  .info-card { padding: 16px; }
+  .info-item-value { word-break: break-word; overflow-wrap: break-word; }
+  .tl-label { word-break: break-word; overflow-wrap: break-word; }
+  .doc-file-name { word-break: break-word; overflow-wrap: break-word; }
+}
+@media (max-width:520px) {
+  .info-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="dd-layout">
+  {% include "due_diligence/www/_sidebar.html" %}
+
+  <div class="dd-main">
+    <div class="dd-mobile-bar">
+      <button class="dd-hamburger" onclick="openSidebar()"><span></span><span></span><span></span></button>
+      Suivi dossier
+    </div>
+    <!-- Banner lecture seule après soumission -->
+    {% if doc.docstatus == 1 %}
+    <div class="lock-banner">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      LECTURE SEULE — CE DOSSIER NE PEUT PLUS ÊTRE MODIFIÉ
+    </div>
+    {% endif %}
+
+    <a href="/mes-suivis" class="back-link">&larr; Retour au suivi des dossiers</a>
+
+    <!-- En-tête dossier -->
+    <div class="page-header">
+      <div class="page-meta">
+        <span class="badge-dossier">{{ doc.name }}</span>
+        {% if doc.dd_type %}<span class="badge-role">{{ doc.dd_type }}</span>{% endif %}
+      </div>
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+        <div>
+          <div class="page-title">{{ doc.tiers_nom or "—" }}</div>
+          {% if doc.demandeur_nom %}<div class="page-tiers">Demandeur : {{ doc.demandeur_nom }}</div>{% endif %}
+        </div>
+        <div>
+          {% set s = etat %}
+          {% if "Clôturé — GO" == s %}
+            <div class="status-pill"><div class="status-dot"></div> STATUT : CLÔTURÉ — GO</div>
+          {% elif "Clôturé — NO GO" == s %}
+            <div class="status-pill red"><div class="status-dot"></div> STATUT : CLÔTURÉ — NO GO</div>
+          {% elif "Clôturé — GO sous réserve" == s %}
+            <div class="status-pill orange"><div class="status-dot"></div> STATUT : GO SOUS RÉSERVE</div>
+          {% elif s in ["En analyse Compliance","En préqualification","Soumis","En validation Manager","En validation Direction"] %}
+            <div class="status-pill blue"><div class="status-dot"></div> STATUT : {{ s | upper }}</div>
+          {% elif s == "En attente de documents" %}
+            <div class="status-pill orange"><div class="status-dot"></div> STATUT : EN ATTENTE DE DOCUMENTS</div>
+          {% else %}
+            <div class="status-pill blue"><div class="status-dot"></div> {{ s | upper }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <!-- Colonne gauche : Timeline + Décision -->
+      <div>
+        <div class="timeline-card">
+          <div class="timeline-card-title">Suivi du processus</div>
+          <div class="timeline">
+            {% for etape in etapes_etat %}
+            <div class="tl-item">
+              <div class="tl-connector">
+                <div class="tl-dot {{ etape.statut }}">
+                  {% if etape.statut == 'done' %}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                  {% elif etape.statut == 'active' %}
+                    <div style="width:8px;height:8px;background:#fff;border-radius:50%"></div>
+                  {% endif %}
+                </div>
+                {% if not loop.last %}<div class="tl-line {{ etape.statut }}"></div>{% endif %}
+              </div>
+              <div class="tl-content">
+                <div class="tl-label {{ etape.statut }}">{{ etape.label }}</div>
+                {% if etape.statut == 'active' %}
+                  <div class="tl-sub" style="color:var(--accent); font-style:italic">En cours de revue…</div>
+                {% elif etape.statut == 'done' %}
+                  <div class="tl-sub">{{ frappe.format(doc.creation, "Date") if loop.first else "—" }}</div>
+                {% else %}
+                  <div class="tl-sub">—</div>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Décision finale / Avis officiel -->
+        {% if avis and doc.workflow_state in ["Clôturé — GO", "Clôturé — NO GO", "Clôturé — GO sous réserve"] %}
+          {% set dec_cls = "go" if avis.decision == "GO" else ("nogo" if avis.decision == "NO GO" else "reserve") %}
+          <div class="avis-card {{ dec_cls }}">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px;">Avis de conformité officiel</div>
+            <div class="avis-badge {{ dec_cls }}">{{ avis.decision }}</div>
+            {% if avis.date_decision %}
+              <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Rendu le {{ frappe.format(avis.date_decision, "Date") }}</div>
+            {% endif %}
+            {% if avis.reserves %}
+              <div class="avis-section-title">Réserves et conditions</div>
+              <div class="avis-text">{{ avis.reserves }}</div>
+            {% endif %}
+            {% if avis.recommandations %}
+              <div class="avis-section-title">Recommandations</div>
+              <div class="avis-text">{{ avis.recommandations }}</div>
+            {% endif %}
+            <a href="/printview?doctype=DD+Avis+Compliance&name={{ avis.name }}&format=Avis+Compliance+AMOAMAN&_lang=fr"
+               class="btn-telecharger" target="_blank">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Télécharger l'avis (PDF)
+            </a>
+          </div>
+        {% else %}
+          <div class="decision-card">
+            {% if doc.decision_finale and doc.workflow_state in ["Clôturé — GO", "Clôturé — NO GO", "Clôturé — GO sous réserve"] %}
+              <div class="decision-icon" style="background:{% if doc.decision_finale=='GO' %}#dcfce7{% elif doc.decision_finale=='NO GO' %}#fee2e2{% else %}#ffedd5{% endif %}">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{% if doc.decision_finale=='GO' %}#16a34a{% elif doc.decision_finale=='NO GO' %}#dc2626{% else %}#d97706{% endif %}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="decision-title">Décision : {{ doc.decision_finale }}</div>
+              {% if doc.reserves %}<div class="decision-sub">{{ doc.reserves }}</div>{% endif %}
+              {% if doc.date_decision %}<div class="decision-sub" style="margin-top:6px">{{ frappe.format(doc.date_decision, "Datetime") }}</div>{% endif %}
+            {% else %}
+              <div class="decision-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div class="decision-title">Décision finale</div>
+              <div class="decision-sub">La décision sera rendue après la clôture de l'étape de validation.</div>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Colonne droite : Infos + Documents -->
+      <div>
+        <div class="info-card">
+          <div class="info-card-title">
+            Informations du dossier
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div class="info-grid">
+            <div>
+              <div class="info-item-label">Objet de la demande</div>
+              <div class="info-item-value">{{ doc.dd_type or "—" }}</div>
+            </div>
+            <div>
+              <div class="info-item-label">Date de création</div>
+              <div class="info-item-value">{{ frappe.format(doc.creation, "Datetime") }}</div>
+            </div>
+            <div>
+              <div class="info-item-label">Responsable assigné</div>
+              <div class="info-item-value">
+                {% if doc.analyste_assigne %}{{ doc.analyste_assigne }}{% else %}<span style="color:var(--muted)">Non assigné</span>{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents déposés -->
+        <div class="info-card">
+          <div class="docs-header">
+            <span class="info-card-title" style="margin-bottom:0">Documents déposés</span>
+            {% set docs_fournis = doc.required_documents | selectattr('fichier') | list %}
+            <span class="docs-count">{{ docs_fournis | length }} Fichier{{ 's' if docs_fournis|length > 1 }}</span>
+          </div>
+
+          {% for d in doc.required_documents %}
+          {% if d.fichier %}
+          <div class="doc-file-item">
+            <div class="doc-file-icon {% if '.pdf' in d.fichier %}pdf{% elif '.xls' in d.fichier %}xls{% endif %}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{% if '.pdf' in d.fichier %}#dc2626{% else %}#16a34a{% endif %}" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div>
+              <div class="doc-file-name">{{ d.nom_document }}</div>
+              <div class="doc-file-meta">
+                {% if d.hash_sha256 %}Intégrité vérifiée{% else %}{{ d.statut }}{% endif %}
+              </div>
+            </div>
+            <a href="{{ d.fichier }}" target="_blank" class="doc-consult">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:3px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Consulter
+            </a>
+          </div>
+          {% endif %}
+          {% endfor %}
+
+          {% if not docs_fournis %}
+          <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Aucun document déposé pour l'instant.</div>
+          {% endif %}
+
+          <div class="security-note">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            L'intégrité de ces documents est garantie par AMOAMAN &amp; ASSOCIÉS via notre coffre-fort numérique sécurisé.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer style="padding:16px 32px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--border);">
+      DOCUMENT CONFIDENTIEL — AMOAMAN &amp; ASSOCIÉS &nbsp;|&nbsp;
+      <a href="#">Confidentialité</a> &nbsp;|&nbsp;
+      <a href="#">Conditions d'utilisation</a> &nbsp;|&nbsp;
+      <a href="#">Support technique</a>
+    </footer>
+  </div>
+</div>
+{% endblock %}

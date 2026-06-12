@@ -5,6 +5,83 @@ app_description = "application pour la gestion des due-diligence"
 app_email = "gatse007@gmail.com"
 app_license = "mit"
 
+# Fixtures — exportées/importées via bench migrate
+# Ordre important : States & Actions avant Workflow (contraintes FK)
+# Phase 1 : DD Type (13 types seeds)
+# Phase 2 : Role (8 rôles DD)
+# Phase 3 : Workflow State, Workflow Action Master, Workflow
+# Phase 6 : Print Format
+# Phase 7 : Notification
+fixtures = [
+	{"dt": "DD Type", "filters": []},
+	{
+		"dt": "Role",
+		"filters": [["role_name", "in", [
+			"DD Client", "DD Analyste", "DD Manager Compliance", "DD Validateur",
+			"DD Juridique", "DD DPO", "DD Cyber", "DD Financier",
+			"DD RSSI", "DD CCO", "DD DG", "DD Manager Metier",
+		]]]
+	},
+	{
+		"dt": "Workflow State",
+		"filters": [["workflow_state_name", "in", [
+			"Brouillon", "Soumis", "En préqualification",
+			"En screening réglementaire", "En analyse Compliance",
+			"En analyse financière", "En revue juridique",
+			"En revue cybersécurité", "En revue DPO",
+			"En attente de documents", "En attente validation métier",
+			"En attente validation Manager", "En attente validation Compliance",
+			"En attente validation CCO", "En attente validation DG",
+			"En validation Manager", "En validation Direction",
+			"Escaladé", "Suspendu",
+			"Clôturé — GO", "Clôturé — NO GO", "Clôturé — GO sous réserve",
+			"Rejeté", "Accepté", "Accepté sous réserve",
+			"Clôturé", "Sous surveillance continue",
+		]]]
+	},
+	{
+		"dt": "Workflow Action Master",
+		"filters": [["workflow_action_name", "in", [
+			"Soumettre le dossier", "Prendre en préqualification",
+			"Bloquer — tiers sanctionné",
+			"Démarrer l'analyse", "Démarrer le screening réglementaire",
+			"Passer en analyse Compliance",
+			"Demander des documents complémentaires", "Reprendre l'analyse",
+			"Envoyer en analyse financière",
+			"Envoyer en revue cybersécurité", "Envoyer en revue juridique", "Envoyer en revue DPO",
+			"Envoyer en validation métier", "Envoyer en validation Compliance",
+			"Envoyer en validation CCO", "Envoyer en validation DG",
+			"Valider — GO", "Valider — NO GO", "Valider — GO sous réserve",
+			"Mettre sous surveillance", "Suspendre le dossier", "Reprendre le dossier",
+		]]]
+	},
+	{
+		"dt": "Workflow",
+		"filters": [["name", "=", "Due Diligence Workflow"]]
+	},
+	{
+		"dt": "Print Format",
+		"filters": [["name", "=", "Avis Compliance"]]
+	},
+	{"dt": "DD Section", "filters": []},
+	{"dt": "DD Question", "filters": []},
+	{
+		"dt": "Notification",
+		"filters": [["name", "in", [
+			"DD - Nouveau dossier soumis",
+			"DD - Documents supplémentaires requis",
+			"DD - Dossier clôturé avis disponible",
+			"DD - En attente de validation Manager",
+		]]]
+	},
+	# Phase 8 : Custom DocPerm — lecture du DocType Workflow pour les rôles DD
+	# (workflow.js lit Workflow via frappe.db.get_value pour vérifier enable_action_confirmation)
+	{
+		"dt": "Custom DocPerm",
+		"filters": [["parent", "=", "Workflow"]]
+	},
+]
+
 # Apps
 # ------------------
 
@@ -118,48 +195,37 @@ app_license = "mit"
 
 # Permissions
 # -----------
-# Permissions evaluated in scripted ways
+# DD Client ne voit que ses propres DD Request (portail + desk)
+permission_query_conditions = {
+	"DD Request": "due_diligence.permissions.get_permission_query_conditions",
+}
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+# Portail web : vérifie que le visiteur est bien le owner du dossier
+has_website_permission = {
+	"DD Request": "due_diligence.permissions.has_website_permission",
+}
 
 # Document Events
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"DD Request": {
+		# Extension : OCR, screening AML/PEP, e-signature — non implémenté MVP
+	},
+}
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"due_diligence.tasks.all"
-# 	],
-# 	"daily": [
-# 		"due_diligence.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"due_diligence.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"due_diligence.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"due_diligence.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"cron": {
+		# Vérification SLA toutes les 4 heures
+		"0 */4 * * *": [
+			"due_diligence.due_diligence.tasks.verifier_sla_workflows",
+		],
+	},
+}
 
 # Testing
 # -------

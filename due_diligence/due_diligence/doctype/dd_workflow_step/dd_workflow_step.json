@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "creation": "2026-06-10 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "ordre",
+  "etape",
+  "role_validateur",
+  "statut",
+  "obligatoire",
+  "col_break",
+  "validateur",
+  "date_validation",
+  "commentaire"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "ordre",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "N°"
+  },
+  {
+   "columns": 4,
+   "fieldname": "etape",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Étape",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "role_validateur",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Rôle"
+  },
+  {
+   "columns": 2,
+   "default": "En attente",
+   "fieldname": "statut",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Statut",
+   "options": "\nEn attente\nEn cours\nValidé\nRefusé\nIgnoré"
+  },
+  {
+   "default": "1",
+   "fieldname": "obligatoire",
+   "fieldtype": "Check",
+   "label": "Obligatoire"
+  },
+  {
+   "fieldname": "col_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "validateur",
+   "fieldtype": "Link",
+   "label": "Validé par",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "date_validation",
+   "fieldtype": "Datetime",
+   "label": "Date de validation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "commentaire",
+   "fieldtype": "Small Text",
+   "label": "Commentaire"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-06-10 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Due Diligence",
+ "name": "DD Workflow Step",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "ordre",
+ "sort_order": "ASC",
+ "states": []
+}

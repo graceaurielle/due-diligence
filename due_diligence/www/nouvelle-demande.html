@@ -1,0 +1,2593 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block page_content %}
+<style>
+:root {
+  --sidebar-bg: #0d1b2a; --sidebar-w: 230px; --primary: #0d1b2a;
+  --blue: #1e4d8c; --accent: #4a90d9; --bg: #f0f2f5;
+  --card: #ffffff; --border: #e2e8f0; --text: #1a202c; --muted: #64748b;
+  --success: #16a34a; --warning: #d97706; --danger: #dc2626;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+a { text-decoration: none; color: inherit; }
+input, select, textarea { font-family: inherit; }
+
+/* Sidebar (same as dashboard) */
+.dd-layout { display: flex; min-height: 100vh; }
+.dd-sidebar {
+  width: var(--sidebar-w); background: var(--sidebar-bg); color: rgba(255,255,255,.75);
+  display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100;
+}
+.dd-sidebar-brand { padding: 28px 20px 24px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.dd-sidebar-logo { font-size: 13px; font-weight: 700; color: #fff; letter-spacing: .5px; line-height: 1.3; }
+.dd-sidebar-tagline { font-size: 10px; color: rgba(255,255,255,.45); margin-top: 4px; text-transform: uppercase; letter-spacing: .6px; }
+.dd-sidebar-nav { flex: 1; padding: 16px 12px; }
+.dd-nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 7px; font-size: 13px; color: rgba(255,255,255,.6); margin-bottom: 2px; transition: all .15s; }
+.dd-nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+.dd-nav-item.active { background: rgba(255,255,255,.1); color: #fff; border-left: 3px solid var(--accent); }
+.dd-sidebar-bottom { padding: 12px; border-top: 1px solid rgba(255,255,255,.08); }
+
+/* Main */
+.dd-main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+.dd-header {
+  background: #fff; border-bottom: 1px solid var(--border); padding: 0 32px; height: 60px;
+  display: flex; align-items: center; font-size: 15px; font-weight: 700;
+}
+
+/* Stepper */
+.wizard-stepper {
+  background: #fff; border-bottom: 1px solid var(--border);
+  padding: 20px 32px; display: flex; align-items: center; gap: 0;
+}
+.step-item { display: flex; align-items: center; flex: 1; }
+.step-item:last-child { flex: 0; }
+.step-circle {
+  width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; flex-shrink: 0; transition: all .2s;
+  background: #e2e8f0; color: var(--muted);
+}
+.step-circle.done { background: var(--primary); color: #fff; }
+.step-circle.active { background: var(--primary); color: #fff; box-shadow: 0 0 0 3px rgba(13,27,42,.15); }
+.step-label { font-size: 11px; font-weight: 600; margin-left: 8px; color: var(--muted); white-space: nowrap; }
+.step-label.active { color: var(--primary); }
+.step-line { flex: 1; height: 2px; background: #e2e8f0; margin: 0 8px; }
+.step-line.done { background: var(--primary); }
+
+/* Content */
+.wizard-body { flex: 1; padding: 32px; display: flex; flex-direction: column; align-items: center; }
+.wizard-panel { background: var(--card); border-radius: 14px; border: 1px solid var(--border); padding: 36px 40px; width: 100%; max-width: 780px; }
+.panel-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+.panel-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+
+/* Type cards grid */
+.type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.type-card {
+  border: 2px solid var(--border); border-radius: 10px; padding: 20px 16px;
+  cursor: pointer; transition: all .15s; position: relative;
+}
+.type-card:hover { border-color: var(--accent); background: #f0f7ff; }
+.type-card.selected { border-color: var(--primary); background: var(--primary); color: #fff; }
+.type-card.selected .type-criticite { background: rgba(255,255,255,.2); color: #fff; }
+.type-card.selected .type-desc { color: rgba(255,255,255,.7); }
+.type-criticite { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+.crit-Faible { background: #dcfce7; color: #15803d; }
+.crit-Modéré { background: #fef9c3; color: #92400e; }
+.crit-Élevé { background: #fee2e2; color: #dc2626; }
+.type-name { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.type-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.type-select-link { font-size: 12px; font-weight: 600; color: var(--accent); margin-top: 12px; display: block; }
+.type-card.selected .type-select-link { color: rgba(255,255,255,.8); }
+.check-overlay {
+  position: absolute; top: 12px; right: 12px; width: 20px; height: 20px;
+  background: #fff; border-radius: 50%; display: none; align-items: center; justify-content: center;
+}
+.type-card.selected .check-overlay { display: flex; }
+
+/* Form fields */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.form-grid.single { grid-template-columns: 1fr; }
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+.field-input, .field-select, .field-textarea {
+  border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 13px;
+  color: var(--text); outline: none; transition: border .15s; width: 100%;
+}
+.field-input:focus, .field-select:focus, .field-textarea:focus { border-color: var(--accent); }
+.field-textarea { resize: vertical; min-height: 80px; }
+.field-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.field-span-full { grid-column: 1 / -1; }
+.relation-block { margin-top: 4px; padding: 16px 18px; background: #f8faff; border: 1.5px solid #c7d8f5; border-radius: 10px; display: flex; flex-direction: column; gap: 14px; }
+.relation-block--warning { background: #fff8f0; border-color: #f5c07d; }
+.relation-note { font-size: 12px; padding: 10px 14px; background: #fff3cd; border-left: 4px solid var(--warning); border-radius: 6px; color: #7d5200; }
+.field-req { color: #dc2626; }
+.risk-alert { border: 2px solid #dc2626; border-radius: 10px; padding: 18px 20px; background: #fef2f2; margin: 16px 0; }
+.risk-alert.eleve { border-color: #d97706; background: #fffbeb; }
+.risk-alert.modere { border-color: #f59e0b; background: #fffbeb; }
+.risk-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
+.risk-badge.critique { background: #dc2626; color: #fff; }
+.risk-badge.eleve { background: #d97706; color: #fff; }
+.risk-badge.modere { background: #f59e0b; color: #fff; }
+.risk-badge.loading { background: #94a3b8; color: #fff; }
+.risk-mesures { margin: 8px 0 0 18px; font-size: 12px; line-height: 1.7; }
+.fin-threshold-alert { border: 2px solid #1e4d8c; border-radius: 10px; padding: 18px 20px; background: #eff6ff; margin: 20px 0 8px; }
+.fin-threshold-alert.modere { border-color: #d97706; background: #fffbeb; }
+.fin-threshold-alert.eleve { border-color: #dc2626; background: #fef2f2; }
+.fin-threshold-alert.critique { border-color: #7f1d1d; background: #fff1f2; }
+.fin-threshold-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
+.fin-threshold-badge.faible { background: #dcfce7; color: #15803d; }
+.fin-threshold-badge.modere { background: #fef3c7; color: #92400e; }
+.fin-threshold-badge.eleve { background: #fee2e2; color: #dc2626; }
+.fin-threshold-badge.critique { background: #7f1d1d; color: #fff; }
+.fin-threshold-controls { font-size: 12px; margin-top: 8px; line-height: 1.8; }
+.fin-threshold-controls ul { margin: 4px 0 0 18px; }
+.tiers-yn-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; }
+.tiers-yn-label { font-size: 12px; font-weight: 600; flex: 1; padding-right: 12px; }
+.tiers-yn-btns { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* Toggles */
+.toggle-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+.toggle-card {
+  border: 1.5px solid var(--border); border-radius: 10px; padding: 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+}
+.toggle-label { font-size: 12px; font-weight: 600; }
+.toggle-switch { position: relative; width: 42px; height: 24px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0; background: #cbd5e1; border-radius: 24px; cursor: pointer; transition: background .2s;
+}
+.toggle-track::before {
+  content: ''; position: absolute; width: 18px; height: 18px; background: #fff;
+  border-radius: 50%; left: 3px; top: 3px; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.toggle-switch input:checked + .toggle-track { background: var(--primary); }
+.toggle-switch input:checked + .toggle-track::before { transform: translateX(18px); }
+
+/* Questionnaire */
+.question-card { border: 1.5px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 14px; }
+.dd-section-header { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--primary); background: #f0f4ff; border-left: 4px solid var(--primary); padding: 8px 14px; border-radius: 0 6px 6px 0; margin: 24px 0 12px; }
+.question-label { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.question-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.yn-btns { display: flex; gap: 8px; }
+.yn-btn {
+  padding: 7px 20px; border: 1.5px solid var(--border); border-radius: 7px;
+  font-size: 13px; font-weight: 600; cursor: pointer; background: #fff; transition: all .15s;
+}
+.yn-btn.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
+.multi-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.multi-btn {
+  padding: 8px 16px; border: 1.5px solid var(--border); border-radius: 7px;
+  font-size: 12px; font-weight: 500; cursor: pointer; background: #fff; transition: all .15s;
+}
+.multi-btn.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* Risk bar */
+.risk-bar-card { background: var(--primary); color: #fff; border-radius: 10px; padding: 16px 20px; margin-top: 20px; display: flex; align-items: center; gap: 20px; }
+.risk-score { font-size: 22px; font-weight: 800; }
+.risk-info { flex: 1; }
+.risk-info-title { font-size: 13px; font-weight: 600; }
+.risk-info-sub { font-size: 11px; color: rgba(255,255,255,.65); }
+.risk-bar-track { flex: 2; height: 8px; background: rgba(255,255,255,.2); border-radius: 4px; overflow: hidden; }
+.risk-bar-fill { height: 100%; border-radius: 4px; transition: width .3s; }
+.risk-range { display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,.5); margin-top: 4px; }
+
+/* Upload */
+.upload-layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+.drop-zone {
+  border: 2px dashed var(--border); border-radius: 12px; padding: 48px 24px;
+  text-align: center; cursor: pointer; transition: all .15s;
+}
+.drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: #f0f7ff; }
+.drop-zone-icon { color: var(--muted); margin-bottom: 14px; }
+.drop-zone-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.drop-zone-sub { font-size: 12px; color: var(--muted); }
+.drop-zone a { color: var(--accent); text-decoration: underline; cursor: pointer; }
+.upload-progress { margin-top: 20px; background: #f8fafc; border-radius: 8px; padding: 14px 16px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+.progress-track { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--primary); border-radius: 4px; transition: width .3s; }
+.progress-pct { font-size: 13px; font-weight: 700; background: var(--primary); color: #fff; padding: 2px 8px; border-radius: 20px; }
+
+.doc-checklist { border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
+.doc-checklist-title { padding: 14px 16px; font-size: 13px; font-weight: 700; border-bottom: 1px solid var(--border); }
+.doc-item { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 12px; }
+.doc-item:last-child { border-bottom: none; }
+.doc-check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.doc-check.done { background: var(--success); border-color: var(--success); }
+.doc-info-name { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.doc-info-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.doc-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; letter-spacing: .4px; }
+.doc-badge.req { background: #fee2e2; color: #dc2626; }
+.doc-badge.opt { background: #f1f5f9; color: #64748b; }
+.doc-status { font-size: 11px; font-weight: 600; margin-top: 3px; }
+.doc-status.received { color: var(--success); }
+.doc-status.waiting { color: var(--warning); }
+input[type=file] { display: none; }
+
+/* Recap */
+.recap-warning {
+  background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 10px; padding: 16px;
+  font-size: 13px; color: #92400e; margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-start;
+}
+.recap-section { border: 1.5px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+.recap-section-header {
+  padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; background: #fafafa; font-weight: 600; font-size: 14px;
+}
+.recap-section-header:hover { background: #f1f5f9; }
+.recap-section-body { padding: 16px; display: none; font-size: 13px; color: var(--muted); }
+.recap-section-body.open { display: block; }
+.recap-row { display: flex; gap: 8px; margin-bottom: 6px; }
+.recap-key { font-weight: 600; color: var(--text); min-width: 160px; }
+.confirm-check-row { display: flex; gap: 10px; align-items: flex-start; margin: 20px 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.confirm-check-row input[type=checkbox] { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; }
+.security-note { text-align: center; font-size: 11px; color: var(--muted); margin-top: 12px; font-style: italic; }
+
+/* Nav buttons */
+.wizard-footer { padding: 24px 0 0; display: flex; justify-content: space-between; align-items: center; }
+.btn-prev { padding: 10px 20px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; background: #fff; display: flex; align-items: center; gap: 6px; }
+.btn-prev:hover { background: #f8fafc; }
+.btn-next { padding: 10px 24px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.btn-next:hover { opacity: .88; }
+.btn-next:disabled { opacity: .5; cursor: not-allowed; }
+.btn-save { padding: 10px 20px; background: #fff; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); }
+
+/* ── Tablet ≤1024px : sidebar repliée, contenu pleine largeur ── */
+@media (max-width: 1024px) {
+  .dd-header { padding: 0 20px; gap: 10px; }
+  .wizard-stepper { padding: 16px 20px; }
+  .type-grid { grid-template-columns: repeat(3, 1fr); }
+  .toggle-grid { grid-template-columns: repeat(3, 1fr); }
+  .wizard-panel { padding: 28px; }
+  .wizard-body { padding: 24px; }
+}
+
+/* ── Mobile ≤767px ──────────────────────────────────── */
+@media (max-width: 767px) {
+  .dd-header { padding: 0 14px; gap: 10px; height: auto; min-height: 60px; flex-wrap: wrap; }
+  .wizard-stepper { padding: 10px 14px; }
+  .step-label { display: none; }
+  .step-line { min-width: 10px; margin: 0 4px; }
+  .step-circle { width: 28px; height: 28px; font-size: 12px; }
+  .wizard-body { padding: 12px; }
+  .wizard-panel { padding: 18px 14px; border-radius: 10px; }
+  .panel-title { font-size: 17px; }
+  .panel-sub { margin-bottom: 16px; font-size: 12px; }
+  .type-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .form-grid { grid-template-columns: 1fr !important; gap: 14px; }
+  .toggle-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .upload-layout { grid-template-columns: 1fr; }
+  .risk-bar-card { flex-wrap: wrap; gap: 10px; }
+  .risk-bar-track { flex: none; width: 100%; }
+  .recap-row { flex-direction: column; gap: 2px; }
+  .recap-key { min-width: auto; }
+  .wizard-footer { gap: 8px; }
+  .btn-prev, .btn-next { font-size: 12px; padding: 9px 14px; }
+  .drop-zone { padding: 28px 16px; }
+  .type-card { padding: 14px 12px; }
+  .type-name { font-size: 13px; }
+  .type-desc { font-size: 11px; }
+}
+
+/* ── Très petit (≤ 420px) ──────────────────────────── */
+@media (max-width: 420px) {
+  .type-grid { grid-template-columns: 1fr; }
+  .wizard-panel { padding: 14px 10px; }
+  .wizard-body { padding: 8px; }
+}
+</style>
+
+<div class="dd-layout">
+  {% include "due_diligence/www/_sidebar.html" %}
+
+  <div class="dd-main">
+    <header class="dd-header">
+      <button class="dd-hamburger" onclick="openSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      NOUVELLE DUE DILIGENCE
+    </header>
+
+    <!-- Stepper -->
+    <div class="wizard-stepper" id="stepper">
+      {% for step in [("1","Type"),("2","Demandeur"),("3","Notre relation"),("4","Tiers"),("5","Questionnaire"),("6","Documents"),("7","Récapitulatif")] %}
+      <div class="step-item">
+        <div class="step-circle" id="circle-{{ step[0] }}">{{ step[0] }}</div>
+        <span class="step-label" id="label-{{ step[0] }}">{{ step[1] }}</span>
+        {% if not loop.last %}<div class="step-line" id="line-{{ step[0] }}"></div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="wizard-body">
+
+      <!-- ═══ STEP 1 : Type de DD ═══ -->
+      <div class="wizard-panel" id="step-1">
+        <div class="panel-title">Choisissez le type de Due Diligence</div>
+        <div class="panel-sub">Sélectionnez la catégorie qui correspond le mieux à la nature du tiers pour adapter le protocole d'audit.</div>
+        <div class="type-grid">
+          {% for t in dd_types %}
+          <div class="type-card" data-type="{{ t.type_name }}" data-desc="{{ t.description_metier or '' }}" onclick="selectType(this)">
+            <span class="type-criticite crit-{{ t.criticite_moyenne }}">{{ t.criticite_moyenne or "—" }}</span>
+            <div class="type-name">{{ t.type_name }}</div>
+            <div class="type-desc">{{ t.description_metier or "" }}</div>
+            <span class="type-select-link">Sélectionner &rarr;</span>
+            <div class="check-overlay">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- ═══ STEP 2 : Demandeur ═══ -->
+      <div class="wizard-panel" id="step-2" style="display:none">
+        <div class="panel-title">Informations du demandeur</div>
+        <div class="panel-sub">Veuillez renseigner les coordonnées de la personne responsable de cette demande de due diligence.</div>
+        <div class="form-grid">
+          <div class="field-group">
+            <label class="field-label">Nom et prénom</label>
+            <input class="field-input" id="f-demandeur_nom" type="text" placeholder="Ex: Jean-Marc Koffi" value="{{ user_fullname }}">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Fonction</label>
+            <input class="field-input" id="f-demandeur_fonction" type="text" placeholder="Ex: Directeur Juridique">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Matricule interne</label>
+            <input class="field-input" id="f-matricule_interne" type="text" placeholder="Ex: EMP-00123">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Département</label>
+            <input class="field-input" id="f-departement" type="text" placeholder="Ex: Département Conformité">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Pays de rattachement</label>
+            <select class="field-select" id="f-pays_rattachement">
+              <option value="">Sélectionner un pays</option>
+              {% for c in countries %}
+              <option value="{{ c.name }}">{{ c.country_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Responsable hiérarchique direct</label>
+            <input class="field-input" id="f-responsable_hierarchique" type="text" placeholder="Ex: Marie Dupont">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Direction métier</label>
+            <input class="field-input" id="f-direction_metier" type="text" placeholder="Ex: Direction Juridique">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Email de contact</label>
+            <input class="field-input" id="f-email_contact" type="email" placeholder="nom@entreprise.ci" value="{{ user_email }}">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Numéro de téléphone professionnel</label>
+            <input class="field-input" id="f-telephone_professionnel" type="tel" placeholder="Ex: +225 07 00 00 00 00">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Niveau hiérarchique du demandeur</label>
+            <select class="field-select" id="f-niveau_hierarchique">
+              <option value="">Sélectionner un niveau</option>
+              <option value="Direction Générale">Direction Générale</option>
+              <option value="Direction">Direction</option>
+              <option value="Management">Management</option>
+              <option value="Cadre">Cadre</option>
+              <option value="Technicien / Agent">Technicien / Agent</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-hint" style="margin-top:16px; padding:12px 16px; background:#f0f7ff; border-radius:8px; color:#1e4d8c;">
+          Ces informations seront utilisées pour toute communication relative au suivi de ce dossier. Assurez-vous de leur exactitude.
+        </div>
+        <div class="wizard-footer">
+          <button class="btn-prev" onclick="goStep(1)">&larr; Précédent</button>
+          <div style="display:flex;gap:10px">
+            <button class="btn-save" onclick="saveAndQuit()">Enregistrer et quitter</button>
+            <button class="btn-next" onclick="goStep(3)">Suivant &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ STEP 3 : Relation ═══ -->
+      <div class="wizard-panel" id="step-3" style="display:none">
+        <div class="panel-title">Nature de votre relation avec nous</div>
+        <div class="panel-sub">Cette section est obligatoire. Elle permet d'évaluer la légitimité et la proportionnalité de la relation envisagée dans une logique de conformité.</div>
+
+        <div class="form-grid">
+
+          <!-- Description de la relation -->
+          <div class="field-group field-span-full">
+            <label class="field-label">Description de la relation <span class="field-req">*</span></label>
+            <textarea class="field-textarea" id="f-relation_description" rows="4" placeholder="Veuillez décrire précisément la nature de la relation envisagée avec le tiers ainsi que les services, produits ou prestations concernés."></textarea>
+          </div>
+
+          <!-- Objectif métier -->
+          <div class="field-group field-span-full">
+            <label class="field-label">Objectif métier <span class="field-req">*</span></label>
+            <textarea class="field-textarea" id="f-relation_objectif_metier" rows="3" placeholder="Quel est l'objectif opérationnel, commercial, stratégique ou réglementaire de cette relation avec le tiers ?"></textarea>
+          </div>
+
+          <!-- Justification du choix du tiers -->
+          <div class="field-group field-span-full">
+            <label class="field-label">Justification du choix du tiers <span class="field-req">*</span></label>
+            <textarea class="field-textarea" id="f-relation_justification_choix" rows="3" placeholder="Pour quelles raisons ce tiers a-t-il été sélectionné par rapport aux autres acteurs du marché ?"></textarea>
+          </div>
+
+          <!-- Caractère stratégique -->
+          <div class="field-group field-span-full">
+            <label class="field-label">Cette relation est-elle considérée comme stratégique pour l'organisation ? <span class="field-req">*</span></label>
+            <input type="hidden" id="f-relation_strategique" value="">
+            <div class="yn-btns">
+              <button class="yn-btn" id="btn-strategique-oui" onclick="setRelationField('relation_strategique','Oui',this,'btn-strategique-non','block-strategique')">Oui</button>
+              <button class="yn-btn" id="btn-strategique-non" onclick="setRelationField('relation_strategique','Non',this,'btn-strategique-oui','block-strategique')">Non</button>
+            </div>
+          </div>
+
+          <!-- Bloc conditionnel : stratégique = Oui -->
+          <div class="field-span-full" id="block-strategique" style="display:none">
+            <div class="relation-block">
+              <div class="field-group">
+                <label class="field-label">Pourquoi cette relation est-elle stratégique ? <span class="field-req">*</span></label>
+                <textarea class="field-textarea" id="f-relation_strategique_explication" rows="3" placeholder="Veuillez expliquer pourquoi cette relation est considérée comme stratégique."></textarea>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Impact opérationnel ou financier en cas d'échec <span class="field-req">*</span></label>
+                <textarea class="field-textarea" id="f-relation_strategique_impact" rows="3" placeholder="Quel serait l'impact opérationnel ou financier en cas d'échec de cette relation ?"></textarea>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Dépendance critique vis-à-vis de ce tiers ? <span class="field-req">*</span></label>
+                <input type="hidden" id="f-relation_dependance_critique" value="">
+                <div class="yn-btns">
+                  <button class="yn-btn" id="btn-dependance-oui" onclick="setRelationField('relation_dependance_critique','Oui',this,'btn-dependance-non',null)">Oui</button>
+                  <button class="yn-btn" id="btn-dependance-non" onclick="setRelationField('relation_dependance_critique','Non',this,'btn-dependance-oui',null)">Non</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Urgence métier -->
+          <div class="field-group field-span-full">
+            <label class="field-label">La demande présente-t-elle un caractère d'urgence opérationnelle ? <span class="field-req">*</span></label>
+            <input type="hidden" id="f-relation_urgence" value="">
+            <div class="yn-btns">
+              <button class="yn-btn" id="btn-urgence-oui" onclick="setRelationField('relation_urgence','Oui',this,'btn-urgence-non','block-urgence')">Oui</button>
+              <button class="yn-btn" id="btn-urgence-non" onclick="setRelationField('relation_urgence','Non',this,'btn-urgence-oui','block-urgence')">Non</button>
+            </div>
+          </div>
+
+          <!-- Bloc conditionnel : urgence = Oui -->
+          <div class="field-span-full" id="block-urgence" style="display:none">
+            <div class="relation-block relation-block--warning">
+              <div class="relation-note">
+                <strong>Important :</strong> Une urgence opérationnelle ne dispense pas des validations obligatoires. Le dossier suivra le circuit de validation standard.
+              </div>
+              <div class="field-group">
+                <label class="field-label">Justification précise de l'urgence <span class="field-req">*</span></label>
+                <textarea class="field-textarea" id="f-relation_urgence_justification" rows="3" placeholder="Quelle est la justification précise de cette urgence ?"></textarea>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Impacts métiers en cas de retard <span class="field-req">*</span></label>
+                <textarea class="field-textarea" id="f-relation_urgence_impact_retard" rows="3" placeholder="Quels seraient les impacts métiers en cas de retard ?"></textarea>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Une procédure exceptionnelle est-elle demandée ? <span class="field-req">*</span></label>
+                <input type="hidden" id="f-relation_procedure_exceptionnelle" value="">
+                <div class="yn-btns">
+                  <button class="yn-btn" id="btn-procedure-oui" onclick="setRelationField('relation_procedure_exceptionnelle','Oui',this,'btn-procedure-non',null)">Oui</button>
+                  <button class="yn-btn" id="btn-procedure-non" onclick="setRelationField('relation_procedure_exceptionnelle','Non',this,'btn-procedure-oui',null)">Non</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- form-grid -->
+
+        <div class="wizard-footer">
+          <button class="btn-prev" onclick="goStep(2)">&larr; Précédent</button>
+          <div style="display:flex;gap:10px">
+            <button class="btn-save" onclick="saveAndQuit()">Enregistrer et quitter</button>
+            <button class="btn-next" onclick="goStep(4)">Suivant &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ STEP 4 : Tiers évalué ═══ -->
+      <div class="wizard-panel" id="step-4" style="display:none">
+        <div class="panel-title">Identification du Tiers Évalué</div>
+        <div class="panel-sub">Renseignez l'ensemble des informations juridiques, opérationnelles et capitalistiques du tiers. Ces données alimentent le moteur d'analyse de risque.</div>
+
+        <!-- ── IDENTIFICATION JURIDIQUE ── -->
+        <div class="dd-section-header">Identification Juridique</div>
+        <div class="form-grid">
+          <div class="field-group">
+            <label class="field-label">Raison sociale complète <span class="field-req">*</span></label>
+            <input class="field-input" id="f-tiers_nom" type="text" placeholder="Ex: Africa Tech Solutions SARL">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Nom commercial</label>
+            <input class="field-input" id="f-tiers_nom_commercial" type="text" placeholder="Ex: ATS Group">
+          </div>
+          <div class="field-group">
+            <label class="field-label">RCCM / Registre de commerce <span class="field-req">*</span></label>
+            <input class="field-input" id="f-tiers_rccm" type="text" placeholder="Ex: CI-ABJ-2015-B-12345">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Numéro d'identification fiscale (NIF) <span class="field-req">*</span></label>
+            <input class="field-input" id="f-tiers_nif" type="text" placeholder="Ex: 1234567A">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Forme juridique <span class="field-req">*</span></label>
+            <select class="field-select" id="f-tiers_forme_juridique">
+              <option value="">Sélectionner…</option>
+              <option>SA</option><option>SARL</option><option>SAS</option>
+              <option>GIE</option><option>ONG</option><option>Association</option>
+              <option>Entreprise Publique</option><option>Société d'État</option>
+              <option>Filiale</option><option>Autre</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Date de création</label>
+            <input class="field-input" id="f-tiers_date_creation" type="date">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Pays d'immatriculation <span class="field-req">*</span></label>
+            <select class="field-select" id="f-tiers_pays" onchange="checkCountryRisk(this.options[this.selectedIndex].text, this.value)">
+              <option value="">Sélectionner un pays</option>
+              {% for c in countries %}
+              <option value="{{ c.name }}">{{ c.country_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Adresse du siège social <span class="field-req">*</span></label>
+            <textarea class="field-textarea" id="f-tiers_adresse_siege" rows="2" placeholder="Adresse complète du siège social"></textarea>
+          </div>
+          <div class="field-group field-span-full">
+            <label class="field-label">Pays d'exercice des activités <span class="field-req">*</span></label>
+            <input type="hidden" id="f-tiers_pays_activites" value="">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+              <select id="pays-activites-select" class="field-select" style="flex:1">
+                <option value="">Sélectionner un pays…</option>
+                {% for c in countries %}
+                <option value="{{ c.name }}">{{ c.country_name }}</option>
+                {% endfor %}
+              </select>
+              <button type="button" onclick="addPaysActivite()" style="padding:8px 16px;background:var(--primary,#0d1b2a);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Ajouter</button>
+            </div>
+            <div id="pays-activites-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px"></div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Filiales internationales ? <span class="field-req">*</span></label>
+            <input type="hidden" id="f-tiers_filiales_internationales" value="">
+            <div class="yn-btns">
+              <button class="yn-btn" id="btn-filiales-oui" onclick="setField('tiers_filiales_internationales','Oui',this,'btn-filiales-non',null)">Oui</button>
+              <button class="yn-btn" id="btn-filiales-non" onclick="setField('tiers_filiales_internationales','Non',this,'btn-filiales-oui',null)">Non</button>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Appartient à un groupe international ? <span class="field-req">*</span></label>
+            <input type="hidden" id="f-tiers_appartient_groupe" value="">
+            <div class="yn-btns">
+              <button class="yn-btn" id="btn-groupe-oui" onclick="setField('tiers_appartient_groupe','Oui',this,'btn-groupe-non',null)">Oui</button>
+              <button class="yn-btn" id="btn-groupe-non" onclick="setField('tiers_appartient_groupe','Non',this,'btn-groupe-oui',null)">Non</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ALERTE RISQUE PAYS (auto-affiché) ── -->
+        <div id="block-risque-pays" style="display:none">
+          <div class="risk-alert" id="risk-alert-box" style="display:none">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+              <span id="risque-pays-badge" class="risk-badge critique">SANCTIONS CRITIQUES</span>
+              <strong style="font-size:14px">Pays à risque détecté : <span id="risque-pays-label">—</span></strong>
+            </div>
+            <p id="risque-pays-reason" style="font-size:13px;margin-bottom:10px;color:#7f1d1d"></p>
+            <div style="font-size:12px;font-weight:600;color:#7f1d1d">Mesures automatiquement activées :</div>
+            <ul class="risk-mesures" id="risque-pays-mesures"></ul>
+          </div>
+          <input type="hidden" id="f-tiers_pays_risque_detecte" value="0">
+          <div class="dd-section-header" style="margin-top:16px">Questions Complémentaires — Pays à Risque</div>
+          <div class="form-grid">
+            <div class="field-group field-span-full">
+              <label class="field-label">Veuillez décrire précisément la nature des opérations prévues dans ce pays <span class="field-req">*</span></label>
+              <textarea class="field-textarea" id="f-tiers_nature_operations_pays_risque" rows="3" placeholder="Nature et périmètre des opérations envisagées dans ce territoire…"></textarea>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Les opérations impliquent-elles des flux financiers internationaux ? <span class="field-req">*</span></label>
+              <input type="hidden" id="f-tiers_flux_financiers_internationaux" value="">
+              <div class="yn-btns">
+                <button class="yn-btn" id="btn-flux-oui" onclick="setField('tiers_flux_financiers_internationaux','Oui',this,'btn-flux-non',null)">Oui</button>
+                <button class="yn-btn" id="btn-flux-non" onclick="setField('tiers_flux_financiers_internationaux','Non',this,'btn-flux-oui',null)">Non</button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Des licences réglementaires ou autorisations gouvernementales sont-elles nécessaires ? <span class="field-req">*</span></label>
+              <input type="hidden" id="f-tiers_licences_reglementaires" value="">
+              <div class="yn-btns">
+                <button class="yn-btn" id="btn-licences-oui" onclick="setField('tiers_licences_reglementaires','Oui',this,'btn-licences-non',null)">Oui</button>
+                <button class="yn-btn" id="btn-licences-non" onclick="setField('tiers_licences_reglementaires','Non',this,'btn-licences-oui',null)">Non</button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Le tiers entretient-il des relations avec des entités publiques locales ? <span class="field-req">*</span></label>
+              <input type="hidden" id="f-tiers_relations_entites_publiques_locales" value="">
+              <div class="yn-btns">
+                <button class="yn-btn" id="btn-entpub-oui" onclick="setField('tiers_relations_entites_publiques_locales','Oui',this,'btn-entpub-non',null)">Oui</button>
+                <button class="yn-btn" id="btn-entpub-non" onclick="setField('tiers_relations_entites_publiques_locales','Non',this,'btn-entpub-oui',null)">Non</button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Existe-t-il des risques de sanctions secondaires ? <span class="field-req">*</span></label>
+              <input type="hidden" id="f-tiers_risques_sanctions_secondaires" value="">
+              <div class="yn-btns">
+                <button class="yn-btn" id="btn-sanctsec-oui" onclick="setField('tiers_risques_sanctions_secondaires','Oui',this,'btn-sanctsec-non',null)">Oui</button>
+                <button class="yn-btn" id="btn-sanctsec-non" onclick="setField('tiers_risques_sanctions_secondaires','Non',this,'btn-sanctsec-oui',null)">Non</button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Le tiers ou ses actionnaires figurent-ils sur des listes de sanctions ? <span class="field-req">*</span></label>
+              <input type="hidden" id="f-tiers_figure_listes_sanctions" value="">
+              <div class="yn-btns">
+                <button class="yn-btn" id="btn-listsanct-oui" onclick="setField('tiers_figure_listes_sanctions','Oui',this,'btn-listsanct-non',null)">Oui</button>
+                <button class="yn-btn" id="btn-listsanct-non" onclick="setField('tiers_figure_listes_sanctions','Non',this,'btn-listsanct-oui',null)">Non</button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Des paiements transitent-ils par des juridictions offshore ? <span class="field-req">*</span></label>
+              <input type="hidden" id="f-tiers_paiements_offshore" value="">
+              <div class="yn-btns">
+                <button class="yn-btn" id="btn-paioff-oui" onclick="setField('tiers_paiements_offshore','Oui',this,'btn-paioff-non',null)">Oui</button>
+                <button class="yn-btn" id="btn-paioff-non" onclick="setField('tiers_paiements_offshore','Non',this,'btn-paioff-oui',null)">Non</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── IDENTIFICATION OPÉRATIONNELLE ── -->
+        <div class="dd-section-header">Identification Opérationnelle</div>
+        <div class="form-grid">
+          <div class="field-group">
+            <label class="field-label">Secteur d'activité principal <span class="field-req">*</span></label>
+            <input class="field-input" id="f-tiers_secteur" type="text" placeholder="Ex: Infrastructures IT, BTP, Finance…">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Nombre d'employés <span class="field-req">*</span></label>
+            <select class="field-select" id="f-tiers_nb_employes">
+              <option value="">Sélectionner…</option>
+              <option>< 10</option><option>10 – 50</option><option>51 – 200</option>
+              <option>201 – 500</option><option>501 – 2 000</option><option>> 2 000</option>
+            </select>
+          </div>
+          <div class="field-group field-span-full">
+            <label class="field-label">Description précise des activités opérationnelles <span class="field-req">*</span></label>
+            <textarea class="field-textarea" id="f-tiers_description_activites" rows="3" placeholder="Décrivez précisément les activités, produits ou services exercés par le tiers"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Principaux clients <span class="field-req">*</span></label>
+            <textarea class="field-textarea" id="f-tiers_principaux_clients" rows="2" placeholder="Nommez les principaux clients du tiers"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Principaux marchés géographiques <span class="field-req">*</span></label>
+            <textarea class="field-textarea" id="f-tiers_marches_geographiques" rows="2" placeholder="Ex: Afrique de l'Ouest, Europe, MENA…"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Montant du contrat (FCFA)</label>
+            <input class="field-input" id="f-tiers_montant_contrat" type="number" min="0" placeholder="0">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Le tiers intervient-il dans des secteurs réglementés ? <span class="field-req">*</span></label>
+            <input type="hidden" id="f-tiers_secteurs_reglementes" value="">
+            <div class="yn-btns">
+              <button class="yn-btn" id="btn-secreg-oui" onclick="setField('tiers_secteurs_reglementes','Oui',this,'btn-secreg-non',null)">Oui</button>
+              <button class="yn-btn" id="btn-secreg-non" onclick="setField('tiers_secteurs_reglementes','Non',this,'btn-secreg-oui',null)">Non</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── IDENTIFICATION CAPITALISTIQUE ── -->
+        <div class="dd-section-header">Identification Capitalistique</div>
+        <div class="form-grid">
+          <div class="field-group field-span-full">
+            <label class="field-label">Actionnaires principaux <span class="field-req">*</span></label>
+            <textarea class="field-textarea" id="f-tiers_actionnaires_principaux" rows="2" placeholder="Nommez les actionnaires principaux avec leurs parts respectives"></textarea>
+          </div>
+          <div class="field-group field-span-full">
+            <label class="field-label">Structure détaillée de l'actionnariat <span class="field-req">*</span></label>
+            <textarea class="field-textarea" id="f-tiers_structure_actionnariat" rows="3" placeholder="Décrivez la structure complète de l'actionnariat (chaîne de détention, holding, etc.)"></textarea>
+          </div>
+          <div class="field-group field-span-full">
+            <label class="field-label">Bénéficiaires effectifs identifiés ? <span class="field-req">*</span></label>
+            <input type="hidden" id="f-tiers_beneficiaires_effectifs" value="">
+            <div class="yn-btns">
+              <button class="yn-btn" id="btn-benef-oui" onclick="setField('tiers_beneficiaires_effectifs','Oui',this,'btn-benef-non','block-benef-detail')">Oui</button>
+              <button class="yn-btn" id="btn-benef-non" onclick="setField('tiers_beneficiaires_effectifs','Non',this,'btn-benef-oui','block-benef-detail')">Non</button>
+            </div>
+            <div id="block-benef-detail" style="display:none;margin-top:10px;">
+              <label class="field-label">Identifiez les bénéficiaires effectifs (nom, % de détention) <span class="field-req">*</span></label>
+              <textarea class="field-textarea" id="f-tiers_beneficiaires_detail" rows="3" placeholder="Ex: Jean Dupont — 45%, Société XYZ — 30%…"></textarea>
+            </div>
+          </div>
+          <div class="field-group field-span-full">
+            <label class="field-label">Actionnaires politiquement exposés (PEP) ? <span class="field-req">*</span></label>
+            <input type="hidden" id="f-tiers_actionnaires_pep" value="">
+            <div class="yn-btns">
+              <button class="yn-btn" id="btn-pep-oui" onclick="setField('tiers_actionnaires_pep','Oui',this,'btn-pep-non','block-pep-detail')">Oui</button>
+              <button class="yn-btn" id="btn-pep-non" onclick="setField('tiers_actionnaires_pep','Non',this,'btn-pep-oui','block-pep-detail')">Non</button>
+            </div>
+            <div id="block-pep-detail" style="display:none;margin-top:10px;">
+              <label class="field-label">Précisez la fonction ou le mandat politique exercé <span class="field-req">*</span></label>
+              <textarea class="field-textarea" id="f-tiers_pep_detail" rows="2" placeholder="Ex: Directeur de cabinet ministériel, Député, Maire…"></textarea>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Responsables publics avec participations ? <span class="field-req">*</span></label>
+            <input type="hidden" id="f-tiers_responsables_publics_participations" value="">
+            <div class="yn-btns">
+              <button class="yn-btn" id="btn-resppub-oui" onclick="setField('tiers_responsables_publics_participations','Oui',this,'btn-resppub-non',null)">Oui</button>
+              <button class="yn-btn" id="btn-resppub-non" onclick="setField('tiers_responsables_publics_participations','Non',this,'btn-resppub-oui',null)">Non</button>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Détenu partiellement/totalement par un État ? <span class="field-req">*</span></label>
+            <input type="hidden" id="f-tiers_detenu_etat" value="">
+            <div class="yn-btns">
+              <button class="yn-btn" id="btn-etat-oui" onclick="setField('tiers_detenu_etat','Oui',this,'btn-etat-non',null)">Oui</button>
+              <button class="yn-btn" id="btn-etat-non" onclick="setField('tiers_detenu_etat','Non',this,'btn-etat-oui',null)">Non</button>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Structures offshore dans l'actionnariat ? <span class="field-req">*</span></label>
+            <input type="hidden" id="f-tiers_structures_offshore" value="">
+            <div class="yn-btns">
+              <button class="yn-btn" id="btn-offshore-oui" onclick="setField('tiers_structures_offshore','Oui',this,'btn-offshore-non',null)">Oui</button>
+              <button class="yn-btn" id="btn-offshore-non" onclick="setField('tiers_structures_offshore','Non',this,'btn-offshore-oui',null)">Non</button>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Trusts, holdings ou structures complexes ? <span class="field-req">*</span></label>
+            <input type="hidden" id="f-tiers_trusts_holdings" value="">
+            <div class="yn-btns">
+              <button class="yn-btn" id="btn-trusts-oui" onclick="setField('tiers_trusts_holdings','Oui',this,'btn-trusts-non',null)">Oui</button>
+              <button class="yn-btn" id="btn-trusts-non" onclick="setField('tiers_trusts_holdings','Non',this,'btn-trusts-oui',null)">Non</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="wizard-footer">
+          <button class="btn-prev" onclick="goStep(3)">&larr; Précédent</button>
+          <div style="display:flex;gap:10px">
+            <button class="btn-save" onclick="saveAndQuit()">Enregistrer et quitter</button>
+            <button class="btn-next" onclick="goStep(5)">Suivant &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ STEP 5 : Questionnaire ═══ -->
+      <div class="wizard-panel" id="step-5" style="display:none">
+        <div class="panel-title">Questionnaire d'Audit Préliminaire</div>
+        <div class="panel-sub">Veuillez répondre aux questions suivantes avec précision. Ces données alimentent directement l'analyse de risque automatisée.</div>
+        <div id="questions-container">
+          <div style="text-align:center;padding:40px;color:var(--muted);">Chargement des questions…</div>
+        </div>
+        <div class="risk-bar-card" id="risk-bar" style="display:none">
+          <div class="risk-score" id="risk-pct">0%</div>
+          <div class="risk-info">
+            <div class="risk-info-title">Niveau de risque préliminaire</div>
+            <div class="risk-info-sub" id="risk-label">FAIBLE — EN COURS D'ANALYSE</div>
+          </div>
+          <div style="flex:2">
+            <div class="risk-bar-track"><div class="risk-bar-fill" id="risk-fill" style="width:0%;background:#22c55e"></div></div>
+            <div class="risk-range"><span>Faible</span><span>Élevé</span></div>
+          </div>
+        </div>
+        <div class="wizard-footer">
+          <button class="btn-prev" onclick="goStep(4)">&larr; Précédent</button>
+          <button class="btn-next" onclick="goStep(6)">Suivant &rarr;</button>
+        </div>
+      </div>
+
+      <!-- ═══ STEP 6 : Documents ═══ -->
+      <div class="wizard-panel" id="step-6" style="display:none">
+        <div class="panel-title">Assistant de Due Diligence</div>
+        <div class="panel-sub">Veuillez fournir les documents nécessaires pour finaliser l'étape d'audit. Vos fichiers sont chiffrés et stockés en toute sécurité.</div>
+        <div class="upload-layout">
+          <div>
+            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+              <div class="drop-zone-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
+              <div class="drop-zone-title">Glissez-déposez vos fichiers ici</div>
+              <div class="drop-zone-sub">ou <a>parcourez votre ordinateur</a></div>
+              <div class="drop-zone-sub" style="margin-top:8px">Formats acceptés : PDF, DOCX (Max. 50 Mo par fichier)</div>
+            </div>
+            <input type="file" id="file-input" multiple accept=".pdf,.docx,.xlsx" onchange="onFileSelect(event)">
+            <div class="upload-progress" id="upload-progress">
+              <div class="progress-label">
+                <span>AVANCEMENT DU DÉPÔT</span>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span id="doc-count">0 / 0 documents</span>
+                  <span class="progress-pct" id="doc-pct">0%</span>
+                </div>
+              </div>
+              <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div class="doc-checklist" id="doc-checklist">
+            <div class="doc-checklist-title">Checklist des documents</div>
+            <div id="doc-items">
+              <div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Les documents requis apparaîtront ici selon le type de DD sélectionné.</div>
+            </div>
+          </div>
+        </div>
+        <div class="wizard-footer">
+          <button class="btn-prev" onclick="goStep(5)">&larr; Précédent</button>
+          <div style="display:flex;gap:10px">
+            <button class="btn-save" onclick="saveAndQuit()">Enregistrer et quitter</button>
+            <button class="btn-next" onclick="goStep(7)">Suivant &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ STEP 7 : Récapitulatif ═══ -->
+      <div class="wizard-panel" id="step-7" style="display:none">
+        <div class="panel-title">Récapitulatif de la Requête</div>
+        <div class="panel-sub">Dernière étape avant la soumission définitive au cabinet</div>
+
+        <div class="recap-warning">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span><strong>Attention</strong><br>Après soumission, votre dossier ne pourra plus être modifié. Toute demande de correction devra faire l'objet d'un ticket d'assistance.</span>
+        </div>
+
+        <div class="recap-section">
+          <div class="recap-section-header" onclick="toggleRecap(this)">
+            <span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;vertical-align:middle"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+              Type de Dossier
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="recap-section-body">
+            <div class="recap-row"><span class="recap-key">Nature de l'opération :</span><span id="recap-dd-type">—</span></div>
+          </div>
+        </div>
+
+        <div class="recap-section">
+          <div class="recap-section-header" onclick="toggleRecap(this)">
+            <span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;vertical-align:middle"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Demandeur
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="recap-section-body">
+            <div class="recap-row"><span class="recap-key">Nom :</span><span id="recap-demandeur">—</span></div>
+            <div class="recap-row"><span class="recap-key">Email :</span><span id="recap-email">—</span></div>
+          </div>
+        </div>
+
+        <div class="recap-section">
+          <div class="recap-section-header" onclick="toggleRecap(this)">
+            <span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;vertical-align:middle"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Parties Tiers
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="recap-section-body">
+            <div class="recap-row"><span class="recap-key">Tiers évalué :</span><span id="recap-tiers">—</span></div>
+            <div class="recap-row"><span class="recap-key">Pays :</span><span id="recap-pays">—</span></div>
+          </div>
+        </div>
+
+        <div class="recap-section">
+          <div class="recap-section-header" onclick="toggleRecap(this)">
+            <span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;vertical-align:middle"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+               Nature de votre relation avec nous
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="recap-section-body" id="recap-relation-body">—</div>
+        </div>
+
+        <div class="recap-section">
+          <div class="recap-section-header" onclick="toggleRecap(this)">
+            <span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;vertical-align:middle"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Réponses au Questionnaire
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="recap-section-body" id="recap-answers-body">—</div>
+        </div>
+
+        <div class="recap-section">
+          <div class="recap-section-header" onclick="toggleRecap(this)">
+            <span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;vertical-align:middle"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              Documents Joints
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="recap-section-body" id="recap-docs-body">—</div>
+        </div>
+
+        <div class="confirm-check-row">
+          <input type="checkbox" id="confirm-check" onchange="document.getElementById('btn-submit').disabled=!this.checked">
+          <label for="confirm-check">Je confirme l'exactitude des informations fournies et j'accepte les conditions générales de traitement des données confidentielles.</label>
+        </div>
+
+        <button class="btn-next" id="btn-submit" style="width:100%;justify-content:center;padding:14px;" disabled onclick="submitRequest()">
+          Soumettre définitivement
+        </button>
+        <div class="security-note">Transaction sécurisée par chiffrement AES-256</div>
+
+        <div class="wizard-footer">
+          <button class="btn-prev" onclick="goStep(6)">&larr; Retour à l'étape 6</button>
+          <div></div>
+        </div>
+      </div>
+
+    </div><!-- wizard-body -->
+  </div><!-- dd-main -->
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+const wizard = {
+  currentStep: 1,
+  totalSteps: 7,
+  ddType: null,
+  questions: [],
+  rootQuestions: [],          // questions sans parent
+  childMap: {},               // {parent_name: [children]}
+  answers: {},                // question_name → {reponse, poids}
+  uploadedFiles: {},          // nom_document → file_url
+  requiredDocs: [],           // [{nom_document, obligatoire}] — chargés depuis API
+  conditionalDocs: {},        // question_name → {nom_document, obligatoire}
+  financialThreshold: null,   // 'faible'|'modere'|'eleve'|'critique' pour DD financière
+  thresholdDocs: [],          // documents supplémentaires déclenchés par le seuil
+  financialAnswers: {},       // fin_qXX → valeur pour les questions financières
+};
+
+// ── Stepper ────────────────────────────────────────────────────────────
+function goStep(n) {
+  if (n < 1 || n > wizard.totalSteps) return;
+  // Validate current step before going forward
+  if (n > wizard.currentStep && !validateStep(wizard.currentStep)) return;
+
+  document.getElementById('step-' + wizard.currentStep).style.display = 'none';
+  wizard.currentStep = n;
+  document.getElementById('step-' + n).style.display = 'block';
+  updateStepper();
+  updateUrl(n);
+  closeSidebar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (n === 5) loadQuestions();
+  if (n === 6) buildDocChecklist();
+  if (n === 7) buildRecap();
+}
+
+function updateStepper() {
+  for (let i = 1; i <= wizard.totalSteps; i++) {
+    const circle = document.getElementById('circle-' + i);
+    const label = document.getElementById('label-' + i);
+    const line = document.getElementById('line-' + i);
+    circle.className = 'step-circle';
+    label.className = 'step-label';
+    if (i < wizard.currentStep) {
+      circle.className += ' done';
+      circle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+      if (line) line.classList.add('done');
+    } else if (i === wizard.currentStep) {
+      circle.className += ' active';
+      circle.textContent = i;
+      label.className += ' active';
+    } else {
+      circle.textContent = i;
+      if (line) line.classList.remove('done');
+    }
+  }
+}
+
+// ── Validation ────────────────────────────────────────────────────────
+function validateStep(n) {
+  if (n === 1) {
+    if (!wizard.ddType) { alert('Veuillez sélectionner un type de Due Diligence.'); return false; }
+  }
+  if (n === 2) {
+    const nom = document.getElementById('f-demandeur_nom').value.trim();
+    const email = document.getElementById('f-email_contact').value.trim();
+    if (!nom) { alert('Le nom du demandeur est obligatoire.'); return false; }
+    if (!email) { alert("L'email de contact est obligatoire."); return false; }
+  }
+  if (n === 3) {
+    const desc = document.getElementById('f-relation_description').value.trim();
+    if (!desc) { alert('La description de la relation est obligatoire.'); return false; }
+    const obj = document.getElementById('f-relation_objectif_metier').value.trim();
+    if (!obj) { alert("L'objectif métier est obligatoire."); return false; }
+    const just = document.getElementById('f-relation_justification_choix').value.trim();
+    if (!just) { alert('La justification du choix du tiers est obligatoire.'); return false; }
+    const strat = document.getElementById('f-relation_strategique').value;
+    if (!strat) { alert('Veuillez indiquer si la relation est stratégique.'); return false; }
+    if (strat === 'Oui') {
+      if (!document.getElementById('f-relation_strategique_explication').value.trim()) {
+        alert('Veuillez expliquer pourquoi la relation est stratégique.'); return false;
+      }
+      if (!document.getElementById('f-relation_strategique_impact').value.trim()) {
+        alert("Veuillez décrire l'impact en cas d'échec de la relation."); return false;
+      }
+      if (!document.getElementById('f-relation_dependance_critique').value) {
+        alert('Veuillez indiquer s\'il existe une dépendance critique.'); return false;
+      }
+    }
+    const urg = document.getElementById('f-relation_urgence').value;
+    if (!urg) { alert("Veuillez indiquer si la demande présente une urgence opérationnelle."); return false; }
+    if (urg === 'Oui') {
+      if (!document.getElementById('f-relation_urgence_justification').value.trim()) {
+        alert("Veuillez justifier l'urgence."); return false;
+      }
+      if (!document.getElementById('f-relation_urgence_impact_retard').value.trim()) {
+        alert('Veuillez décrire les impacts métiers en cas de retard.'); return false;
+      }
+      if (!document.getElementById('f-relation_procedure_exceptionnelle').value) {
+        alert("Veuillez indiquer si une procédure exceptionnelle est demandée."); return false;
+      }
+    }
+  }
+  if (n === 4) {
+    const checks = [
+      ['f-tiers_nom',              'La raison sociale complète est obligatoire.'],
+      ['f-tiers_rccm',             'Le numéro RCCM / registre de commerce est obligatoire.'],
+      ['f-tiers_nif',              'Le numéro d\'identification fiscale (NIF) est obligatoire.'],
+      ['f-tiers_forme_juridique',  'La forme juridique est obligatoire.'],
+      ['f-tiers_pays',             'Le pays d\'immatriculation est obligatoire.'],
+      ['f-tiers_adresse_siege',    'L\'adresse du siège social est obligatoire.'],
+      ['f-tiers_pays_activites',   'Veuillez sélectionner au moins un pays d\'exercice des activités.'],
+      ['f-tiers_filiales_internationales', 'Veuillez indiquer si le tiers dispose de filiales internationales.'],
+      ['f-tiers_appartient_groupe','Veuillez indiquer si le tiers appartient à un groupe international.'],
+      ['f-tiers_secteur',          'Le secteur d\'activité principal est obligatoire.'],
+      ['f-tiers_nb_employes',      'Le nombre d\'employés est obligatoire.'],
+      ['f-tiers_description_activites','La description des activités opérationnelles est obligatoire.'],
+      ['f-tiers_principaux_clients','Les principaux clients sont obligatoires.'],
+      ['f-tiers_marches_geographiques','Les marchés géographiques sont obligatoires.'],
+      ['f-tiers_secteurs_reglementes','Veuillez indiquer si le tiers intervient dans des secteurs réglementés.'],
+      ['f-tiers_actionnaires_principaux','Les actionnaires principaux sont obligatoires.'],
+      ['f-tiers_structure_actionnariat','La structure de l\'actionnariat est obligatoire.'],
+      ['f-tiers_beneficiaires_effectifs','Veuillez indiquer si des bénéficiaires effectifs ont été identifiés.'],
+      ['f-tiers_actionnaires_pep', 'Veuillez indiquer si des actionnaires sont politiquement exposés.'],
+      ['f-tiers_responsables_publics_participations','Veuillez indiquer si des responsables publics détiennent des participations.'],
+      ['f-tiers_detenu_etat',      'Veuillez indiquer si le tiers est détenu par un État.'],
+      ['f-tiers_structures_offshore','Veuillez indiquer s\'il existe des structures offshore dans l\'actionnariat.'],
+      ['f-tiers_trusts_holdings',  'Veuillez indiquer s\'il existe des trusts ou holdings dans la structure.'],
+    ];
+    for (const [id, msg] of checks) {
+      const el = document.getElementById(id);
+      if (!el || !el.value.trim()) { alert(msg); return false; }
+    }
+    // Sous-champs conditionnels bénéficiaires / PEP
+    if ((document.getElementById('f-tiers_beneficiaires_effectifs') || {}).value === 'Oui') {
+      const elBenef = document.getElementById('f-tiers_beneficiaires_detail');
+      if (!elBenef || !elBenef.value.trim()) { alert('Veuillez identifier les bénéficiaires effectifs (nom, % de détention).'); return false; }
+    }
+    if ((document.getElementById('f-tiers_actionnaires_pep') || {}).value === 'Oui') {
+      const elPep = document.getElementById('f-tiers_pep_detail');
+      if (!elPep || !elPep.value.trim()) { alert('Veuillez préciser la fonction ou le mandat politique exercé.'); return false; }
+    }
+    // Vérification champs pays à risque
+    if (document.getElementById('f-tiers_pays_risque_detecte').value === '1') {
+      const riskChecks = [
+        ['f-tiers_nature_operations_pays_risque','Veuillez décrire la nature des opérations prévues dans ce pays à risque.'],
+        ['f-tiers_flux_financiers_internationaux','Veuillez indiquer si les opérations impliquent des flux financiers internationaux.'],
+        ['f-tiers_licences_reglementaires','Veuillez indiquer si des licences réglementaires sont nécessaires.'],
+        ['f-tiers_relations_entites_publiques_locales','Veuillez indiquer si le tiers entretient des relations avec des entités publiques locales.'],
+        ['f-tiers_risques_sanctions_secondaires','Veuillez indiquer s\'il existe des risques de sanctions secondaires.'],
+        ['f-tiers_figure_listes_sanctions','Veuillez indiquer si le tiers figure sur des listes de sanctions.'],
+        ['f-tiers_paiements_offshore','Veuillez indiquer si des paiements transitent par des juridictions offshore.'],
+      ];
+      for (const [id, msg] of riskChecks) {
+        const el = document.getElementById(id);
+        if (!el || !el.value.trim()) { alert(msg); return false; }
+      }
+    }
+  }
+  if (n === 5) {
+    if (wizard.ddType && wizard.ddType.toLowerCase().includes('financ')) {
+      const finBase = [
+        ['f-fin_q02', 'La devise utilisée est obligatoire.'],
+        ['f-fin_q03', 'Veuillez indiquer si la relation implique des paiements internationaux.'],
+        ['f-fin_q05', 'Le calendrier prévisionnel des paiements est obligatoire.'],
+        ['f-fin_q06', 'Veuillez indiquer si des avances sont prévues.'],
+        ['f-fin_q07', 'Veuillez indiquer si des commissions sont prévues.'],
+        ['f-fin_q08', 'Veuillez indiquer s\'il existe des intermédiaires rémunérés.'],
+        ['f-fin_q09', 'Veuillez indiquer si les paiements en espèces sont autorisés.'],
+        ['f-fin_q10', 'Le mode de facturation prévu est obligatoire.'],
+        ['f-fin_q11', 'L\'établissement bancaire principal du tiers est obligatoire.'],
+        ['f-fin_q12', 'Le pays de domiciliation de la banque du tiers est obligatoire.'],
+      ];
+      for (const [id, msg] of finBase) {
+        const el = document.getElementById(id);
+        if (!el || !el.value.trim()) { alert(msg); return false; }
+      }
+      if (document.getElementById('f-fin_q03').value === 'Oui') {
+        const elPays = document.getElementById('f-fin_q04');
+        if (!elPays || !elPays.value.trim()) { alert('Veuillez indiquer les pays qui recevront les paiements.'); return false; }
+      }
+      const lvl = wizard.financialThreshold;
+      if (lvl === 'modere' || lvl === 'eleve' || lvl === 'critique') {
+        for (const [id, msg] of [
+          ['f-fin_m01', 'Veuillez indiquer si le tiers a déjà fait l\'objet de difficultés fiscales.'],
+          ['f-fin_m02', 'Veuillez indiquer si le tiers dispose d\'états financiers récents.'],
+          ['f-fin_m03', 'Veuillez indiquer s\'il existe des dettes sociales ou fiscales connues.'],
+        ]) {
+          const el = document.getElementById(id);
+          if (!el || !el.value.trim()) { alert(msg); return false; }
+        }
+      }
+      if (lvl === 'eleve' || lvl === 'critique') {
+        for (const [id, msg] of [
+          ['f-fin_e01', 'Veuillez détailler la structure capitalistique complète du tiers.'],
+          ['f-fin_e02', 'Veuillez indiquer si le tiers a été impliqué dans des contentieux financiers.'],
+          ['f-fin_e03', 'Veuillez indiquer si le tiers dépend économiquement d\'un nombre limité de clients.'],
+          ['f-fin_e04', 'Veuillez indiquer si des audits externes sont disponibles.'],
+        ]) {
+          const el = document.getElementById(id);
+          if (!el || !el.value.trim()) { alert(msg); return false; }
+        }
+      }
+    }
+    const tDpd = (wizard.ddType || '').toLowerCase();
+    if (tDpd.includes('protection') || tDpd.includes('donn') || tDpd.includes('rgpd') || tDpd.includes('dpd')) {
+      const gwDpd = document.getElementById('f-dpd_gateway');
+      if (!gwDpd || !gwDpd.value.trim()) { alert('Veuillez indiquer si le tiers aura accès à des données personnelles ou des systèmes d\'information (question gateway Protection des Données).'); return false; }
+      if (gwDpd.value === 'Oui') {
+        const dpdChecks = [
+          ['f-dpd_q01', 'Veuillez décrire les catégories de données personnelles qui seront traitées.'],
+          ['f-dpd_q02', 'Veuillez indiquer si le tiers traitera des données biométriques.'],
+          ['f-dpd_q03', 'Veuillez indiquer si le tiers traitera des données médicales.'],
+          ['f-dpd_q04', 'Veuillez indiquer si le tiers traitera des données relatives aux employés.'],
+          ['f-dpd_q05', 'Veuillez indiquer si le tiers traitera des données bancaires.'],
+          ['f-dpd_q06', 'Veuillez indiquer si le tiers traitera des données concernant des mineurs.'],
+          ['f-dpd_q07', 'Le volume estimé de données concernées est obligatoire.'],
+          ['f-dpd_q08', 'Veuillez indiquer les pays d\'hébergement des données.'],
+          ['f-dpd_q09', 'Veuillez indiquer si des transferts internationaux de données sont prévus.'],
+          ['f-dpd_q10', 'Veuillez indiquer si le tiers dispose d\'un DPO officiellement désigné.'],
+          ['f-dpd_q11', 'Veuillez indiquer si un Data Processing Agreement existe déjà.'],
+          ['f-dpd_q12', 'Veuillez décrire les mesures de chiffrement mises en œuvre.'],
+          ['f-dpd_q13', 'La durée de conservation des données est obligatoire.'],
+          ['f-dpd_q14', 'Veuillez indiquer si une procédure formalisée de gestion des violations de données existe.'],
+        ];
+        for (const [id, msg] of dpdChecks) {
+          const el = document.getElementById(id);
+          if (!el || !el.value.trim()) { alert(msg); return false; }
+        }
+        // Sous-questions transferts internationaux
+        const q09DpdVal = (document.getElementById('f-dpd_q09') || {}).value;
+        if (q09DpdVal === 'Oui') {
+          const elPaysDestination = document.getElementById('f-dpd_q09_pays');
+          if (!elPaysDestination || !elPaysDestination.value.trim()) { alert('Veuillez préciser les pays destinataires des transferts de données.'); return false; }
+          const elGaranties = document.getElementById('f-dpd_q09_garanties');
+          if (!elGaranties || !elGaranties.value.trim()) { alert('Veuillez préciser les garanties encadrant ces transferts.'); return false; }
+        }
+      }
+    }
+    const tCyber = (wizard.ddType || '').toLowerCase();
+    if (tCyber.includes('cyber') || tCyber.includes('secu') || tCyber.includes('sécur')) {
+      const gwCyber = document.getElementById('f-cyber_gateway');
+      if (!gwCyber || !gwCyber.value.trim()) { alert('Veuillez indiquer si le tiers aura accès à des données personnelles ou des systèmes d\'information (question gateway Cybersécurité).'); return false; }
+      if (gwCyber.value === 'Oui') {
+        const cyberChecks = [
+          ['f-cyber_q01', 'Veuillez indiquer si le tiers disposera d\'un accès VPN aux infrastructures.'],
+          ['f-cyber_q02', 'Veuillez indiquer si le tiers disposera d\'un accès aux applications internes.'],
+          ['f-cyber_q06', 'Veuillez indiquer si le MFA est activé sur les comptes sensibles.'],
+          ['f-cyber_q08', 'Veuillez indiquer la date du dernier audit cybersécurité.'],
+          ['f-cyber_q10', 'Veuillez indiquer si un SOC opérationnel existe.'],
+          ['f-cyber_q11', 'Veuillez indiquer le délai moyen de traitement des incidents cyber.'],
+          ['f-cyber_q12', 'Veuillez indiquer si le tiers a subi des cyberattaques au cours des 36 derniers mois.'],
+        ];
+        for (const [id, msg] of cyberChecks) {
+          const el = document.getElementById(id);
+          if (!el || !el.value.trim()) { alert(msg); return false; }
+        }
+        // Sous-questions conditionnelles : accès applications internes → Oui
+        const q02Val = (document.getElementById('f-cyber_q02') || {}).value;
+        if (q02Val === 'Oui') {
+          if (!(document.getElementById('f-cyber_q03') || {}).value) { alert('Veuillez indiquer si le tiers disposera d\'un accès aux bases de données.'); return false; }
+          if (!(document.getElementById('f-cyber_q04') || {}).value) { alert('Veuillez indiquer si des API seront interconnectées.'); return false; }
+        }
+      }
+    }
+    if (document.getElementById('ac-qcard-01') && shouldShowAnticorruption()) {
+      const acChecks = [
+        ['f-ac_q01', 'Veuillez indiquer si le tiers interagit avec des agents publics ou représentants gouvernementaux.'],
+        ['f-ac_q02', 'Veuillez indiquer si le tiers intervient dans des marchés publics.'],
+        ['f-ac_q03', 'Veuillez indiquer si des commissions ou honoraires de succès sont prévus.'],
+        ['f-ac_q04', 'Veuillez indiquer si des intermédiaires secondaires existent.'],
+        ['f-ac_q05', 'Veuillez indiquer si des paiements en espèces sont envisagés.'],
+        ['f-ac_q06', 'Veuillez indiquer si des cadeaux, avantages ou invitations sont prévus.'],
+        ['f-ac_q07', 'Veuillez indiquer si le tiers dispose d\'un programme anti-corruption formalisé.'],
+        ['f-ac_q08', 'Veuillez indiquer si le tiers a déjà fait l\'objet d\'enquêtes pour corruption.'],
+        ['f-ac_q09', 'Veuillez indiquer si des PEP sont impliqués dans l\'actionnariat ou la direction.'],
+        ['f-ac_q10', 'Veuillez indiquer s\'il existe des liens familiaux avec des responsables politiques.'],
+      ];
+      for (const [id, msg] of acChecks) {
+        const el = document.getElementById(id);
+        if (!el || !el.value.trim()) { alert(msg); return false; }
+      }
+    }
+  }
+  return true;
+}
+
+// ── Step 1 — Type selection ──────────────────────────────────────────
+function selectType(card) {
+  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  wizard.ddType = card.dataset.type;
+  setTimeout(() => goStep(2), 150);
+}
+
+function updateUrl(step) {
+  const params = new URLSearchParams(window.location.search);
+  if (wizard.ddType) params.set('type', wizard.ddType);
+  params.set('step', step);
+  history.replaceState(null, '', window.location.pathname + '?' + params.toString());
+}
+
+function saveAndQuit() {
+  const payload = {
+    dd_type: wizard.ddType || '',
+    demandeur_nom: (document.getElementById('f-demandeur_nom') || {}).value || '',
+    demandeur_fonction: (document.getElementById('f-demandeur_fonction') || {}).value || '',
+    matricule_interne: (document.getElementById('f-matricule_interne') || {}).value || '',
+    departement: (document.getElementById('f-departement') || {}).value || '',
+    pays_rattachement: (document.getElementById('f-pays_rattachement') || {}).value || '',
+    responsable_hierarchique: (document.getElementById('f-responsable_hierarchique') || {}).value || '',
+    direction_metier: (document.getElementById('f-direction_metier') || {}).value || '',
+    email_contact: (document.getElementById('f-email_contact') || {}).value || '',
+    telephone_professionnel: (document.getElementById('f-telephone_professionnel') || {}).value || '',
+    tiers_nom: (document.getElementById('f-tiers_nom') || {}).value || '',
+    tiers_pays: (document.getElementById('f-tiers_pays') || {}).value || '',
+    tiers_pays_activites: (document.getElementById('f-tiers_pays_activites') || {}).value || '[]',
+    tiers_secteur: (document.getElementById('f-tiers_secteur') || {}).value || '',
+    tiers_description_activites: (document.getElementById('f-tiers_description_activites') || {}).value || '',
+    tiers_montant_contrat: (document.getElementById('f-tiers_montant_contrat') || {}).value || 0,
+    relation_description: (document.getElementById('f-relation_description') || {}).value || '',
+    relation_objectif_metier: (document.getElementById('f-relation_objectif_metier') || {}).value || '',
+  };
+
+  frappe.call({
+    method: 'due_diligence.api.save_dd_draft',
+    args: { data: JSON.stringify(payload) },
+    callback(r) {
+      if (r.message && r.message.name) {
+        window.location.href = '/tableau-de-bord';
+      } else {
+        alert('Erreur lors de la sauvegarde. Veuillez réessayer.');
+      }
+    },
+    error() {
+      alert('Erreur lors de la sauvegarde. Veuillez réessayer.');
+    },
+  });
+}
+
+// ── Step 4 — Tiers ───────────────────────────────────────────────────
+function setField(fieldId, value, activeBtnEl, otherBtnId, blockId) {
+  document.getElementById('f-' + fieldId).value = value;
+  activeBtnEl.classList.add('selected');
+  if (otherBtnId) document.getElementById(otherBtnId).classList.remove('selected');
+  if (blockId) document.getElementById(blockId).style.display = value === 'Oui' ? 'block' : 'none';
+}
+
+const PAYS_CRITIQUE = new Set([
+  'North Korea','Iran','Syria','Russia','Belarus','Cuba','Venezuela',
+  'Myanmar','Sudan','South Sudan','Libya','Yemen','Somalia',
+  'Central African Republic','Mali','Haiti','Nicaragua','Zimbabwe',
+  'Eritrea','Democratic Republic of the Congo',
+]);
+const PAYS_ELEVE = new Set([
+  'Afghanistan','Albania','Barbados','Burkina Faso','Cameroon',
+  'Cayman Islands','Gibraltar','Jamaica','Jordan','Morocco',
+  'Mozambique','Nigeria','Panama','Philippines','Senegal','Tanzania',
+  'Turkey','Uganda','Vietnam','Pakistan','Iraq','Lebanon','Ethiopia',
+  'Kenya','Guinea','Congo','Guinea-Bissau','Liberia','Sierra Leone','Togo',
+]);
+
+function addPaysActivite() {
+  const sel = document.getElementById('pays-activites-select');
+  const val = sel.value;
+  const txt = sel.options[sel.selectedIndex]?.text;
+  if (!val) return;
+  const hidden = document.getElementById('f-tiers_pays_activites');
+  const current = JSON.parse(hidden.value || '[]');
+  if (current.includes(val)) { sel.value = ''; return; }
+  current.push(val);
+  hidden.value = JSON.stringify(current);
+  sel.value = '';
+  renderPaysActiviteTags(current);
+}
+
+function removePaysActivite(val) {
+  const hidden = document.getElementById('f-tiers_pays_activites');
+  const current = JSON.parse(hidden.value || '[]').filter(v => v !== val);
+  hidden.value = JSON.stringify(current);
+  renderPaysActiviteTags(current);
+}
+
+function renderPaysActiviteTags(list) {
+  const sel = document.getElementById('pays-activites-select');
+  const container = document.getElementById('pays-activites-tags');
+  container.innerHTML = list.map(val => {
+    const opt = Array.from(sel.options).find(o => o.value === val);
+    const label = opt ? opt.text : val;
+    return `<span style="display:inline-flex;align-items:center;gap:4px;background:#e8f0fe;color:#1a237e;border-radius:14px;padding:3px 10px;font-size:12px;font-weight:500">
+      ${label}
+      <button type="button" onclick="removePaysActivite('${val.replace(/'/g, "\\'")}')" style="background:none;border:none;cursor:pointer;font-size:14px;line-height:1;color:#1a237e;padding:0 0 0 2px">&times;</button>
+    </span>`;
+  }).join('');
+}
+
+function checkCountryRisk(countryText, countryValue) {
+  const block = document.getElementById('block-risque-pays');
+  const hiddenRisque = document.getElementById('f-tiers_pays_risque_detecte');
+  if (!countryValue) {
+    block.style.display = 'none';
+    hiddenRisque.value = '0';
+    return;
+  }
+  let level = null;
+  if (PAYS_CRITIQUE.has(countryText)) level = 'critique';
+  else if (PAYS_ELEVE.has(countryText)) level = 'eleve';
+
+  if (level) {
+    showRiskAlert(countryText, level, null, null);
+  } else {
+    frappe.call({
+      method: 'due_diligence.api.check_country_risk',
+      args: { country: countryText },
+      callback: function(r) {
+        const d = r.message || {};
+        if (d.risk_level && d.risk_level !== 'faible') {
+          showRiskAlert(countryText, d.risk_level, d.reason, d.mesures);
+        } else {
+          block.style.display = 'none';
+          hiddenRisque.value = '0';
+        }
+      },
+      error: function() { block.style.display = 'none'; }
+    });
+  }
+}
+
+function showRiskAlert(country, level, reason, mesures) {
+  document.getElementById('f-tiers_pays_risque_detecte').value = '1';
+  const block = document.getElementById('block-risque-pays');
+  const alertBox = document.getElementById('risk-alert-box');
+  const badge = document.getElementById('risque-pays-badge');
+  block.style.display = 'block';
+  document.getElementById('risque-pays-label').textContent = country;
+
+  const labels = { critique: 'SANCTIONS CRITIQUES', eleve: 'PAYS À RISQUE ÉLEVÉ', modere: 'RISQUE MODÉRÉ' };
+  badge.textContent = labels[level] || level.toUpperCase();
+  badge.className = 'risk-badge ' + level;
+  alertBox.className = 'risk-alert' + (level !== 'critique' ? ' ' + level : '');
+
+  const defaultReasons = {
+    critique: 'Ce pays est soumis à des sanctions internationales critiques (ONU/UE/OFAC). Les workflows simplifiés sont bloqués. Une Due Diligence renforcée est obligatoire.',
+    eleve: 'Ce pays figure sur les listes de surveillance FATF ou présente des indicateurs de risque AML/CTF élevés. Une vérification approfondie est requise.',
+    modere: 'Ce pays présente des indicateurs de risque modéré. Des mesures de vigilance renforcée s\'appliquent.',
+  };
+  document.getElementById('risque-pays-reason').textContent = reason || defaultReasons[level] || '';
+
+  const defaultMesures = {
+    critique: ['Blocage des workflows simplifiés','Due Diligence renforcée obligatoire','Validation Compliance senior requise','Revue juridique obligatoire','Validation Direction Générale','Scoring de risque renforcé','Screening sanctions approfondi','Documents additionnels exigés'],
+    eleve: ['Due Diligence approfondie requise','Validation Compliance requise','Screening sanctions standard'],
+    modere: ['Due Diligence standard avec vigilance accrue'],
+  };
+  const list = mesures || defaultMesures[level] || [];
+  document.getElementById('risque-pays-mesures').innerHTML = list.map(m => '<li>' + m + '</li>').join('');
+}
+
+// ── Step 3 — Relation ────────────────────────────────────────────────
+function setRelationField(fieldId, value, activeBtn, otherBtnId, blockId) {
+  document.getElementById('f-' + fieldId).value = value;
+  activeBtn.classList.add('selected');
+  document.getElementById(otherBtnId).classList.remove('selected');
+  if (blockId) {
+    document.getElementById(blockId).style.display = value === 'Oui' ? 'block' : 'none';
+    if (value === 'Non') {
+      if (blockId === 'block-strategique') {
+        document.getElementById('f-relation_strategique_explication').value = '';
+        document.getElementById('f-relation_strategique_impact').value = '';
+        document.getElementById('f-relation_dependance_critique').value = '';
+        document.getElementById('btn-dependance-oui').classList.remove('selected');
+        document.getElementById('btn-dependance-non').classList.remove('selected');
+      }
+      if (blockId === 'block-urgence') {
+        document.getElementById('f-relation_urgence_justification').value = '';
+        document.getElementById('f-relation_urgence_impact_retard').value = '';
+        document.getElementById('f-relation_procedure_exceptionnelle').value = '';
+        document.getElementById('btn-procedure-oui').classList.remove('selected');
+        document.getElementById('btn-procedure-non').classList.remove('selected');
+      }
+    }
+  }
+}
+
+// ── Step 5 — Questionnaire ───────────────────────────────────────────
+function loadQuestions() {
+  if (wizard.questions.length > 0) { renderQuestions(); return; }
+  document.getElementById('questions-container').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">Chargement…</div>';
+  frappe.call({
+    method: 'due_diligence.api.get_questions',
+    args: { dd_type: wizard.ddType },
+    callback: function(r) {
+      wizard.questions = r.message || [];
+      // Docs des questions racines toujours requis (indépendamment d'une réponse)
+      wizard.questionBaseDocs = [];
+      wizard.questions.forEach(q => {
+        if (!q.question_parente && q.demander_document && q.label_document) {
+          wizard.questionBaseDocs.push({ nom_document: q.label_document, obligatoire: q.obligatoire || 0 });
+        }
+      });
+      renderQuestions();
+      renderFinancialSection();
+      renderDpdSection();
+      renderCyberSection();
+      renderAnticorruptionSection();
+    }
+  });
+}
+
+function renderQuestions() {
+  const container = document.getElementById('questions-container');
+  if (!wizard.questions.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">Aucune question définie pour ce type de DD.</div>';
+    return;
+  }
+
+  // Construire la hiérarchie
+  wizard.rootQuestions = [];
+  wizard.childMap = {};
+  wizard.questions.forEach(q => {
+    if (q.question_parente) {
+      if (!wizard.childMap[q.question_parente]) wizard.childMap[q.question_parente] = [];
+      wizard.childMap[q.question_parente].push(q);
+    } else {
+      wizard.rootQuestions.push(q);
+    }
+  });
+
+  // Grouper par section (etape)
+  const sections = [];
+  const sectionMap = {};
+  wizard.rootQuestions.forEach(q => {
+    const key = q.section_label || q.etape || 'Général';
+    if (!sectionMap[key]) { sectionMap[key] = []; sections.push(key); }
+    sectionMap[key].push(q);
+  });
+
+  let html = '';
+  sections.forEach(section => {
+    html += `<div class="dd-section-header">${section}</div>`;
+    sectionMap[section].forEach(q => {
+      html += renderQuestionCard(q, false);
+      // Sous-questions cachées
+      (wizard.childMap[q.name] || []).forEach(child => {
+        html += renderQuestionCard(child, true);
+      });
+    });
+  });
+
+  container.innerHTML = html;
+  updateRiskBar();
+}
+
+function renderQuestionCard(q, hidden) {
+  const style = hidden ? 'display:none;margin-left:24px;border-left:3px solid var(--primary);' : '';
+  let html = `<div class="question-card" id="qcard-${q.name}" data-qname="${q.name}" data-poids="${q.poids_risque || 0}" style="${style}">`;
+  html += `<div class="question-label">${q.question_label}${q.obligatoire ? ' <span style="color:#dc2626;">*</span>' : ''}</div>`;
+
+  if (q.field_type === 'Check') {
+    html += `<div class="yn-btns">
+      <button class="yn-btn" onclick="answerYN(this, '${q.name}', 'Oui', ${q.poids_risque || 0})">Oui</button>
+      <button class="yn-btn" onclick="answerYN(this, '${q.name}', 'Non', 0)">Non</button>
+    </div>`;
+  } else if (q.field_type === 'Select' && q.options) {
+    const opts = q.options.split('\n').filter(o => o.trim());
+    html += `<select class="field-select" onchange="answerSelect(this, '${q.name}', ${q.poids_risque || 0})"><option value="">Sélectionner…</option>`;
+    opts.forEach(o => { html += `<option value="${o}">${o}</option>`; });
+    html += '</select>';
+  } else {
+    html += `<textarea class="field-textarea" placeholder="Votre réponse…" oninput="answerText(this, '${q.name}')"></textarea>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+// ── Questionnaire financier ──────────────────────────────────────────
+function renderFinancialSection() {
+  if (!wizard.ddType || !wizard.ddType.toLowerCase().includes('financ')) return;
+  const container = document.getElementById('questions-container');
+  container.insertAdjacentHTML('beforeend', `
+<div class="dd-section-header" id="fin-section-header">Flux Financiers &amp; Conditions de Paiement</div>
+<div class="question-card" id="fin-qcard-02">
+  <div class="question-label">Quelle devise sera utilisée&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="text" class="field-input" id="f-fin_q02" placeholder="Ex: FCFA, EUR, USD">
+</div>
+<div class="question-card" id="fin-qcard-03">
+  <div class="question-label">La relation implique-t-elle des paiements internationaux&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-fin_q03" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-fin-q03-oui" onclick="answerFin('fin_q03','Oui',this,'btn-fin-q03-non','fin-q04-block')">Oui</button>
+    <button class="yn-btn" id="btn-fin-q03-non" onclick="answerFin('fin_q03','Non',this,'btn-fin-q03-oui','fin-q04-block')">Non</button>
+  </div>
+</div>
+<div id="fin-q04-block" style="display:none;margin-left:24px;border-left:3px solid var(--primary);padding-left:4px;">
+  <div class="question-card" id="fin-qcard-04">
+    <div class="question-label">Quels pays recevront les paiements&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="text" class="field-input" id="f-fin_q04" placeholder="Ex: France, Sénégal">
+  </div>
+</div>
+<div class="question-card" id="fin-qcard-05">
+  <div class="question-label">Quel est le calendrier prévisionnel des paiements&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="text" class="field-input" id="f-fin_q05" placeholder="Ex: Mensuel sur 12 mois à compter de la signature">
+</div>
+<div class="question-card" id="fin-qcard-06">
+  <div class="question-label">Des avances sont-elles prévues&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-fin_q06" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-fin-q06-oui" onclick="answerFin('fin_q06','Oui',this,'btn-fin-q06-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-fin-q06-non" onclick="answerFin('fin_q06','Non',this,'btn-fin-q06-oui',null)">Non</button>
+  </div>
+</div>
+<div class="question-card" id="fin-qcard-07">
+  <div class="question-label">Des commissions sont-elles prévues&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-fin_q07" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-fin-q07-oui" onclick="answerFin('fin_q07','Oui',this,'btn-fin-q07-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-fin-q07-non" onclick="answerFin('fin_q07','Non',this,'btn-fin-q07-oui',null)">Non</button>
+  </div>
+</div>
+<div class="question-card" id="fin-qcard-08">
+  <div class="question-label">Existe-t-il des intermédiaires rémunérés&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-fin_q08" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-fin-q08-oui" onclick="answerFin('fin_q08','Oui',this,'btn-fin-q08-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-fin-q08-non" onclick="answerFin('fin_q08','Non',this,'btn-fin-q08-oui',null)">Non</button>
+  </div>
+</div>
+<div class="question-card" id="fin-qcard-09">
+  <div class="question-label">Les paiements en espèces sont-ils autorisés&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-fin_q09" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-fin-q09-oui" onclick="answerFin('fin_q09','Oui',this,'btn-fin-q09-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-fin-q09-non" onclick="answerFin('fin_q09','Non',this,'btn-fin-q09-oui',null)">Non</button>
+  </div>
+</div>
+<div class="question-card" id="fin-qcard-10">
+  <div class="question-label">Quel est le mode de facturation prévu&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="text" class="field-input" id="f-fin_q10" placeholder="Ex: Facture mensuelle, acompte à la commande…">
+</div>
+<div class="question-card" id="fin-qcard-11">
+  <div class="question-label">Quel est l'établissement bancaire principal du tiers&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="text" class="field-input" id="f-fin_q11" placeholder="Ex: Société Générale Côte d'Ivoire">
+</div>
+<div class="question-card" id="fin-qcard-12">
+  <div class="question-label">Dans quel pays est domiciliée la banque du tiers&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="text" class="field-input" id="f-fin_q12" placeholder="Ex: Côte d'Ivoire">
+</div>
+<div id="fin-threshold-block"></div>`);
+  detectFinancialThreshold();
+}
+
+function detectFinancialThreshold() {
+  const el = document.getElementById('f-tiers_montant_contrat');
+  const montant = el ? (parseFloat(el.value) || 0) : 0;
+  let level, label, controls, extraQuestions = [], extraDocs = [];
+
+  if (montant < 5000000) {
+    level = 'faible';
+    label = 'SEUIL FAIBLE — 0 à 5 millions FCFA';
+    controls = ['Contrôle standard','Workflow simplifié','Validation métier'];
+    extraDocs = ['RCCM','Pièce d\'identité du représentant légal','Relevé d\'identité bancaire (RIB)'];
+  } else if (montant < 25000000) {
+    level = 'modere';
+    label = 'SEUIL MODÉRÉ — 5 à 25 millions FCFA';
+    controls = ['Revue Compliance simplifiée','Contrôle fiscal','Analyse financière simplifiée'];
+    extraQuestions = [
+      {id:'fin_m01', label:'Le tiers a-t-il déjà fait l\'objet de difficultés fiscales ?'},
+      {id:'fin_m02', label:'Le tiers dispose-t-il d\'états financiers récents ?'},
+      {id:'fin_m03', label:'Existe-t-il des dettes sociales ou fiscales connues ?'},
+    ];
+  } else if (montant < 100000000) {
+    level = 'eleve';
+    label = 'SEUIL ÉLEVÉ — 25 à 100 millions FCFA';
+    controls = ['Revue Compliance renforcée','Analyse réputationnelle','Contrôle bénéficiaire effectif','Analyse anti-corruption'];
+    extraQuestions = [
+      {id:'fin_m01', label:'Le tiers a-t-il déjà fait l\'objet de difficultés fiscales ?'},
+      {id:'fin_m02', label:'Le tiers dispose-t-il d\'états financiers récents ?'},
+      {id:'fin_m03', label:'Existe-t-il des dettes sociales ou fiscales connues ?'},
+      {id:'fin_e01', label:'Veuillez détailler la structure capitalistique complète du tiers.', type:'text'},
+      {id:'fin_e02', label:'Le tiers a-t-il déjà été impliqué dans des contentieux financiers ?'},
+      {id:'fin_e03', label:'Le tiers dépend-il économiquement d\'un nombre limité de clients ?'},
+      {id:'fin_e04', label:'Des audits externes sont-ils disponibles ?'},
+    ];
+  } else {
+    level = 'critique';
+    label = 'SEUIL CRITIQUE — supérieur à 100 millions FCFA';
+    controls = ['Validation CCO obligatoire','Validation Direction Générale','Analyse juridique approfondie','Revue cybersécurité','Revue DPO (si données personnelles)','Due Diligence renforcée obligatoire'];
+    extraQuestions = [
+      {id:'fin_m01', label:'Le tiers a-t-il déjà fait l\'objet de difficultés fiscales ?'},
+      {id:'fin_m02', label:'Le tiers dispose-t-il d\'états financiers récents ?'},
+      {id:'fin_m03', label:'Existe-t-il des dettes sociales ou fiscales connues ?'},
+      {id:'fin_e01', label:'Veuillez détailler la structure capitalistique complète du tiers.', type:'text'},
+      {id:'fin_e02', label:'Le tiers a-t-il déjà été impliqué dans des contentieux financiers ?'},
+      {id:'fin_e03', label:'Le tiers dépend-il économiquement d\'un nombre limité de clients ?'},
+      {id:'fin_e04', label:'Des audits externes sont-ils disponibles ?'},
+    ];
+    extraDocs = [
+      'Audits externes','Rapports de solvabilité','Attestations bancaires',
+      'Rapports ESG','Historiques de contentieux','Audits cybersécurité',
+    ];
+  }
+
+  wizard.financialThreshold = level;
+  wizard.thresholdDocs = extraDocs.map(d => ({nom_document: d, obligatoire: 0}));
+  renderThresholdAlert(level, label, controls, extraQuestions);
+}
+
+function renderThresholdAlert(level, label, controls, extraQuestions) {
+  const block = document.getElementById('fin-threshold-block');
+  if (!block) return;
+
+  let qHtml = '';
+  extraQuestions.forEach(q => {
+    const cardStyle = 'border-left:3px solid var(--warning);';
+    if (q.type === 'text') {
+      qHtml += `<div class="question-card" id="fin-qcard-${q.id}" style="${cardStyle}">
+        <div class="question-label">${q.label} <span style="color:#dc2626;">*</span></div>
+        <textarea class="field-textarea" id="f-${q.id}" rows="2" placeholder="Votre réponse…"></textarea>
+      </div>`;
+    } else {
+      qHtml += `<div class="question-card" id="fin-qcard-${q.id}" style="${cardStyle}">
+        <div class="question-label">${q.label} <span style="color:#dc2626;">*</span></div>
+        <input type="hidden" id="f-${q.id}" value="">
+        <div class="yn-btns">
+          <button class="yn-btn" id="btn-${q.id}-oui" onclick="answerFin('${q.id}','Oui',this,'btn-${q.id}-non',null)">Oui</button>
+          <button class="yn-btn" id="btn-${q.id}-non" onclick="answerFin('${q.id}','Non',this,'btn-${q.id}-oui',null)">Non</button>
+        </div>
+      </div>`;
+    }
+  });
+
+  block.innerHTML = qHtml;
+}
+
+function answerFin(qKey, value, activeBtnEl, otherBtnId, blockId) {
+  document.getElementById('f-' + qKey).value = value;
+  activeBtnEl.classList.add('selected');
+  if (otherBtnId) document.getElementById(otherBtnId).classList.remove('selected');
+  if (blockId) document.getElementById(blockId).style.display = (value === 'Oui') ? 'block' : 'none';
+  wizard.financialAnswers[qKey] = value;
+}
+
+// ── Questionnaire Protection des Données ────────────────────────────
+function renderDpdSection() {
+  const t = (wizard.ddType || '').toLowerCase();
+  if (!t.includes('protection') && !t.includes('donn') && !t.includes('rgpd') && !t.includes('dpd')) return;
+  const container = document.getElementById('questions-container');
+  container.insertAdjacentHTML('beforeend', `
+<div style="margin-top:28px;">
+  <div style="font-size:14px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #7c3aed;padding-bottom:6px;margin-bottom:16px;letter-spacing:.3px;">PROTECTION DES DONNÉES PERSONNELLES</div>
+
+<div class="question-card" style="border:2px solid #7c3aed;background:#faf5ff;" id="dpd-gateway-card">
+  <div class="question-label" style="font-size:14px;">Le tiers aura-t-il accès, directement ou indirectement, à des données personnelles, des systèmes d'information, des infrastructures numériques ou des données stratégiques de l'organisation&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-dpd_gateway" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-dpd-gw-oui" onclick="answerFin('dpd_gateway','Oui',this,'btn-dpd-gw-non','dpd-subsections-block')">Oui</button>
+    <button class="yn-btn" id="btn-dpd-gw-non" onclick="answerFin('dpd_gateway','Non',this,'btn-dpd-gw-oui','dpd-subsections-block')">Non</button>
+  </div>
+</div>
+
+<div id="dpd-subsections-block" style="display:none;">
+
+  <div style="font-size:12px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px;padding-left:4px;">Catégories &amp; Sensibilité des données</div>
+  <div class="question-card" id="dpd-qcard-01">
+    <div class="question-label">Quelles catégories exactes de données personnelles seront traitées&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <textarea class="field-textarea" id="f-dpd_q01" rows="2" placeholder="Ex: état civil, données de connexion, localisation…"></textarea>
+  </div>
+  <div class="question-card" id="dpd-qcard-02">
+    <div class="question-label">Le tiers traitera-t-il des données biométriques&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-dpd_q02" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-dpd-q02-oui" onclick="answerFin('dpd_q02','Oui',this,'btn-dpd-q02-non',null)">Oui</button>
+      <button class="yn-btn" id="btn-dpd-q02-non" onclick="answerFin('dpd_q02','Non',this,'btn-dpd-q02-oui',null)">Non</button>
+    </div>
+  </div>
+  <div class="question-card" id="dpd-qcard-03">
+    <div class="question-label">Le tiers traitera-t-il des données médicales&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-dpd_q03" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-dpd-q03-oui" onclick="answerFin('dpd_q03','Oui',this,'btn-dpd-q03-non',null)">Oui</button>
+      <button class="yn-btn" id="btn-dpd-q03-non" onclick="answerFin('dpd_q03','Non',this,'btn-dpd-q03-oui',null)">Non</button>
+    </div>
+  </div>
+  <div class="question-card" id="dpd-qcard-04">
+    <div class="question-label">Le tiers traitera-t-il des données relatives aux employés&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-dpd_q04" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-dpd-q04-oui" onclick="answerFin('dpd_q04','Oui',this,'btn-dpd-q04-non',null)">Oui</button>
+      <button class="yn-btn" id="btn-dpd-q04-non" onclick="answerFin('dpd_q04','Non',this,'btn-dpd-q04-oui',null)">Non</button>
+    </div>
+  </div>
+  <div class="question-card" id="dpd-qcard-05">
+    <div class="question-label">Le tiers traitera-t-il des données bancaires&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-dpd_q05" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-dpd-q05-oui" onclick="answerFin('dpd_q05','Oui',this,'btn-dpd-q05-non',null)">Oui</button>
+      <button class="yn-btn" id="btn-dpd-q05-non" onclick="answerFin('dpd_q05','Non',this,'btn-dpd-q05-oui',null)">Non</button>
+    </div>
+  </div>
+  <div class="question-card" id="dpd-qcard-06">
+    <div class="question-label">Le tiers traitera-t-il des données concernant des mineurs&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-dpd_q06" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-dpd-q06-oui" onclick="answerFin('dpd_q06','Oui',this,'btn-dpd-q06-non',null)">Oui</button>
+      <button class="yn-btn" id="btn-dpd-q06-non" onclick="answerFin('dpd_q06','Non',this,'btn-dpd-q06-oui',null)">Non</button>
+    </div>
+  </div>
+
+  <div style="font-size:12px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px;padding-left:4px;">Localisation &amp; Transferts</div>
+  <div class="question-card" id="dpd-qcard-07">
+    <div class="question-label">Quel est le volume estimé de données concernées&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="text" class="field-input" id="f-dpd_q07" placeholder="Ex: 50 000 personnes, 2 To de données…">
+  </div>
+  <div class="question-card" id="dpd-qcard-08">
+    <div class="question-label">Dans quels pays les données seront-elles hébergées&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+      <select id="dpd-q08-select" class="field-select" style="flex:1"><option value="">Sélectionner un pays…</option></select>
+      <button type="button" onclick="addDpdPays('dpd-q08-select','dpd-q08-tags','f-dpd_q08')" style="padding:8px 16px;background:var(--primary,#0d1b2a);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Ajouter</button>
+    </div>
+    <div id="dpd-q08-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px"></div>
+    <input type="hidden" id="f-dpd_q08" value="">
+  </div>
+  <div class="question-card" id="dpd-qcard-09">
+    <div class="question-label">Des transferts internationaux de données sont-ils prévus&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-dpd_q09" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-dpd-q09-oui" onclick="answerFin('dpd_q09','Oui',this,'btn-dpd-q09-non','dpd-q09-sub-block')">Oui</button>
+      <button class="yn-btn" id="btn-dpd-q09-non" onclick="answerFin('dpd_q09','Non',this,'btn-dpd-q09-oui','dpd-q09-sub-block')">Non</button>
+    </div>
+  </div>
+  <div id="dpd-q09-sub-block" style="display:none;margin-left:24px;border-left:3px solid #7c3aed;padding-left:4px;">
+    <div class="question-card" id="dpd-qcard-09b">
+      <div class="question-label">Précisez les pays destinataires&nbsp;: <span style="color:#dc2626;">*</span></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+        <select id="dpd-q09-select" class="field-select" style="flex:1"><option value="">Sélectionner un pays…</option></select>
+        <button type="button" onclick="addDpdPays('dpd-q09-select','dpd-q09-tags','f-dpd_q09_pays')" style="padding:8px 16px;background:var(--primary,#0d1b2a);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">Ajouter</button>
+      </div>
+      <div id="dpd-q09-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px"></div>
+      <input type="hidden" id="f-dpd_q09_pays" value="">
+    </div>
+    <div class="question-card" id="dpd-qcard-09c">
+      <div class="question-label">Garanties encadrant ces transferts&nbsp;: <span style="color:#dc2626;">*</span></div>
+      <textarea class="field-textarea" id="f-dpd_q09_garanties" rows="2" placeholder="Ex: Clauses contractuelles types (CCT/SCC), décision d'adéquation, BCR…"></textarea>
+    </div>
+  </div>
+
+  <div style="font-size:12px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px;padding-left:4px;">Gouvernance &amp; Conformité</div>
+  <div class="question-card" id="dpd-qcard-10">
+    <div class="question-label">Le tiers dispose-t-il d'un DPO officiellement désigné&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-dpd_q10" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-dpd-q10-oui" onclick="answerFin('dpd_q10','Oui',this,'btn-dpd-q10-non',null)">Oui</button>
+      <button class="yn-btn" id="btn-dpd-q10-non" onclick="answerFin('dpd_q10','Non',this,'btn-dpd-q10-oui',null)">Non</button>
+    </div>
+  </div>
+  <div class="question-card" id="dpd-qcard-11">
+    <div class="question-label">Un Data Processing Agreement (DPA) existe-t-il déjà&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-dpd_q11" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-dpd-q11-oui" onclick="answerFin('dpd_q11','Oui',this,'btn-dpd-q11-non',null)">Oui</button>
+      <button class="yn-btn" id="btn-dpd-q11-non" onclick="answerFin('dpd_q11','Non',this,'btn-dpd-q11-oui',null)">Non</button>
+    </div>
+  </div>
+
+  <div style="font-size:12px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px;padding-left:4px;">Mesures techniques &amp; Conservation</div>
+  <div class="question-card" id="dpd-qcard-12">
+    <div class="question-label">Quelles mesures de chiffrement sont mises en œuvre&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <textarea class="field-textarea" id="f-dpd_q12" rows="2" placeholder="Ex: chiffrement AES-256 au repos, TLS 1.3 en transit…"></textarea>
+  </div>
+  <div class="question-card" id="dpd-qcard-13">
+    <div class="question-label">Quelle est la durée de conservation des données&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="text" class="field-input" id="f-dpd_q13" placeholder="Ex: 3 ans après fin de contrat">
+  </div>
+
+  <div style="font-size:12px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px;padding-left:4px;">Gestion des incidents</div>
+  <div class="question-card" id="dpd-qcard-14">
+    <div class="question-label">Existe-t-il une procédure formalisée de gestion des violations de données&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-dpd_q14" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-dpd-q14-oui" onclick="answerFin('dpd_q14','Oui',this,'btn-dpd-q14-non',null)">Oui</button>
+      <button class="yn-btn" id="btn-dpd-q14-non" onclick="answerFin('dpd_q14','Non',this,'btn-dpd-q14-oui',null)">Non</button>
+    </div>
+  </div>
+
+</div>
+</div>`);
+  // Peupler les selects pays DPD depuis le select principal (déjà rendu par Jinja)
+  ['dpd-q08-select', 'dpd-q09-select'].forEach(id => {
+    const src = document.getElementById('pays-activites-select');
+    const dst = document.getElementById(id);
+    if (!src || !dst) return;
+    Array.from(src.options).forEach(o => {
+      if (o.value) dst.appendChild(new Option(o.text, o.value));
+    });
+  });
+}
+
+function addDpdPays(selectId, tagsId, hiddenId) {
+  const sel = document.getElementById(selectId);
+  const val = sel ? sel.value : '';
+  if (!val) return;
+  const hidden = document.getElementById(hiddenId);
+  const current = JSON.parse(hidden.value || '[]');
+  if (current.includes(val)) { sel.value = ''; return; }
+  current.push(val);
+  hidden.value = current.length > 0 ? JSON.stringify(current) : '';
+  sel.value = '';
+  renderDpdPaysTags(current, tagsId, selectId, hiddenId);
+}
+
+function removeDpdPays(val, tagsId, selectId, hiddenId) {
+  const hidden = document.getElementById(hiddenId);
+  const current = JSON.parse(hidden.value || '[]').filter(v => v !== val);
+  hidden.value = current.length > 0 ? JSON.stringify(current) : '';
+  renderDpdPaysTags(current, tagsId, selectId, hiddenId);
+}
+
+function renderDpdPaysTags(list, tagsId, selectId, hiddenId) {
+  const sel = document.getElementById(selectId);
+  const container = document.getElementById(tagsId);
+  if (!container) return;
+  container.innerHTML = list.map(val => {
+    const opt = sel ? Array.from(sel.options).find(o => o.value === val) : null;
+    const lbl = opt ? opt.text : val;
+    const escaped = val.replace(/'/g, "\\'");
+    return `<span style="display:inline-flex;align-items:center;gap:4px;background:#e8f0fe;color:#1a237e;border-radius:14px;padding:3px 10px;font-size:12px;font-weight:500">${lbl}<button type="button" onclick="removeDpdPays('${escaped}','${tagsId}','${selectId}','${hiddenId}')" style="background:none;border:none;cursor:pointer;font-size:14px;line-height:1;color:#1a237e;padding:0 0 0 2px">&times;</button></span>`;
+  }).join('');
+}
+
+function renderCyberSection() {
+  const t = (wizard.ddType || '').toLowerCase();
+  if (!t.includes('cyber') && !t.includes('secu') && !t.includes('sécur')) return;
+  const container = document.getElementById('questions-container');
+  if (!container) return;
+  container.insertAdjacentHTML('beforeend', `
+<div style="margin-top:28px;">
+  <div style="font-size:14px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #3b82f6;padding-bottom:6px;margin-bottom:16px;letter-spacing:.3px;">CYBERSÉCURITÉ</div>
+
+<div class="question-card" style="border:2px solid #3b82f6;background:#eff6ff;" id="cyber-gateway-card">
+  <div class="question-label" style="font-size:14px;">Le tiers aura-t-il accès, directement ou indirectement, à des données personnelles, des systèmes d'information, des infrastructures numériques ou des données stratégiques de l'organisation&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-cyber_gateway" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-cyber-gw-oui" onclick="answerFin('cyber_gateway','Oui',this,'btn-cyber-gw-non','cyber-subsections-block')">Oui</button>
+    <button class="yn-btn" id="btn-cyber-gw-non" onclick="answerFin('cyber_gateway','Non',this,'btn-cyber-gw-oui','cyber-subsections-block')">Non</button>
+  </div>
+</div>
+
+<div id="cyber-subsections-block" style="display:none;">
+
+  <div style="font-size:12px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px;padding-left:4px;">Périmètre d'accès</div>
+  <div class="question-card" id="cyber-qcard-01">
+    <div class="question-label">Le tiers disposera-t-il d'un accès VPN aux infrastructures de l'organisation&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-cyber_q01" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-cyber-q01-oui" onclick="answerFin('cyber_q01','Oui',this,'btn-cyber-q01-non',null)">Oui</button>
+      <button class="yn-btn" id="btn-cyber-q01-non" onclick="answerFin('cyber_q01','Non',this,'btn-cyber-q01-oui',null)">Non</button>
+    </div>
+  </div>
+  <div class="question-card" id="cyber-qcard-02">
+    <div class="question-label">Le tiers disposera-t-il d'un accès aux applications internes&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-cyber_q02" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-cyber-q02-oui" onclick="answerFin('cyber_q02','Oui',this,'btn-cyber-q02-non','cyber-q02-sub-block')">Oui</button>
+      <button class="yn-btn" id="btn-cyber-q02-non" onclick="answerFin('cyber_q02','Non',this,'btn-cyber-q02-oui','cyber-q02-sub-block')">Non</button>
+    </div>
+  </div>
+  <div id="cyber-q02-sub-block" style="display:none;margin-left:24px;border-left:3px solid #3b82f6;padding-left:4px;">
+    <div class="question-card" id="cyber-qcard-03">
+      <div class="question-label">Le tiers disposera-t-il d'un accès aux bases de données&nbsp;? <span style="color:#dc2626;">*</span></div>
+      <input type="hidden" id="f-cyber_q03" value="">
+      <div class="yn-btns">
+        <button class="yn-btn" id="btn-cyber-q03-oui" onclick="answerFin('cyber_q03','Oui',this,'btn-cyber-q03-non',null)">Oui</button>
+        <button class="yn-btn" id="btn-cyber-q03-non" onclick="answerFin('cyber_q03','Non',this,'btn-cyber-q03-oui',null)">Non</button>
+      </div>
+    </div>
+    <div class="question-card" id="cyber-qcard-04">
+      <div class="question-label">Des API seront-elles interconnectées&nbsp;? <span style="color:#dc2626;">*</span></div>
+      <input type="hidden" id="f-cyber_q04" value="">
+      <div class="yn-btns">
+        <button class="yn-btn" id="btn-cyber-q04-oui" onclick="answerFin('cyber_q04','Oui',this,'btn-cyber-q04-non',null)">Oui</button>
+        <button class="yn-btn" id="btn-cyber-q04-non" onclick="answerFin('cyber_q04','Non',this,'btn-cyber-q04-oui',null)">Non</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="font-size:12px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px;padding-left:4px;">Dispositifs de sécurité</div>
+  <div class="question-card" id="cyber-qcard-06">
+    <div class="question-label">Le MFA est-il activé sur les comptes sensibles&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-cyber_q06" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-cyber-q06-oui" onclick="answerFin('cyber_q06','Oui',this,'btn-cyber-q06-non',null)">Oui</button>
+      <button class="yn-btn" id="btn-cyber-q06-non" onclick="answerFin('cyber_q06','Non',this,'btn-cyber-q06-oui',null)">Non</button>
+    </div>
+  </div>
+
+  <div style="font-size:12px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px;padding-left:4px;">Certification &amp; Audit</div>
+  <div class="question-card" id="cyber-qcard-08">
+    <div class="question-label">À quelle date le dernier audit cybersécurité a-t-il été réalisé&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:6px;">
+      <select class="field-input" id="f-cyber_q08_mois" onchange="updateCyberQ08()" style="flex:1;">
+        <option value="">— Mois —</option>
+        <option>Janvier</option><option>Février</option><option>Mars</option>
+        <option>Avril</option><option>Mai</option><option>Juin</option>
+        <option>Juillet</option><option>Août</option><option>Septembre</option>
+        <option>Octobre</option><option>Novembre</option><option>Décembre</option>
+      </select>
+      <select class="field-input" id="f-cyber_q08_annee" onchange="updateCyberQ08()" style="flex:1;"></select>
+    </div>
+    <input type="hidden" id="f-cyber_q08" value="">
+  </div>
+
+  <div style="font-size:12px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px;padding-left:4px;">Surveillance &amp; Résilience</div>
+  <div class="question-card" id="cyber-qcard-10">
+    <div class="question-label">Existe-t-il un SOC opérationnel&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-cyber_q10" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-cyber-q10-oui" onclick="answerFin('cyber_q10','Oui',this,'btn-cyber-q10-non',null)">Oui</button>
+      <button class="yn-btn" id="btn-cyber-q10-non" onclick="answerFin('cyber_q10','Non',this,'btn-cyber-q10-oui',null)">Non</button>
+    </div>
+  </div>
+  <div class="question-card" id="cyber-qcard-11">
+    <div class="question-label">Quel est le délai moyen de traitement des incidents cyber&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="number" class="field-input" id="f-cyber_q11_jours" min="0" placeholder="0" style="width:80px;" oninput="updateCyberQ11()">
+        <span style="font-size:13px;color:var(--text);font-weight:500;">jour(s)</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="number" class="field-input" id="f-cyber_q11_heures" min="0" max="23" placeholder="0" style="width:80px;" oninput="updateCyberQ11()">
+        <span style="font-size:13px;color:var(--text);font-weight:500;">heure(s)</span>
+      </div>
+    </div>
+    <input type="hidden" id="f-cyber_q11" value="">
+  </div>
+  <div class="question-card" id="cyber-qcard-12">
+    <div class="question-label">Le tiers a-t-il subi des cyberattaques au cours des 36 derniers mois&nbsp;? <span style="color:#dc2626;">*</span></div>
+    <input type="hidden" id="f-cyber_q12" value="">
+    <div class="yn-btns">
+      <button class="yn-btn" id="btn-cyber-q12-oui" onclick="answerFin('cyber_q12','Oui',this,'btn-cyber-q12-non',null)">Oui</button>
+      <button class="yn-btn" id="btn-cyber-q12-non" onclick="answerFin('cyber_q12','Non',this,'btn-cyber-q12-oui',null)">Non</button>
+    </div>
+  </div>
+
+</div>
+</div>`);
+  // Peupler les années pour le sélecteur de date d'audit
+  const selAnnee = document.getElementById('f-cyber_q08_annee');
+  if (selAnnee) {
+    const optDef = document.createElement('option');
+    optDef.value = ''; optDef.textContent = '— Année —';
+    selAnnee.appendChild(optDef);
+    const now = new Date().getFullYear();
+    for (let y = now; y >= 2010; y--) {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      selAnnee.appendChild(opt);
+    }
+  }
+}
+
+function updateCyberQ08() {
+  const mois = (document.getElementById('f-cyber_q08_mois') || {}).value || '';
+  const annee = (document.getElementById('f-cyber_q08_annee') || {}).value || '';
+  const h = document.getElementById('f-cyber_q08');
+  if (h) h.value = (mois && annee) ? mois + ' ' + annee : '';
+}
+
+function updateCyberQ11() {
+  const j = parseInt((document.getElementById('f-cyber_q11_jours') || {}).value) || 0;
+  const hh = parseInt((document.getElementById('f-cyber_q11_heures') || {}).value) || 0;
+  const hidden = document.getElementById('f-cyber_q11');
+  if (!hidden) return;
+  if (j === 0 && hh === 0) { hidden.value = ''; return; }
+  const parts = [];
+  if (j > 0) parts.push(j + ' jour' + (j > 1 ? 's' : ''));
+  if (hh > 0) parts.push(hh + ' heure' + (hh > 1 ? 's' : ''));
+  hidden.value = parts.join(' ');
+}
+
+function shouldShowAnticorruption() {
+  const t = (wizard.ddType || '').toLowerCase();
+  if (t.includes('anticorrup') || t.includes('corrupt') || t.includes('intégrit') || t.includes('integrit')) return true;
+  if ((document.getElementById('f-tiers_pays_risque_detecte') || {}).value === '1') return true;
+  const finQ08 = document.getElementById('f-fin_q08');
+  if (finQ08 && finQ08.value === 'Oui') return true;
+  const montant = parseFloat((document.getElementById('f-tiers_montant_contrat') || {}).value || 0);
+  if (montant >= 25000000) return true;
+  return false;
+}
+
+function renderAnticorruptionSection() {
+  if (!shouldShowAnticorruption()) return;
+  if (document.getElementById('ac-qcard-01')) return; // déjà injecté
+  const container = document.getElementById('questions-container');
+  if (!container) return;
+  container.insertAdjacentHTML('beforeend', `
+<div style="margin-top:28px;">
+  <div style="font-size:14px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #d97706;padding-bottom:6px;margin-bottom:16px;letter-spacing:.3px;">ANTI-CORRUPTION</div>
+
+<div class="question-card" id="ac-qcard-01">
+  <div class="question-label">Le tiers interagit-il avec des agents publics ou représentants gouvernementaux&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-ac_q01" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-ac-q01-oui" onclick="answerFin('ac_q01','Oui',this,'btn-ac-q01-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-ac-q01-non" onclick="answerFin('ac_q01','Non',this,'btn-ac-q01-oui',null)">Non</button>
+  </div>
+</div>
+
+<div class="question-card" id="ac-qcard-02">
+  <div class="question-label">Le tiers intervient-il dans des marchés publics&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-ac_q02" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-ac-q02-oui" onclick="answerFin('ac_q02','Oui',this,'btn-ac-q02-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-ac-q02-non" onclick="answerFin('ac_q02','Non',this,'btn-ac-q02-oui',null)">Non</button>
+  </div>
+</div>
+
+<div class="question-card" id="ac-qcard-03">
+  <div class="question-label">Des commissions ou honoraires de succès sont-ils prévus&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-ac_q03" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-ac-q03-oui" onclick="answerFin('ac_q03','Oui',this,'btn-ac-q03-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-ac-q03-non" onclick="answerFin('ac_q03','Non',this,'btn-ac-q03-oui',null)">Non</button>
+  </div>
+</div>
+
+<div class="question-card" id="ac-qcard-04">
+  <div class="question-label">Existe-t-il des intermédiaires secondaires&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-ac_q04" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-ac-q04-oui" onclick="answerFin('ac_q04','Oui',this,'btn-ac-q04-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-ac-q04-non" onclick="answerFin('ac_q04','Non',this,'btn-ac-q04-oui',null)">Non</button>
+  </div>
+</div>
+
+<div class="question-card" id="ac-qcard-05">
+  <div class="question-label">Des paiements en espèces sont-ils envisagés&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-ac_q05" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-ac-q05-oui" onclick="answerFin('ac_q05','Oui',this,'btn-ac-q05-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-ac-q05-non" onclick="answerFin('ac_q05','Non',this,'btn-ac-q05-oui',null)">Non</button>
+  </div>
+</div>
+
+<div class="question-card" id="ac-qcard-06">
+  <div class="question-label">Des cadeaux, avantages ou invitations sont-ils prévus&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-ac_q06" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-ac-q06-oui" onclick="answerFin('ac_q06','Oui',this,'btn-ac-q06-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-ac-q06-non" onclick="answerFin('ac_q06','Non',this,'btn-ac-q06-oui',null)">Non</button>
+  </div>
+</div>
+
+<div class="question-card" id="ac-qcard-07">
+  <div class="question-label">Le tiers dispose-t-il d'un programme anti-corruption formalisé&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-ac_q07" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-ac-q07-oui" onclick="answerFin('ac_q07','Oui',this,'btn-ac-q07-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-ac-q07-non" onclick="answerFin('ac_q07','Non',this,'btn-ac-q07-oui',null)">Non</button>
+  </div>
+</div>
+
+<div class="question-card" id="ac-qcard-08">
+  <div class="question-label">Le tiers a-t-il déjà fait l'objet d'enquêtes pour corruption&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-ac_q08" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-ac-q08-oui" onclick="answerFin('ac_q08','Oui',this,'btn-ac-q08-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-ac-q08-non" onclick="answerFin('ac_q08','Non',this,'btn-ac-q08-oui',null)">Non</button>
+  </div>
+</div>
+
+<div class="question-card" id="ac-qcard-09">
+  <div class="question-label">Des PEP sont-ils impliqués dans l'actionnariat ou la direction&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-ac_q09" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-ac-q09-oui" onclick="answerFin('ac_q09','Oui',this,'btn-ac-q09-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-ac-q09-non" onclick="answerFin('ac_q09','Non',this,'btn-ac-q09-oui',null)">Non</button>
+  </div>
+</div>
+
+<div class="question-card" id="ac-qcard-10">
+  <div class="question-label">Existe-t-il des liens familiaux avec des responsables politiques&nbsp;? <span style="color:#dc2626;">*</span></div>
+  <input type="hidden" id="f-ac_q10" value="">
+  <div class="yn-btns">
+    <button class="yn-btn" id="btn-ac-q10-oui" onclick="answerFin('ac_q10','Oui',this,'btn-ac-q10-non',null)">Oui</button>
+    <button class="yn-btn" id="btn-ac-q10-non" onclick="answerFin('ac_q10','Non',this,'btn-ac-q10-oui',null)">Non</button>
+  </div>
+</div>
+
+</div>`);
+}
+
+function answerYN(btn, qname, val, poids) {
+  const btns = btn.parentElement.querySelectorAll('.yn-btn');
+  btns.forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const isOui = val === 'Oui';
+  wizard.answers[qname] = { reponse: val, poids: isOui ? poids : 0 };
+  updateRiskBar();
+  triggerConditionals(qname, val);
+}
+
+function triggerConditionals(qname, val) {
+  const children = wizard.childMap[qname] || [];
+  children.forEach(child => {
+    const card = document.getElementById('qcard-' + child.name);
+    if (!card) return;
+    const triggered = child.valeur_declenchante &&
+        val.toLowerCase() === child.valeur_declenchante.toLowerCase();
+    card.style.display = triggered ? 'block' : 'none';
+    if (!triggered) {
+      // Réinitialiser la réponse et le doc conditionnel si cachée
+      delete wizard.answers[child.name];
+      if (child.demander_document && child.label_document) {
+        delete wizard.conditionalDocs[child.name];
+        delete wizard.uploadedFiles[child.label_document];
+      }
+    } else if (child.demander_document && child.label_document) {
+      wizard.conditionalDocs[child.name] = {
+        nom_document: child.label_document,
+        obligatoire: child.obligatoire || 0,
+      };
+    }
+  });
+}
+
+function answerSelect(sel, qname, poids) {
+  wizard.answers[qname] = { reponse: sel.value, poids: sel.value ? poids : 0 };
+  updateRiskBar();
+}
+
+function answerText(ta, qname) {
+  wizard.answers[qname] = { reponse: ta.value, poids: 0 };
+}
+
+function updateRiskBar() {
+  let score = 0;
+  // Bonus contexte
+  Object.values(wizard.answers).forEach(a => { score += (a.poids || 0); });
+  const maxScore = 100;
+  const pct = Math.min(Math.round((score / maxScore) * 100), 100);
+  let label = 'FAIBLE', color = '#22c55e';
+  if (score > 60) { label = 'CRITIQUE'; color = '#dc2626'; }
+  else if (score > 40) { label = 'ÉLEVÉ'; color = '#f97316'; }
+  else if (score > 20) { label = 'MODÉRÉ'; color = '#f59e0b'; }
+  document.getElementById('risk-pct').textContent = pct + '%';
+  document.getElementById('risk-label').textContent = label + ' — ANALYSE EN COURS';
+  document.getElementById('risk-fill').style.width = pct + '%';
+  document.getElementById('risk-fill').style.background = color;
+}
+
+// ── Step 5 — Documents ───────────────────────────────────────────────
+function deduplicateDocs(docs) {
+  const seen = new Set();
+  return docs.filter(d => {
+    if (seen.has(d.nom_document)) return false;
+    seen.add(d.nom_document);
+    return true;
+  });
+}
+
+function buildDocChecklist() {
+  // Combiner docs type + docs conditionnels des sous-questions + docs seuil financier
+  const conditionalDocsList = Object.values(wizard.conditionalDocs);
+  const baseDocs = wizard.questionBaseDocs || [];
+  const thresholdDocsList = wizard.thresholdDocs || [];
+  if (wizard.requiredDocs.length === 0) {
+    frappe.call({
+      method: 'due_diligence.api.get_required_documents',
+      args: { dd_type: wizard.ddType },
+      callback: function(r) {
+        wizard.requiredDocs = r.message || [];
+        const allDocs = deduplicateDocs([...wizard.requiredDocs, ...baseDocs, ...conditionalDocsList, ...thresholdDocsList]);
+        renderDocChecklist(allDocs);
+        updateDocProgress(allDocs);
+      },
+      error: function() {
+        const allDocs = deduplicateDocs([...baseDocs, ...conditionalDocsList, ...thresholdDocsList]);
+        renderDocChecklist(allDocs);
+        updateDocProgress(allDocs);
+      }
+    });
+  } else {
+    const allDocs = deduplicateDocs([...wizard.requiredDocs, ...baseDocs, ...conditionalDocsList, ...thresholdDocsList]);
+    renderDocChecklist(allDocs);
+    updateDocProgress(allDocs);
+  }
+}
+
+function renderDocChecklist(docs) {
+  wizard.currentDocs = docs || wizard.currentDocs || [];
+  const container = document.getElementById('doc-items');
+  let html = '';
+  wizard.currentDocs.forEach((d, i) => {
+    const uploaded = wizard.uploadedFiles[d.nom_document];
+    html += `<div class="doc-item">
+      <div class="doc-check ${uploaded ? 'done' : ''}">
+        ${uploaded ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+      </div>
+      <div style="flex:1">
+        <div class="doc-info-name">
+          ${d.nom_document}
+        </div>
+        ${uploaded
+          ? `<div class="doc-status received">&#x2713; Reçu : ${uploaded.name}</div>`
+          : '<div class="doc-status waiting">Attendu</div>'}
+      </div>
+      <button onclick="triggerUploadFor(${i})" style="font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:#fff;">
+        ${uploaded ? 'Remplacer' : 'Ajouter'}
+      </button>
+    </div>`;
+  });
+  container.innerHTML = html || '<div style="color:var(--muted);padding:20px 0;">Aucun document requis pour ce type.</div>';
+}
+
+function triggerUploadFor(idx) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.pdf,.docx,.xlsx,.jpg,.jpeg,.png';
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const doc = wizard.currentDocs[idx];
+    // Frappe file upload
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('is_private', '1');
+    fd.append('folder', 'Home/Attachments');
+    fetch('/api/method/upload_file', {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-Frappe-CSRF-Token': frappe.csrf_token },
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.message) {
+        wizard.uploadedFiles[doc.nom_document] = { url: data.message.file_url, name: file.name };
+        renderDocChecklist();
+        updateDocProgress();
+      }
+    });
+  };
+  input.click();
+}
+
+function onDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('dragover'); }
+function onDragLeave(e) { document.getElementById('drop-zone').classList.remove('dragover'); }
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+}
+function onFileSelect(e) { handleFiles(e.target.files); }
+function handleFiles(files) {
+  for (const file of files) {
+    const unmatched = (wizard.currentDocs || []).find(d => !wizard.uploadedFiles[d.nom_document]);
+    if (unmatched) triggerUploadForFile(file, unmatched);
+  }
+}
+function triggerUploadForFile(file, doc) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('is_private', '1');
+  fd.append('folder', 'Home/Attachments');
+  fetch('/api/method/upload_file', {
+    method: 'POST',
+    body: fd,
+    headers: { 'X-Frappe-CSRF-Token': frappe.csrf_token },
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.message) {
+      wizard.uploadedFiles[doc.nom_document] = { url: data.message.file_url, name: file.name };
+      renderDocChecklist();
+      updateDocProgress();
+    }
+  });
+}
+
+function updateDocProgress(docs) {
+  const list = docs || wizard.currentDocs || [];
+  const total = list.length;
+  const done = list.filter(d => wizard.uploadedFiles[d.nom_document]).length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('doc-count').textContent = done + ' / ' + total + ' documents';
+  document.getElementById('doc-pct').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+// ── Step 7 — Récapitulatif ───────────────────────────────────────────
+function buildRecap() {
+  document.getElementById('recap-dd-type').textContent = wizard.ddType || '—';
+  document.getElementById('recap-demandeur').textContent = document.getElementById('f-demandeur_nom').value || '—';
+  document.getElementById('recap-email').textContent = document.getElementById('f-email_contact').value || '—';
+  document.getElementById('recap-tiers').textContent = document.getElementById('f-tiers_nom').value || '—';
+  const paysEl = document.getElementById('f-tiers_pays');
+  const paysText = paysEl.options[paysEl.selectedIndex]?.text || '—';
+  document.getElementById('recap-pays').textContent = paysText;
+  const risqueDetecte = document.getElementById('f-tiers_pays_risque_detecte').value === '1';
+  if (risqueDetecte) {
+    document.getElementById('recap-pays').innerHTML = paysText + ' <span class="risk-badge ' + (PAYS_CRITIQUE.has(paysText) ? 'critique' : 'eleve') + '" style="font-size:9px;vertical-align:middle">RISQUE</span>';
+  }
+  // Relation
+  const strat = document.getElementById('f-relation_strategique').value || '—';
+  const urg = document.getElementById('f-relation_urgence').value || '—';
+  let relHtml = '';
+  relHtml += `<div class="recap-row"><span class="recap-key">Description :</span><span>${document.getElementById('f-relation_description').value || '—'}</span></div>`;
+  relHtml += `<div class="recap-row"><span class="recap-key">Objectif métier :</span><span>${document.getElementById('f-relation_objectif_metier').value || '—'}</span></div>`;
+  relHtml += `<div class="recap-row"><span class="recap-key">Justification du choix :</span><span>${document.getElementById('f-relation_justification_choix').value || '—'}</span></div>`;
+  relHtml += `<div class="recap-row"><span class="recap-key">Relation stratégique :</span><span>${strat}</span></div>`;
+  if (strat === 'Oui') {
+    relHtml += `<div class="recap-row"><span class="recap-key">Dépendance critique :</span><span>${document.getElementById('f-relation_dependance_critique').value || '—'}</span></div>`;
+  }
+  relHtml += `<div class="recap-row"><span class="recap-key">Urgence opérationnelle :</span><span>${urg}</span></div>`;
+  document.getElementById('recap-relation-body').innerHTML = relHtml;
+  // Answers
+  let answersHtml = '';
+  wizard.questions.forEach(q => {
+    const a = wizard.answers[q.name];
+    answersHtml += `<div class="recap-row"><span class="recap-key">${q.question_label} :</span><span>${a ? a.reponse : '—'}</span></div>`;
+  });
+  document.getElementById('recap-answers-body').innerHTML = answersHtml || '<span style="color:var(--muted)">Aucune réponse saisie.</span>';
+  // Docs
+  let docsHtml = '';
+  wizard.requiredDocs.forEach(d => {
+    const up = wizard.uploadedFiles[d.nom_document];
+    docsHtml += `<div class="recap-row"><span class="recap-key">${d.nom_document} :</span><span style="color:${up ? 'var(--success)' : 'var(--warning)'}">${up ? '✓ ' + up.name : 'Non fourni'}</span></div>`;
+  });
+  document.getElementById('recap-docs-body').innerHTML = docsHtml || '<span style="color:var(--muted)">Aucun document joint.</span>';
+}
+
+function toggleRecap(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+// ── Submit ────────────────────────────────────────────────────────────
+function submitRequest() {
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours…';
+
+  const answers = wizard.questions.map(q => ({
+    question: q.name,
+    question_label: q.question_label,
+    reponse: (wizard.answers[q.name] || {}).reponse || '',
+    poids_applique: (wizard.answers[q.name] || {}).poids || 0,
+  }));
+  // Ajouter les réponses financières spécifiques (questions du questionnaire financier)
+  if (wizard.ddType && wizard.ddType.toLowerCase().includes('financ')) {
+    const finQuestions = [
+      {id:'fin_q01', label:'Montant total estimé de la relation contractuelle'},
+      {id:'fin_q02', label:'Devise utilisée'},
+      {id:'fin_q03', label:'Paiements internationaux'},
+      {id:'fin_q04', label:'Pays recevant les paiements'},
+      {id:'fin_q05', label:'Calendrier prévisionnel des paiements'},
+      {id:'fin_q06', label:'Avances prévues'},
+      {id:'fin_q07', label:'Commissions prévues'},
+      {id:'fin_q08', label:'Intermédiaires rémunérés'},
+      {id:'fin_q09', label:'Paiements en espèces autorisés'},
+      {id:'fin_q10', label:'Mode de facturation prévu'},
+      {id:'fin_q11', label:'Établissement bancaire principal du tiers'},
+      {id:'fin_q12', label:'Pays de domiciliation de la banque du tiers'},
+      {id:'fin_m01', label:'Difficultés fiscales antérieures du tiers'},
+      {id:'fin_m02', label:'États financiers récents disponibles'},
+      {id:'fin_m03', label:'Dettes sociales ou fiscales connues'},
+      {id:'fin_e01', label:'Structure capitalistique complète du tiers'},
+      {id:'fin_e02', label:'Contentieux financiers antérieurs'},
+      {id:'fin_e03', label:'Dépendance économique envers un nombre limité de clients'},
+      {id:'fin_e04', label:'Audits externes disponibles'},
+    ];
+    finQuestions.forEach(q => {
+      const el = document.getElementById('f-' + q.id);
+      if (el && el.value && el.value.trim()) {
+        answers.push({ question: null, question_label: q.label, reponse: el.value.trim(), poids_applique: 0 });
+      }
+    });
+  }
+
+  // Ajouter les réponses DPD (Protection des Données)
+  const tDpd = (wizard.ddType || '').toLowerCase();
+  if (tDpd.includes('protection') || tDpd.includes('donn') || tDpd.includes('rgpd') || tDpd.includes('dpd')) {
+    const dpdQuestions = [
+      {id:'dpd_gateway', label:'Accès aux données personnelles, SI ou données stratégiques'},
+      {id:'dpd_q01', label:'Catégories de données personnelles traitées'},
+      {id:'dpd_q02', label:'Traitement de données biométriques'},
+      {id:'dpd_q03', label:'Traitement de données médicales'},
+      {id:'dpd_q04', label:'Traitement de données relatives aux employés'},
+      {id:'dpd_q05', label:'Traitement de données bancaires'},
+      {id:'dpd_q06', label:'Traitement de données concernant des mineurs'},
+      {id:'dpd_q07', label:'Volume estimé de données concernées'},
+      {id:'dpd_q08', label:'Pays d\'hébergement des données'},
+      {id:'dpd_q09', label:'Transferts internationaux de données prévus'},
+      {id:'dpd_q09_pays', label:'Pays destinataires des transferts'},
+      {id:'dpd_q09_garanties', label:'Garanties encadrant ces transferts'},
+      {id:'dpd_q10', label:'DPO officiellement désigné'},
+      {id:'dpd_q11', label:'Data Processing Agreement (DPA) existant'},
+      {id:'dpd_q12', label:'Mesures de chiffrement mises en œuvre'},
+      {id:'dpd_q13', label:'Durée de conservation des données'},
+      {id:'dpd_q14', label:'Procédure formalisée de gestion des violations de données'},
+    ];
+    dpdQuestions.forEach(q => {
+      const el = document.getElementById('f-' + q.id);
+      if (!el || !el.value || !el.value.trim()) return;
+      let val = el.value.trim();
+      if (val.startsWith('[')) { try { val = JSON.parse(val).join(', '); } catch(e) {} }
+      answers.push({ question: null, question_label: q.label, reponse: val, poids_applique: 0 });
+    });
+  }
+
+  // Ajouter les réponses Cybersécurité
+  const tCyber = (wizard.ddType || '').toLowerCase();
+  if (tCyber.includes('cyber') || tCyber.includes('secu') || tCyber.includes('sécur')) {
+    const cyberQuestions = [
+      {id:'cyber_gateway', label:'Accès aux données personnelles, SI ou données stratégiques'},
+      {id:'cyber_q01', label:'Accès VPN aux infrastructures de l\'organisation'},
+      {id:'cyber_q02', label:'Accès aux applications internes'},
+      {id:'cyber_q03', label:'Accès aux bases de données'},
+      {id:'cyber_q04', label:'API interconnectées'},
+      {id:'cyber_q05', label:'Hébergement de données dans le cloud'},
+      {id:'cyber_q06', label:'MFA activé sur les comptes sensibles'},
+      {id:'cyber_q07', label:'PRA/PCA formalisé'},
+      {id:'cyber_q08', label:'Date du dernier audit cybersécurité'},
+      {id:'cyber_q09', label:'Certification ISO 27001'},
+      {id:'cyber_q10', label:'SOC opérationnel'},
+      {id:'cyber_q11', label:'Délai moyen de traitement des incidents cyber'},
+      {id:'cyber_q12', label:'Cyberattaques au cours des 36 derniers mois'},
+    ];
+    cyberQuestions.forEach(q => {
+      const el = document.getElementById('f-' + q.id);
+      if (el && el.value && el.value.trim()) {
+        answers.push({ question: null, question_label: q.label, reponse: el.value.trim(), poids_applique: 0 });
+      }
+    });
+  }
+
+  // Ajouter les réponses Anti-Corruption
+  if (document.getElementById('ac-qcard-01')) {
+    const acQuestions = [
+      {id:'ac_q01', label:'Interaction avec agents publics ou représentants gouvernementaux'},
+      {id:'ac_q02', label:'Intervention dans des marchés publics'},
+      {id:'ac_q03', label:'Commissions ou honoraires de succès prévus'},
+      {id:'ac_q04', label:'Intermédiaires secondaires'},
+      {id:'ac_q05', label:'Paiements en espèces envisagés'},
+      {id:'ac_q06', label:'Cadeaux, avantages ou invitations prévus'},
+      {id:'ac_q07', label:'Programme anti-corruption formalisé'},
+      {id:'ac_q08', label:'Enquêtes pour corruption antérieures'},
+      {id:'ac_q09', label:'PEP impliqués dans l\'actionnariat ou la direction'},
+      {id:'ac_q10', label:'Liens familiaux avec des responsables politiques'},
+    ];
+    acQuestions.forEach(q => {
+      const el = document.getElementById('f-' + q.id);
+      if (el && el.value && el.value.trim()) {
+        answers.push({ question: null, question_label: q.label, reponse: el.value.trim(), poids_applique: 0 });
+      }
+    });
+  }
+
+  const required_documents = (wizard.currentDocs || []).map(d => ({
+    nom_document: d.nom_document,
+    obligatoire: d.obligatoire,
+    fichier: (wizard.uploadedFiles[d.nom_document] || {}).url || '',
+  }));
+
+  const data = {
+    dd_type: wizard.ddType,
+    demandeur_nom: document.getElementById('f-demandeur_nom').value,
+    demandeur_fonction: document.getElementById('f-demandeur_fonction').value,
+    matricule_interne: document.getElementById('f-matricule_interne').value,
+    departement: document.getElementById('f-departement').value,
+    pays_rattachement: document.getElementById('f-pays_rattachement').value,
+    responsable_hierarchique: document.getElementById('f-responsable_hierarchique').value,
+    direction_metier: document.getElementById('f-direction_metier').value,
+    email_contact: document.getElementById('f-email_contact').value,
+    telephone_professionnel: document.getElementById('f-telephone_professionnel').value,
+    niveau_hierarchique: document.getElementById('f-niveau_hierarchique').value,
+    tiers_nom: document.getElementById('f-tiers_nom').value,
+    tiers_nom_commercial: document.getElementById('f-tiers_nom_commercial').value,
+    tiers_rccm: document.getElementById('f-tiers_rccm').value,
+    tiers_nif: document.getElementById('f-tiers_nif').value,
+    tiers_forme_juridique: document.getElementById('f-tiers_forme_juridique').value,
+    tiers_date_creation: document.getElementById('f-tiers_date_creation').value,
+    tiers_pays: document.getElementById('f-tiers_pays').value,
+    tiers_adresse_siege: document.getElementById('f-tiers_adresse_siege').value,
+    tiers_pays_activites: document.getElementById('f-tiers_pays_activites').value,
+    tiers_filiales_internationales: document.getElementById('f-tiers_filiales_internationales').value,
+    tiers_appartient_groupe: document.getElementById('f-tiers_appartient_groupe').value,
+    tiers_secteur: document.getElementById('f-tiers_secteur').value,
+    tiers_description_activites: document.getElementById('f-tiers_description_activites').value,
+    tiers_nb_employes: document.getElementById('f-tiers_nb_employes').value,
+    tiers_montant_contrat: document.getElementById('f-tiers_montant_contrat').value || 0,
+    tiers_principaux_clients: document.getElementById('f-tiers_principaux_clients').value,
+    tiers_marches_geographiques: document.getElementById('f-tiers_marches_geographiques').value,
+    tiers_secteurs_reglementes: document.getElementById('f-tiers_secteurs_reglementes').value,
+    interaction_publique: 0,
+    donnees_personnelles: 0,
+    acces_si: 0,
+    tiers_actionnaires_principaux: document.getElementById('f-tiers_actionnaires_principaux').value,
+    tiers_beneficiaires_effectifs: document.getElementById('f-tiers_beneficiaires_effectifs').value,
+    tiers_beneficiaires_detail: (document.getElementById('f-tiers_beneficiaires_detail') || {}).value || '',
+    tiers_structure_actionnariat: document.getElementById('f-tiers_structure_actionnariat').value,
+    tiers_actionnaires_pep: document.getElementById('f-tiers_actionnaires_pep').value,
+    tiers_pep_detail: (document.getElementById('f-tiers_pep_detail') || {}).value || '',
+    tiers_responsables_publics_participations: document.getElementById('f-tiers_responsables_publics_participations').value,
+    tiers_detenu_etat: document.getElementById('f-tiers_detenu_etat').value,
+    tiers_structures_offshore: document.getElementById('f-tiers_structures_offshore').value,
+    tiers_trusts_holdings: document.getElementById('f-tiers_trusts_holdings').value,
+    tiers_pays_risque_detecte: document.getElementById('f-tiers_pays_risque_detecte').value || 0,
+    tiers_nature_operations_pays_risque: document.getElementById('f-tiers_nature_operations_pays_risque').value,
+    tiers_flux_financiers_internationaux: document.getElementById('f-tiers_flux_financiers_internationaux').value,
+    tiers_licences_reglementaires: document.getElementById('f-tiers_licences_reglementaires').value,
+    tiers_relations_entites_publiques_locales: document.getElementById('f-tiers_relations_entites_publiques_locales').value,
+    tiers_risques_sanctions_secondaires: document.getElementById('f-tiers_risques_sanctions_secondaires').value,
+    tiers_figure_listes_sanctions: document.getElementById('f-tiers_figure_listes_sanctions').value,
+    tiers_paiements_offshore: document.getElementById('f-tiers_paiements_offshore').value,
+    relation_description: document.getElementById('f-relation_description').value,
+    relation_objectif_metier: document.getElementById('f-relation_objectif_metier').value,
+    relation_justification_choix: document.getElementById('f-relation_justification_choix').value,
+    relation_strategique: document.getElementById('f-relation_strategique').value,
+    relation_strategique_explication: document.getElementById('f-relation_strategique_explication').value,
+    relation_strategique_impact: document.getElementById('f-relation_strategique_impact').value,
+    relation_dependance_critique: document.getElementById('f-relation_dependance_critique').value,
+    relation_urgence: document.getElementById('f-relation_urgence').value,
+    relation_urgence_justification: document.getElementById('f-relation_urgence_justification').value,
+    relation_urgence_impact_retard: document.getElementById('f-relation_urgence_impact_retard').value,
+    relation_procedure_exceptionnelle: document.getElementById('f-relation_procedure_exceptionnelle').value,
+    answers,
+    required_documents,
+  };
+
+  frappe.call({
+    method: 'due_diligence.api.create_dd_request',
+    args: { data: JSON.stringify(data) },
+    callback: function(r) {
+      if (r.message && r.message.name) {
+        window.location.href = '/dd-confirmation?name=' + r.message.name;
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Soumettre définitivement';
+        frappe.msgprint('Une erreur est survenue. Veuillez réessayer.');
+      }
+    },
+    error: function() {
+      btn.disabled = false;
+      btn.textContent = 'Soumettre définitivement';
+    }
+  });
+}
+
+// Init
+updateStepper();
+</script>
+{% endblock %}

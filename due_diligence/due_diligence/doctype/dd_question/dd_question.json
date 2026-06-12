@@ -1,0 +1,157 @@
+{
+ "actions": [],
+ "creation": "2026-06-04 10:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Setup",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "question_label",
+  "dd_type",
+  "etape",
+  "field_type",
+  "obligatoire",
+  "column_break_1",
+  "options",
+  "poids_risque",
+  "valeur_declenchante",
+  "documents_requis",
+  "section_conditionnelle",
+  "question_parente",
+  "section_document",
+  "demander_document",
+  "label_document"
+ ],
+ "fields": [
+  {
+   "fieldname": "question_label",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Libellé de la question",
+   "reqd": 1
+  },
+  {
+   "fieldname": "dd_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Type de Due Diligence",
+   "options": "DD Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "etape",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Section",
+   "options": "DD Section",
+   "reqd": 1
+  },
+  {
+   "fieldname": "field_type",
+   "fieldtype": "Select",
+   "label": "Type de champ",
+   "options": "Data\nSelect\nCheck\nInt\nCurrency\nSmall Text",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "obligatoire",
+   "fieldtype": "Check",
+   "label": "Obligatoire"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "options",
+   "fieldtype": "Small Text",
+   "label": "Options (pour type Select, une par ligne)"
+  },
+  {
+   "default": "0",
+   "fieldname": "poids_risque",
+   "fieldtype": "Int",
+   "label": "Poids de risque"
+  },
+  {
+   "fieldname": "valeur_declenchante",
+   "fieldtype": "Data",
+   "label": "Valeur déclenchante (pour sous-question)",
+   "description": "Valeur de la réponse parente qui déclenche l'affichage de cette question — ex: Oui"
+  },
+  {
+   "fieldname": "documents_requis",
+   "fieldtype": "Small Text",
+   "label": "Documents requis (si réponse déclenchante)"
+  },
+  {
+   "fieldname": "section_conditionnelle",
+   "fieldtype": "Section Break",
+   "label": "Sous-question conditionnelle"
+  },
+  {
+   "fieldname": "question_parente",
+   "fieldtype": "Link",
+   "label": "Question parente",
+   "options": "DD Question",
+   "description": "Remplir si cette question doit s'afficher uniquement quand la question parente reçoit la valeur déclenchante"
+  },
+  {
+   "fieldname": "section_document",
+   "fieldtype": "Section Break",
+   "label": "Document conditionnel"
+  },
+  {
+   "default": "0",
+   "fieldname": "demander_document",
+   "fieldtype": "Check",
+   "label": "Demander un document en complément"
+  },
+  {
+   "fieldname": "label_document",
+   "fieldtype": "Data",
+   "label": "Libellé du document",
+   "depends_on": "eval:doc.demander_document==1",
+   "description": "Nom du document à téléverser — ex: Liste des certifications"
+  }
+ ],
+ "links": [],
+ "modified": "2026-06-05 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Due Diligence",
+ "name": "DD Question",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "DD Manager Compliance"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0
+}

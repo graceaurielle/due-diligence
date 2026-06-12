@@ -1,0 +1,485 @@
+[
+ {
+  "doctype": "Workflow",
+  "name": "Due Diligence Workflow",
+  "workflow_name": "Due Diligence Workflow",
+  "document_type": "DD Request",
+  "workflow_state_field": "workflow_state",
+  "is_active": 1,
+  "override_status": 0,
+  "send_email_alert": 0,
+  "states": [
+   {
+    "doctype": "Workflow Document State",
+    "state": "Brouillon",
+    "doc_status": "0",
+    "allow_edit": "DD Client"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "Soumis",
+    "doc_status": "1",
+    "allow_edit": "DD Analyste"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "En préqualification",
+    "doc_status": "1",
+    "allow_edit": "DD Analyste"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "En screening réglementaire",
+    "doc_status": "1",
+    "allow_edit": "DD Analyste"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "En analyse Compliance",
+    "doc_status": "1",
+    "allow_edit": "DD Analyste"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "En attente de documents",
+    "doc_status": "1",
+    "allow_edit": "DD Analyste"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "En analyse financière",
+    "doc_status": "1",
+    "allow_edit": "DD Financier"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "En revue cybersécurité",
+    "doc_status": "1",
+    "allow_edit": "DD RSSI"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "En revue juridique",
+    "doc_status": "1",
+    "allow_edit": "DD Juridique"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "En revue DPO",
+    "doc_status": "1",
+    "allow_edit": "DD DPO"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "En attente validation métier",
+    "doc_status": "1",
+    "allow_edit": "DD Manager Metier"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "En attente validation Compliance",
+    "doc_status": "1",
+    "allow_edit": "DD Manager Compliance"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "En attente validation CCO",
+    "doc_status": "1",
+    "allow_edit": "DD CCO"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "En attente validation DG",
+    "doc_status": "1",
+    "allow_edit": "DD DG"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "Suspendu",
+    "doc_status": "1",
+    "allow_edit": "DD Manager Compliance"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "Clôturé — GO",
+    "doc_status": "1",
+    "allow_edit": "System Manager"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "Clôturé — NO GO",
+    "doc_status": "1",
+    "allow_edit": "System Manager"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "Clôturé — GO sous réserve",
+    "doc_status": "1",
+    "allow_edit": "System Manager"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "Rejeté",
+    "doc_status": "1",
+    "allow_edit": "System Manager"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "Sous surveillance continue",
+    "doc_status": "1",
+    "allow_edit": "System Manager"
+   }
+  ],
+  "transitions": [
+   {
+    "doctype": "Workflow Transition",
+    "state": "Brouillon",
+    "action": "Soumettre le dossier",
+    "next_state": "Soumis",
+    "allowed": "DD Client",
+    "allow_self_approval": 1
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "Soumis",
+    "action": "Prendre en préqualification",
+    "next_state": "En préqualification",
+    "allowed": "DD Analyste",
+    "allow_self_approval": 1
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "Soumis",
+    "action": "Bloquer — tiers sanctionné",
+    "next_state": "Rejeté",
+    "allowed": "DD Manager Compliance",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Interdit\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En préqualification",
+    "action": "Bloquer — tiers sanctionné",
+    "next_state": "Rejeté",
+    "allowed": "DD Manager Compliance",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Interdit\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En préqualification",
+    "action": "Démarrer l'analyse",
+    "next_state": "En analyse Compliance",
+    "allowed": "DD Analyste",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow in (\"Faible\", \"Modéré\", \"\")"
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En préqualification",
+    "action": "Démarrer le screening réglementaire",
+    "next_state": "En screening réglementaire",
+    "allowed": "DD Analyste",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow in (\"Élevé\", \"Critique\")"
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En préqualification",
+    "action": "Suspendre le dossier",
+    "next_state": "Suspendu",
+    "allowed": "DD Manager Compliance",
+    "allow_self_approval": 1
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En screening réglementaire",
+    "action": "Passer en analyse Compliance",
+    "next_state": "En analyse Compliance",
+    "allowed": "DD Analyste",
+    "allow_self_approval": 1
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En screening réglementaire",
+    "action": "Suspendre le dossier",
+    "next_state": "Suspendu",
+    "allowed": "DD Manager Compliance",
+    "allow_self_approval": 1
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En analyse Compliance",
+    "action": "Demander des documents complémentaires",
+    "next_state": "En attente de documents",
+    "allowed": "DD Analyste",
+    "allow_self_approval": 1
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En analyse Compliance",
+    "action": "Envoyer en validation métier",
+    "next_state": "En attente validation métier",
+    "allowed": "DD Analyste",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Faible\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En analyse Compliance",
+    "action": "Envoyer en analyse financière",
+    "next_state": "En analyse financière",
+    "allowed": "DD Analyste",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow in (\"Modéré\", \"Élevé\", \"Critique\")"
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En analyse Compliance",
+    "action": "Suspendre le dossier",
+    "next_state": "Suspendu",
+    "allowed": "DD Manager Compliance",
+    "allow_self_approval": 1
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente de documents",
+    "action": "Reprendre l'analyse",
+    "next_state": "En analyse Compliance",
+    "allowed": "DD Analyste",
+    "allow_self_approval": 1
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En analyse financière",
+    "action": "Envoyer en validation Compliance",
+    "next_state": "En attente validation Compliance",
+    "allowed": "DD Financier",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Modéré\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En analyse financière",
+    "action": "Envoyer en revue cybersécurité",
+    "next_state": "En revue cybersécurité",
+    "allowed": "DD Financier",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow in (\"Élevé\", \"Critique\")"
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En analyse financière",
+    "action": "Suspendre le dossier",
+    "next_state": "Suspendu",
+    "allowed": "DD Manager Compliance",
+    "allow_self_approval": 1
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En revue cybersécurité",
+    "action": "Envoyer en revue juridique",
+    "next_state": "En revue juridique",
+    "allowed": "DD RSSI",
+    "allow_self_approval": 1
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En revue juridique",
+    "action": "Envoyer en validation Compliance",
+    "next_state": "En attente validation Compliance",
+    "allowed": "DD Juridique",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Élevé\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En revue juridique",
+    "action": "Envoyer en revue DPO",
+    "next_state": "En revue DPO",
+    "allowed": "DD Juridique",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Critique\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En revue DPO",
+    "action": "Envoyer en validation Compliance",
+    "next_state": "En attente validation Compliance",
+    "allowed": "DD DPO",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Critique\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation métier",
+    "action": "Valider — GO",
+    "next_state": "Clôturé — GO",
+    "allowed": "DD Manager Metier",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Faible\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation métier",
+    "action": "Valider — NO GO",
+    "next_state": "Clôturé — NO GO",
+    "allowed": "DD Manager Metier",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Faible\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation métier",
+    "action": "Valider — GO sous réserve",
+    "next_state": "Clôturé — GO sous réserve",
+    "allowed": "DD Manager Metier",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Faible\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation métier",
+    "action": "Mettre sous surveillance",
+    "next_state": "Sous surveillance continue",
+    "allowed": "DD Manager Metier",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Faible\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation Compliance",
+    "action": "Valider — GO",
+    "next_state": "Clôturé — GO",
+    "allowed": "DD Manager Compliance",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Modéré\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation Compliance",
+    "action": "Valider — NO GO",
+    "next_state": "Clôturé — NO GO",
+    "allowed": "DD Manager Compliance",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Modéré\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation Compliance",
+    "action": "Valider — GO sous réserve",
+    "next_state": "Clôturé — GO sous réserve",
+    "allowed": "DD Manager Compliance",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Modéré\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation Compliance",
+    "action": "Mettre sous surveillance",
+    "next_state": "Sous surveillance continue",
+    "allowed": "DD Manager Compliance",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Modéré\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation Compliance",
+    "action": "Envoyer en validation CCO",
+    "next_state": "En attente validation CCO",
+    "allowed": "DD Manager Compliance",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow in (\"Élevé\", \"Critique\")"
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation CCO",
+    "action": "Valider — GO",
+    "next_state": "Clôturé — GO",
+    "allowed": "DD CCO",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Élevé\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation CCO",
+    "action": "Valider — NO GO",
+    "next_state": "Clôturé — NO GO",
+    "allowed": "DD CCO",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Élevé\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation CCO",
+    "action": "Valider — GO sous réserve",
+    "next_state": "Clôturé — GO sous réserve",
+    "allowed": "DD CCO",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Élevé\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation CCO",
+    "action": "Mettre sous surveillance",
+    "next_state": "Sous surveillance continue",
+    "allowed": "DD CCO",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Élevé\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation CCO",
+    "action": "Envoyer en validation DG",
+    "next_state": "En attente validation DG",
+    "allowed": "DD CCO",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Critique\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation DG",
+    "action": "Valider — GO",
+    "next_state": "Clôturé — GO",
+    "allowed": "DD DG",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Critique\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation DG",
+    "action": "Valider — NO GO",
+    "next_state": "Clôturé — NO GO",
+    "allowed": "DD DG",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Critique\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation DG",
+    "action": "Valider — GO sous réserve",
+    "next_state": "Clôturé — GO sous réserve",
+    "allowed": "DD DG",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Critique\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "En attente validation DG",
+    "action": "Mettre sous surveillance",
+    "next_state": "Sous surveillance continue",
+    "allowed": "DD DG",
+    "allow_self_approval": 1,
+    "condition": "doc.circuit_workflow == \"Critique\""
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "Suspendu",
+    "action": "Reprendre le dossier",
+    "next_state": "En analyse Compliance",
+    "allowed": "DD Manager Compliance",
+    "allow_self_approval": 1
+   }
+  ]
+ }
+]

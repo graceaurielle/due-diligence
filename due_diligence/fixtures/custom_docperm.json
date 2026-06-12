@@ -1,0 +1,74 @@
+[
+  {
+    "doctype": "Custom DocPerm",
+    "name": "jc8pne37f7",
+    "parent": "Workflow",
+    "role": "System Manager",
+    "permlevel": 0,
+    "read": 1,
+    "write": 1
+  },
+  {
+    "doctype": "Custom DocPerm",
+    "name": "jcbtmahlj8",
+    "parent": "Workflow",
+    "role": "DD Analyste",
+    "permlevel": 0,
+    "read": 1,
+    "write": 0
+  },
+  {
+    "doctype": "Custom DocPerm",
+    "name": "jcbakdln6v",
+    "parent": "Workflow",
+    "role": "DD Manager Compliance",
+    "permlevel": 0,
+    "read": 1,
+    "write": 0
+  },
+  {
+    "doctype": "Custom DocPerm",
+    "name": "jcc231lrrt",
+    "parent": "Workflow",
+    "role": "DD Validateur",
+    "permlevel": 0,
+    "read": 1,
+    "write": 0
+  },
+  {
+    "doctype": "Custom DocPerm",
+    "name": "jccvrs0s76",
+    "parent": "Workflow",
+    "role": "DD Juridique",
+    "permlevel": 0,
+    "read": 1,
+    "write": 0
+  },
+  {
+    "doctype": "Custom DocPerm",
+    "name": "jcdpna7rq6",
+    "parent": "Workflow",
+    "role": "DD DPO",
+    "permlevel": 0,
+    "read": 1,
+    "write": 0
+  },
+  {
+    "doctype": "Custom DocPerm",
+    "name": "jcdvk889mo",
+    "parent": "Workflow",
+    "role": "DD Cyber",
+    "permlevel": 0,
+    "read": 1,
+    "write": 0
+  },
+  {
+    "doctype": "Custom DocPerm",
+    "name": "jce5g5sso6",
+    "parent": "Workflow",
+    "role": "DD Financier",
+    "permlevel": 0,
+    "read": 1,
+    "write": 0
+  }
+]

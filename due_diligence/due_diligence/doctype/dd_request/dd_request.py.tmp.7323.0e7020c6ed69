@@ -1,0 +1,229 @@
+import hashlib
+import frappe
+from frappe import _
+from frappe.model.document import Document
+from frappe.utils import now_datetime
+
+
+class DDRequest(Document):
+
+	# ------------------------------------------------------------------ #
+	# 4.1 — Verrou soumission portail                                     #
+	# ------------------------------------------------------------------ #
+
+	def validate(self):
+		"""Bloque la modification si le DD Client n'est plus en état Brouillon."""
+		if "DD Client" in frappe.get_roles(frappe.session.user):
+			if self.workflow_state and self.workflow_state != "Brouillon":
+				frappe.throw(
+					_("Ce dossier est en cours de traitement et ne peut plus être modifié."),
+					title=_("Dossier verrouillé"),
+				)
+		self.calculer_score()
+
+	# ------------------------------------------------------------------ #
+	# 4.2 — Moteur de scoring                                             #
+	# ------------------------------------------------------------------ #
+
+	def calculer_score(self):
+		"""
+		Score brut  = somme des poids_applique dans les réponses
+		             + bonus sur les drapeaux du tiers évalué
+		Score pondéré = score brut × atténuants (0..1)
+		Catégorie : <20 Faible | 20-40 Modéré | 41-60 Élevé | >60 Critique
+		"""
+		brut = sum(int(row.poids_applique or 0) for row in (self.answers or []))
+
+		# Bonus drapeaux tiers (points de risque fixes)
+		if self.interaction_publique:
+			brut += 15
+		if self.donnees_personnelles:
+			brut += 10
+		if self.acces_si:
+			brut += 10
+
+		# Bonus montant contrat
+		montant = float(self.tiers_montant_contrat or 0)
+		if montant >= 500_000_000:
+			brut += 20
+		elif montant >= 100_000_000:
+			brut += 10
+		elif montant >= 10_000_000:
+			brut += 5
+
+		# Pondération : documents manquants = aggravant
+		total_docs = len(self.required_documents or [])
+		docs_ok = sum(
+			1 for d in (self.required_documents or [])
+			if d.statut in ("Reçu", "Validé")
+		)
+		if total_docs > 0:
+			ratio_docs = docs_ok / total_docs
+			# 0 doc reçu → ×1.2 ; tous reçus → ×0.9
+			attenuation = 0.9 + (1 - ratio_docs) * 0.3
+		else:
+			attenuation = 1.0
+
+		# Extension : intégrer score externe AML/PEP ici
+		# brut += screening_externe(self.tiers_nom)
+
+		pondere = round(brut * attenuation)
+
+		if pondere < 20:
+			categorie = "Faible"
+		elif pondere <= 40:
+			categorie = "Modéré"
+		elif pondere <= 60:
+			categorie = "Élevé"
+		else:
+			categorie = "Critique"
+
+		self.score_brut = brut
+		self.score_pondere = pondere
+		self.categorie_risque = categorie
+
+	# ------------------------------------------------------------------ #
+	# 4.3 — Hash SHA-256 des pièces jointes                               #
+	# ------------------------------------------------------------------ #
+
+	def _hash_documents(self):
+		"""Calcule le SHA-256 de chaque fichier attaché dans required_documents."""
+		for row in (self.required_documents or []):
+			if not row.fichier:
+				row.hash_sha256 = ""
+				continue
+			try:
+				file_doc = frappe.get_doc("File", {"file_url": row.fichier})
+				file_path = file_doc.get_full_path()
+				sha = hashlib.sha256()
+				with open(file_path, "rb") as f:
+					for chunk in iter(lambda: f.read(65536), b""):
+						sha.update(chunk)
+				row.hash_sha256 = sha.hexdigest()
+			except Exception:
+				# Fichier distant ou inaccessible : on laisse l'ancien hash
+				pass
+
+	def on_update(self):
+		self._hash_documents()
+		self._horodater_decision()
+
+	# ------------------------------------------------------------------ #
+	# 4.4 — Soumission : assignation analyste + notifications             #
+	# ------------------------------------------------------------------ #
+
+	def on_submit(self):
+		self._assigner_analyste()
+		self._notifier_equipe()
+		self._notifier_client_soumission()
+
+	def _assigner_analyste(self):
+		"""Assigne automatiquement le premier DD Analyste disponible si non renseigné."""
+		if self.analyste_assigne:
+			return
+		analystes = frappe.get_all(
+			"Has Role",
+			filters={"role": "DD Analyste", "parenttype": "User"},
+			fields=["parent"],
+			order_by="parent asc",
+			limit=1,
+		)
+		if analystes:
+			self.db_set("analyste_assigne", analystes[0].parent, notify=True)
+
+	def _notifier_equipe(self):
+		"""Envoie un email à tous les DD Analystes + DD Manager Compliance."""
+		destinataires = self._emails_par_role(["DD Analyste", "DD Manager Compliance"])
+		if not destinataires:
+			return
+		frappe.sendmail(
+			recipients=destinataires,
+			subject=_("Nouveau dossier DD — {0}").format(self.name),
+			message=_(
+				"<p>Un nouveau dossier de Due Diligence a été soumis.</p>"
+				"<ul>"
+				"<li><b>Référence :</b> {name}</li>"
+				"<li><b>Tiers évalué :</b> {tiers}</li>"
+				"<li><b>Type :</b> {type}</li>"
+				"<li><b>Demandeur :</b> {demandeur}</li>"
+				"</ul>"
+				'<p><a href="/app/dd-request/{name}">Ouvrir le dossier</a></p>'
+			).format(
+				name=self.name,
+				tiers=self.tiers_nom,
+				type=self.dd_type,
+				demandeur=self.demandeur_nom,
+			),
+		)
+
+	def _notifier_client_soumission(self):
+		"""Confirme la réception au client demandeur."""
+		email = self.email_contact or frappe.db.get_value("User", self.owner, "email")
+		if not email:
+			return
+		frappe.sendmail(
+			recipients=[email],
+			subject=_("Votre dossier DD a été reçu — {0}").format(self.name),
+			message=_(
+				"<p>Madame, Monsieur,</p>"
+				"<p>Votre dossier de Due Diligence <b>{name}</b> concernant "
+				"<b>{tiers}</b> a bien été reçu et est en cours de traitement.</p>"
+				"<p>Vous serez notifié(e) dès qu'une décision sera rendue.</p>"
+				"<p>Cordialement,<br/>Équipe Compliance — AMOAMAN & ASSOCIÉS</p>"
+			).format(name=self.name, tiers=self.tiers_nom),
+		)
+
+	# ------------------------------------------------------------------ #
+	# 4.5 — Décision finale : horodatage                                  #
+	# ------------------------------------------------------------------ #
+
+	def _horodater_decision(self):
+		"""Pose date_decision à la première fois qu'une décision finale est enregistrée."""
+		if self.decision_finale and not self.date_decision:
+			self.db_set("date_decision", now_datetime(), notify=False)
+			self._notifier_client_decision()
+
+	def _notifier_client_decision(self):
+		"""Notifie le client de la décision finale."""
+		email = self.email_contact or frappe.db.get_value("User", self.owner, "email")
+		if not email:
+			return
+		frappe.sendmail(
+			recipients=[email],
+			subject=_("Décision rendue pour votre dossier DD — {0}").format(self.name),
+			message=_(
+				"<p>Madame, Monsieur,</p>"
+				"<p>Une décision a été rendue pour votre dossier <b>{name}</b> "
+				"concernant <b>{tiers}</b> :</p>"
+				"<p style='font-size:1.2em;font-weight:bold;'>{decision}</p>"
+				"{reserves}"
+				"<p>Cordialement,<br/>Équipe Compliance — AMOAMAN & ASSOCIÉS</p>"
+			).format(
+				name=self.name,
+				tiers=self.tiers_nom,
+				decision=self.decision_finale,
+				reserves=(
+					"<p><b>Réserves :</b> {0}</p>".format(self.reserves)
+					if self.reserves else ""
+				),
+			),
+		)
+
+	# ------------------------------------------------------------------ #
+	# Utilitaires                                                         #
+	# ------------------------------------------------------------------ #
+
+	def _emails_par_role(self, roles):
+		"""Retourne la liste des emails des utilisateurs ayant l'un des rôles donnés."""
+		emails = set()
+		for role in roles:
+			users = frappe.get_all(
+				"Has Role",
+				filters={"role": role, "parenttype": "User"},
+				fields=["parent"],
+			)
+			for u in users:
+				email = frappe.db.get_value("User", u.parent, "email")
+				if email:
+					emails.add(email)
+		return list(emails)

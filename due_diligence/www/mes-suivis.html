@@ -1,0 +1,366 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block page_content %}
+<style>
+:root {
+  --sidebar-bg: #0d1b2a;
+  --sidebar-w: 230px;
+  --primary: #0d1b2a;
+  --accent: #4a90d9;
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #1a202c;
+  --muted: #64748b;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #2563eb;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+a { text-decoration: none; color: inherit; }
+
+.dd-layout { display: flex; min-height: 100vh; }
+.dd-sidebar { width: var(--sidebar-w); background: var(--sidebar-bg); color: rgba(255,255,255,.75); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; }
+.dd-sidebar-brand { padding: 28px 20px 24px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.dd-sidebar-logo { font-size: 13px; font-weight: 700; color: #fff; letter-spacing: .5px; line-height: 1.3; }
+.dd-sidebar-tagline { font-size: 10px; color: rgba(255,255,255,.45); margin-top: 4px; text-transform: uppercase; letter-spacing: .6px; }
+.dd-sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+.dd-nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 7px; font-size: 13px; color: rgba(255,255,255,.6); margin-bottom: 2px; transition: all .15s; }
+.dd-nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+.dd-nav-item.active { background: rgba(255,255,255,.1); color: #fff; border-left: 3px solid var(--accent); }
+.dd-sidebar-bottom { padding: 12px; border-top: 1px solid rgba(255,255,255,.08); }
+
+.dd-main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+.dd-header { background: #fff; border-bottom: 1px solid var(--border); padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+.dd-header-title { font-size: 18px; font-weight: 700; }
+.dd-content { padding: 28px 32px; flex: 1; }
+
+/* KPI */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+.kpi-card { background: var(--card); border-radius: 12px; padding: 18px 20px; border: 1px solid var(--border); display: flex; align-items: center; gap: 14px; }
+.kpi-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.kpi-icon.blue { background: #dbeafe; color: var(--info); }
+.kpi-icon.orange { background: #ffedd5; color: var(--warning); }
+.kpi-icon.green { background: #dcfce7; color: var(--success); }
+.kpi-icon.gray { background: #f1f5f9; color: var(--muted); }
+.kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
+.kpi-value { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1; }
+
+/* Filter bar */
+.filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.filter-btn { padding: 7px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1.5px solid var(--border); background: #fff; cursor: pointer; color: var(--muted); transition: all .15s; }
+.filter-btn.active, .filter-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+.search-input { margin-left: auto; padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 12px; font-family: inherit; outline: none; width: 220px; }
+.search-input:focus { border-color: var(--accent); }
+
+/* Cards grid */
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); gap: 16px; }
+
+/* Suivi card */
+.suivi-card {
+  background: var(--card); border-radius: 14px; border: 1px solid var(--border);
+  overflow: hidden; transition: box-shadow .15s, transform .1s;
+}
+.suivi-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.08); transform: translateY(-1px); }
+
+.suivi-card-header { padding: 18px 20px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.suivi-card-ref { font-size: 11px; font-weight: 700; color: var(--primary); background: #f1f5f9; padding: 3px 8px; border-radius: 5px; display: inline-block; margin-bottom: 6px; }
+.suivi-card-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; line-height: 1.3; }
+.suivi-card-type { font-size: 12px; color: var(--muted); }
+
+/* Status badge */
+.status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.status-badge.blue { background: #dbeafe; color: #1e40af; }
+.status-badge.orange { background: #ffedd5; color: #c2410c; }
+.status-badge.green { background: #dcfce7; color: #15803d; }
+.status-badge.red { background: #fee2e2; color: #dc2626; }
+.status-badge.gray { background: #f1f5f9; color: #475569; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+/* Progress stepper */
+.suivi-card-progress { padding: 18px 20px 14px; }
+.progress-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+.progress-pct { font-size: 12px; font-weight: 700; color: var(--accent); }
+
+.stepper { display: flex; align-items: flex-start; position: relative; }
+.step-item { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; }
+.step-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+.step-item.done:not(:last-child)::after { background: var(--success); }
+.step-item.active:not(:last-child)::after { background: linear-gradient(to right, var(--accent), var(--border)); }
+
+.step-dot {
+  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--border); background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; z-index: 1;
+  transition: all .2s;
+}
+.step-item.done .step-dot { background: var(--success); border-color: var(--success); }
+.step-item.active .step-dot { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 3px rgba(74,144,217,.2); }
+.step-label { font-size: 10px; text-align: center; margin-top: 6px; color: var(--muted); font-weight: 500; line-height: 1.2; }
+.step-item.done .step-label { color: var(--success); font-weight: 600; }
+.step-item.active .step-label { color: var(--accent); font-weight: 700; }
+
+/* Card footer */
+.suivi-card-footer { padding: 12px 20px; background: #fafbfc; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.footer-meta { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 14px; }
+.risk-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+.footer-link { font-size: 12px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 5px; }
+.footer-link:hover { color: #357bc2; }
+
+/* Closed overlay */
+.suivi-card.clos { border-color: transparent; }
+.suivi-card.clos.go { border-left: 3px solid var(--success); }
+.suivi-card.clos.nogo { border-left: 3px solid var(--danger); }
+.suivi-card.clos.reserve { border-left: 3px solid var(--warning); }
+
+/* Empty */
+.empty-state { text-align: center; padding: 80px 32px; color: var(--muted); background: var(--card); border-radius: 14px; border: 1px solid var(--border); }
+.empty-state h3 { font-size: 16px; font-weight: 600; margin: 16px 0 8px; color: var(--text); }
+
+/* Titres et textes longs dans les cartes */
+.suivi-card-header > div:first-child { min-width: 0; flex: 1; }
+.suivi-card-header > div:last-child { flex-shrink: 0; }
+.suivi-card-title { overflow-wrap: break-word; word-break: break-word; }
+.suivi-card-ref { overflow-wrap: break-word; word-break: break-word; }
+
+/* ≤1024px : sidebar repliée, contenu pleine largeur */
+@media (max-width:1024px) {
+  .dd-header { padding: 0 20px; gap: 10px; }
+  .dd-content { padding: 20px; }
+  .kpi-grid { grid-template-columns: repeat(2,1fr); gap: 12px; }
+  .cards-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width:767px) {
+  .dd-header { padding: 0 12px; gap: 8px; height: auto; min-height: 60px; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; }
+  .dd-header-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dd-content { padding: 14px; }
+  .kpi-grid { grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 14px; }
+  .kpi-card { padding: 14px; }
+  .kpi-value { font-size: 22px; }
+  .cards-grid { grid-template-columns: 1fr; gap: 12px; }
+  .filter-bar { flex-wrap: wrap; gap: 8px; padding: 10px 14px; }
+  .search-input { width: 100%; max-width: 100%; margin-left: 0; margin-top: 4px; }
+  .empty-state { padding: 48px 16px; }
+}
+@media (max-width:520px) {
+  .kpi-grid { grid-template-columns: repeat(2,1fr); }
+  .suivi-card-header { padding: 14px 16px 10px; gap: 8px; }
+  .suivi-card-progress { padding: 14px 16px 10px; }
+  .suivi-card-footer { padding: 10px 16px; }
+  .step-label { font-size: 9px; }
+  .btn-label { display: none; }
+}
+</style>
+
+<div class="dd-layout">
+  {% include "due_diligence/www/_sidebar.html" %}
+
+  <div class="dd-main">
+    <header class="dd-header">
+      <button class="dd-hamburger" onclick="openSidebar()"><span></span><span></span><span></span></button>
+      <div class="dd-header-title" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Suivi des dossiers</div>
+      <a href="/nouvelle-demande" style="background:var(--primary);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="btn-label">Nouvelle demande</span>
+      </a>
+    </header>
+
+    <div class="dd-content">
+
+      <!-- KPI -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon gray">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div>
+            <div class="kpi-label">Total dossiers</div>
+            <div class="kpi-value">{{ "%02d"|format(kpi_total) }}</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div>
+            <div class="kpi-label">En cours</div>
+            <div class="kpi-value">{{ "%02d"|format(kpi_en_cours) }}</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon orange">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div>
+            <div class="kpi-label">En attente</div>
+            <div class="kpi-value">{{ "%02d"|format(kpi_attente) }}</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div>
+            <div class="kpi-label">Clôturés</div>
+            <div class="kpi-value">{{ "%02d"|format(kpi_clotures) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterCards('all', this)">Tous</button>
+        <button class="filter-btn" onclick="filterCards('en-cours', this)">En cours</button>
+        <button class="filter-btn" onclick="filterCards('attente', this)">En attente</button>
+        <button class="filter-btn" onclick="filterCards('clos', this)">Clôturés</button>
+        <input type="text" class="search-input" placeholder="Rechercher un tiers, une référence…" oninput="searchCards(this.value)">
+      </div>
+
+      <!-- Cards -->
+      {% if requests %}
+      <div class="cards-grid" id="cards-grid">
+        {% for r in requests %}
+        {% set etat = r.etat %}
+        {% set is_clos = r.is_clos %}
+        {% set is_attente = r.is_attente %}
+
+        <div class="suivi-card {% if is_clos %}clos {% if 'NO GO' in etat %}nogo{% elif 'sous réserve' in etat %}reserve{% else %}go{% endif %}{% endif %}"
+             data-filter="{% if is_clos %}clos{% elif is_attente %}attente{% else %}en-cours{% endif %}"
+             data-search="{{ (r.name ~ ' ' ~ (r.tiers_nom or '') ~ ' ' ~ (r.dd_type or '')) | lower }}">
+
+          <div class="suivi-card-header">
+            <div>
+              <div class="suivi-card-ref">{{ r.name }}</div>
+              <div class="suivi-card-title">{{ r.tiers_nom or "—" }}</div>
+              <div class="suivi-card-type">{{ r.dd_type or "—" }}</div>
+            </div>
+            <div>
+              {% if "Clôturé — GO" == etat and "sous réserve" not in etat %}
+                <span class="status-badge green"><span class="status-dot"></span>CLÔTURÉ GO</span>
+              {% elif "NO GO" in etat %}
+                <span class="status-badge red"><span class="status-dot"></span>CLÔTURÉ NO GO</span>
+              {% elif "sous réserve" in etat %}
+                <span class="status-badge orange"><span class="status-dot"></span>GO SOUS RÉSERVE</span>
+              {% elif is_attente %}
+                <span class="status-badge orange"><span class="status-dot"></span>EN ATTENTE</span>
+              {% elif etat == "Soumis" %}
+                <span class="status-badge gray"><span class="status-dot"></span>SOUMIS</span>
+              {% else %}
+                <span class="status-badge blue"><span class="status-dot"></span>{{ etat | upper }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="suivi-card-progress">
+            <div class="progress-label">
+              <span>Avancement du processus</span>
+              <span class="progress-pct">{{ r.progress }}%</span>
+            </div>
+            <div class="stepper">
+              {% for step in r.steps %}
+              <div class="step-item {{ step.statut }}">
+                <div class="step-dot">
+                  {% if step.statut == 'done' %}
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                  {% elif step.statut == 'active' %}
+                  <div style="width:7px;height:7px;background:#fff;border-radius:50%;"></div>
+                  {% endif %}
+                </div>
+                <div class="step-label">{{ step.short }}</div>
+              </div>
+              {% endfor %}
+              {% if is_clos %}
+              <div class="step-item done">
+                <div class="step-dot">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div class="step-label">Clôturé</div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="suivi-card-footer">
+            <div class="footer-meta">
+              <span>{{ frappe.format(r.creation, "Date") }}</span>
+              {% if r.analyste_assigne %}
+              <span>{{ r.analyste_assigne }}</span>
+              {% endif %}
+            </div>
+            <a href="/suivi?name={{ r.name }}" class="footer-link">
+              Voir le détail
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div id="empty-search" style="display:none;" class="empty-state">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <h3>Aucun résultat</h3>
+        <p>Essayez un autre terme de recherche ou filtre.</p>
+      </div>
+
+      {% else %}
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <h3>Aucun dossier pour l'instant</h3>
+        <p>Créez votre première demande de Due Diligence.</p>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <footer style="padding:16px 32px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--border);">
+      DOCUMENT CONFIDENTIEL — AMOAMAN &amp; ASSOCIÉS &nbsp;|&nbsp;
+      <a href="#">Confidentialité</a> &nbsp;|&nbsp;
+      <a href="#">Conditions d'utilisation</a>
+    </footer>
+  </div>
+</div>
+
+<script>
+let currentFilter = 'all';
+
+function filterCards(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function searchCards(val) {
+  applyFilters(val.toLowerCase().trim());
+}
+
+function applyFilters(search) {
+  const cards = document.querySelectorAll('#cards-grid .suivi-card');
+  let visible = 0;
+  cards.forEach(c => {
+    const matchFilter = currentFilter === 'all' || c.dataset.filter === currentFilter;
+    const matchSearch = !search || c.dataset.search.includes(search);
+    const show = matchFilter && matchSearch;
+    c.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  const emptyEl = document.getElementById('empty-search');
+  if (emptyEl) emptyEl.style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+{% endblock %}

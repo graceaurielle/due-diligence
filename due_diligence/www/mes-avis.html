@@ -1,0 +1,144 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block page_content %}
+<style>
+:root { --sidebar-bg:#0d1b2a; --sidebar-w:230px; --primary:#0d1b2a; --accent:#4a90d9; --bg:#f0f2f5; --border:#e2e8f0; --text:#1a202c; --muted:#64748b; --success:#16a34a; --warning:#d97706; --danger:#dc2626; }
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Inter',-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+a { text-decoration:none; color:inherit; }
+.dd-layout { display:flex; min-height:100vh; }
+.dd-sidebar { width:var(--sidebar-w); background:var(--sidebar-bg); color:rgba(255,255,255,.75); display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:100; }
+.dd-sidebar-brand { padding:28px 20px 24px; border-bottom:1px solid rgba(255,255,255,.08); }
+.dd-sidebar-logo { font-size:13px; font-weight:700; color:#fff; letter-spacing:.5px; line-height:1.3; }
+.dd-sidebar-tagline { font-size:10px; color:rgba(255,255,255,.45); margin-top:4px; text-transform:uppercase; letter-spacing:.6px; }
+.dd-sidebar-nav { flex:1; padding:16px 12px; }
+.dd-nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:7px; font-size:13px; color:rgba(255,255,255,.6); margin-bottom:2px; transition:all .15s; }
+.dd-nav-item:hover { background:rgba(255,255,255,.06); color:#fff; }
+.dd-nav-item.active { background:rgba(255,255,255,.1); color:#fff; border-left:3px solid var(--accent); }
+.dd-sidebar-bottom { padding:12px; border-top:1px solid rgba(255,255,255,.08); }
+.dd-main { margin-left:var(--sidebar-w); flex:1; padding:32px; }
+
+/* Header */
+.page-header { margin-bottom:28px; }
+.page-title { font-size:24px; font-weight:800; margin-bottom:4px; }
+.page-sub { font-size:13px; color:var(--muted); }
+
+/* Grille */
+.avis-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; }
+.avis-card { background:#fff; border-radius:12px; border:1px solid var(--border); padding:20px 22px; display:flex; flex-direction:column; gap:12px; }
+.avis-card:hover { border-color:var(--accent); box-shadow:0 4px 16px rgba(0,0,0,.06); }
+
+/* Badge décision */
+.dec-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 14px; border-radius:20px; font-size:12px; font-weight:800; letter-spacing:.5px; }
+.dec-go { background:#dcfce7; color:#15803d; }
+.dec-nogo { background:#fee2e2; color:#dc2626; }
+.dec-reserve { background:#ffedd5; color:#c2410c; }
+
+/* Badge risque */
+.risque-badge { font-size:11px; font-weight:600; padding:2px 10px; border-radius:12px; }
+.r-faible { background:#dcfce7; color:#15803d; }
+.r-modere { background:#ffedd5; color:#c2410c; }
+.r-eleve { background:#fee2e2; color:#dc2626; }
+.r-critique { background:#fce7f3; color:#9d174d; }
+
+.avis-ref { font-size:12px; color:var(--muted); font-weight:600; }
+.avis-tiers { font-size:15px; font-weight:700; }
+.avis-meta { font-size:12px; color:var(--muted); }
+.avis-actions { display:flex; gap:10px; margin-top:4px; }
+.btn-sm { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:7px; font-size:12px; font-weight:600; }
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { opacity:.85; }
+.btn-outline { background:#fff; color:var(--primary); border:1px solid var(--border); }
+.btn-outline:hover { border-color:var(--primary); }
+
+/* Vide */
+.empty-state { text-align:center; padding:80px 20px; color:var(--muted); }
+.empty-state svg { margin-bottom:16px; opacity:.3; }
+.empty-state h3 { font-size:16px; font-weight:700; margin-bottom:6px; color:var(--text); }
+
+/* Textes longs */
+.avis-tiers, .avis-ref { overflow-wrap: break-word; word-break: break-word; }
+
+/* ≤1024px : sidebar repliée, contenu pleine largeur */
+@media (max-width:1024px) {
+  .dd-main { padding: 0; }
+  .page-header { padding: 20px 24px 16px; }
+  .avis-grid { padding: 0 24px 24px; gap: 14px; grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width:767px) {
+  .page-header { padding: 14px 16px; }
+  .avis-grid { padding: 0 14px 14px; gap: 12px; grid-template-columns: 1fr; }
+  .avis-card { padding: 16px 18px; }
+  .empty-state { padding: 48px 16px; }
+}
+</style>
+
+<div class="dd-layout">
+  {% include "due_diligence/www/_sidebar.html" %}
+
+  <div class="dd-main">
+    <div class="dd-mobile-bar">
+      <button class="dd-hamburger" onclick="openSidebar()"><span></span><span></span><span></span></button>
+      Mes avis
+    </div>
+    <div class="page-header">
+      <div class="page-title">Mes avis de conformité</div>
+      <div class="page-sub">Avis officiels rendus par AMOAMAN &amp; ASSOCIÉS</div>
+    </div>
+
+    {% if avis_list %}
+    <div class="avis-grid">
+      {% for avis in avis_list %}
+      {% set dec_cls = "go" if avis.decision == "GO" else ("nogo" if avis.decision == "NO GO" else "reserve") %}
+      {% set r_cls = {"Faible":"r-faible","Modéré":"r-modere","Élevé":"r-eleve","Critique":"r-critique"}.get(avis.categorie_risque, "") %}
+      <div class="avis-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <span class="dec-badge dec-{{ dec_cls }}">{{ avis.decision }}</span>
+          {% if avis.categorie_risque %}
+            <span class="risque-badge {{ r_cls }}">{{ avis.categorie_risque }}</span>
+          {% endif %}
+        </div>
+        <div>
+          <div class="avis-ref">{{ avis.name }} · {{ avis.dd_request }}</div>
+          <div class="avis-tiers">{{ avis.tiers_nom or "—" }}</div>
+          {% if avis.client_nom %}<div class="avis-meta">Client : {{ avis.client_nom }}</div>{% endif %}
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          {% if avis.date_decision %}
+            <div class="avis-meta">
+              <strong>Décision le</strong> {{ frappe.format(avis.date_decision, "Date") }}
+            </div>
+          {% endif %}
+          {% if avis.date_expiration %}
+            <div class="avis-meta">
+              <strong>Expire le</strong> {{ frappe.format(avis.date_expiration, "Date") }}
+            </div>
+          {% endif %}
+        </div>
+        <div class="avis-actions">
+          <a href="/suivi?name={{ avis.dd_request }}" class="btn-sm btn-outline">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Voir le dossier
+          </a>
+          <a href="/printview?doctype=DD+Avis+Compliance&name={{ avis.name }}&format=Avis+Compliance+AMOAMAN&_lang=fr"
+             class="btn-sm btn-primary" target="_blank">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Télécharger PDF
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <h3>Aucun avis disponible</h3>
+      <p>Les avis de conformité apparaîtront ici une fois les dossiers clôturés.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

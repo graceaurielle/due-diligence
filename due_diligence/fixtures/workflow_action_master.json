@@ -1,0 +1,112 @@
+[
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Soumettre le dossier",
+  "workflow_action_name": "Soumettre le dossier"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Prendre en préqualification",
+  "workflow_action_name": "Prendre en préqualification"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Bloquer — tiers sanctionné",
+  "workflow_action_name": "Bloquer — tiers sanctionné"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Démarrer l'analyse",
+  "workflow_action_name": "Démarrer l'analyse"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Démarrer le screening réglementaire",
+  "workflow_action_name": "Démarrer le screening réglementaire"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Passer en analyse Compliance",
+  "workflow_action_name": "Passer en analyse Compliance"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Demander des documents complémentaires",
+  "workflow_action_name": "Demander des documents complémentaires"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Reprendre l'analyse",
+  "workflow_action_name": "Reprendre l'analyse"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Envoyer en analyse financière",
+  "workflow_action_name": "Envoyer en analyse financière"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Envoyer en revue cybersécurité",
+  "workflow_action_name": "Envoyer en revue cybersécurité"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Envoyer en revue juridique",
+  "workflow_action_name": "Envoyer en revue juridique"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Envoyer en revue DPO",
+  "workflow_action_name": "Envoyer en revue DPO"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Envoyer en validation métier",
+  "workflow_action_name": "Envoyer en validation métier"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Envoyer en validation Compliance",
+  "workflow_action_name": "Envoyer en validation Compliance"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Envoyer en validation CCO",
+  "workflow_action_name": "Envoyer en validation CCO"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Envoyer en validation DG",
+  "workflow_action_name": "Envoyer en validation DG"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Valider — GO",
+  "workflow_action_name": "Valider — GO"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Valider — NO GO",
+  "workflow_action_name": "Valider — NO GO"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Valider — GO sous réserve",
+  "workflow_action_name": "Valider — GO sous réserve"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Mettre sous surveillance",
+  "workflow_action_name": "Mettre sous surveillance"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Suspendre le dossier",
+  "workflow_action_name": "Suspendre le dossier"
+ },
+ {
+  "doctype": "Workflow Action Master",
+  "name": "Reprendre le dossier",
+  "workflow_action_name": "Reprendre le dossier"
+ }
+]

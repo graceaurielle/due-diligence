@@ -1,0 +1,155 @@
+{
+ "actions": [],
+ "creation": "2026-06-10 00:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Setup",
+ "field_order": [
+  "sb_poids",
+  "poids_geo",
+  "poids_corruption",
+  "poids_financier",
+  "poids_reputationnel",
+  "cb_poids",
+  "poids_cyber",
+  "poids_donnees",
+  "poids_documentaire",
+  "total_poids",
+  "sb_seuils",
+  "seuil_faible",
+  "seuil_modere",
+  "seuil_eleve",
+  "seuil_critique",
+  "note_seuils"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_poids",
+   "fieldtype": "Section Break",
+   "label": "Poids des axes (total = 100 %)"
+  },
+  {
+   "default": "20",
+   "fieldname": "poids_geo",
+   "fieldtype": "Float",
+   "label": "Géographique (%)",
+   "reqd": 1
+  },
+  {
+   "default": "25",
+   "fieldname": "poids_corruption",
+   "fieldtype": "Float",
+   "label": "Corruption / Intégrité (%)",
+   "reqd": 1
+  },
+  {
+   "default": "15",
+   "fieldname": "poids_financier",
+   "fieldtype": "Float",
+   "label": "Financier (%)",
+   "reqd": 1
+  },
+  {
+   "default": "15",
+   "fieldname": "poids_reputationnel",
+   "fieldtype": "Float",
+   "label": "Réputationnel (%)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_poids",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "10",
+   "fieldname": "poids_cyber",
+   "fieldtype": "Float",
+   "label": "Cybersécurité (%)",
+   "reqd": 1
+  },
+  {
+   "default": "10",
+   "fieldname": "poids_donnees",
+   "fieldtype": "Float",
+   "label": "Données personnelles (%)",
+   "reqd": 1
+  },
+  {
+   "default": "5",
+   "fieldname": "poids_documentaire",
+   "fieldtype": "Float",
+   "label": "Documentaire (%)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_poids",
+   "fieldtype": "Float",
+   "label": "Total (%)",
+   "read_only": 1,
+   "description": "Doit être égal à 100 %"
+  },
+  {
+   "fieldname": "sb_seuils",
+   "fieldtype": "Section Break",
+   "label": "Seuils de catégorie (score résiduel)"
+  },
+  {
+   "default": "20",
+   "fieldname": "seuil_faible",
+   "fieldtype": "Int",
+   "label": "Seuil max Faible (0 – X)",
+   "reqd": 1
+  },
+  {
+   "default": "40",
+   "fieldname": "seuil_modere",
+   "fieldtype": "Int",
+   "label": "Seuil max Modéré (X+1 – Y)",
+   "reqd": 1
+  },
+  {
+   "default": "60",
+   "fieldname": "seuil_eleve",
+   "fieldtype": "Int",
+   "label": "Seuil max Élevé (Y+1 – Z)",
+   "reqd": 1
+  },
+  {
+   "default": "80",
+   "fieldname": "seuil_critique",
+   "fieldtype": "Int",
+   "label": "Seuil max Critique (Z+1 – W)",
+   "reqd": 1,
+   "description": "Au-delà → Interdit"
+  },
+  {
+   "fieldname": "note_seuils",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted\">Les seuils doivent être strictement croissants. Score &gt; Seuil Critique → catégorie <strong>Interdit</strong>.</p>"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-06-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Due Diligence",
+ "name": "DD Scoring Config",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "DD Manager Compliance",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

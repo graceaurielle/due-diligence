@@ -1,0 +1,421 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block page_content %}
+<style>
+:root {
+  --sidebar-bg: #0d1b2a;
+  --sidebar-w: 230px;
+  --primary: #0d1b2a;
+  --accent: #4a90d9;
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #1a202c;
+  --muted: #64748b;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #2563eb;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+a { text-decoration: none; color: inherit; }
+
+/* Layout */
+.dd-layout { display: flex; min-height: 100vh; }
+.dd-sidebar { width: var(--sidebar-w); background: var(--sidebar-bg); color: rgba(255,255,255,.75); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; }
+.dd-sidebar-brand { padding: 28px 20px 24px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.dd-sidebar-logo { font-size: 13px; font-weight: 700; color: #fff; letter-spacing: .5px; line-height: 1.3; }
+.dd-sidebar-tagline { font-size: 10px; color: rgba(255,255,255,.45); margin-top: 4px; text-transform: uppercase; letter-spacing: .6px; }
+.dd-sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+.dd-nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 7px; font-size: 13px; color: rgba(255,255,255,.6); margin-bottom: 2px; transition: all .15s; }
+.dd-nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+.dd-nav-item.active { background: rgba(255,255,255,.1); color: #fff; border-left: 3px solid var(--accent); }
+.dd-sidebar-bottom { padding: 12px; border-top: 1px solid rgba(255,255,255,.08); }
+.dd-main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+
+/* Page header */
+.page-header { background: #fff; border-bottom: 1px solid var(--border); padding: 24px 32px 20px; }
+.page-header h1 { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+.page-header p { font-size: 13px; color: var(--muted); }
+
+.dd-content { padding: 28px 32px; flex: 1; }
+
+/* Charts row */
+.charts-row { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 18px; margin-bottom: 24px; }
+.chart-card { background: var(--card); border-radius: 14px; border: 1px solid var(--border); padding: 22px; }
+.chart-card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); margin-bottom: 18px; }
+
+/* Donut chart */
+.donut-wrap { display: flex; align-items: center; gap: 20px; }
+.donut-svg { flex-shrink: 0; }
+.donut-legend { flex: 1; }
+.legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: var(--dot-color, #ccc); }
+.legend-label { color: var(--muted); flex: 1; }
+.legend-pct { font-weight: 700; color: var(--text); }
+
+/* Bar chart */
+.bar-chart-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+.bar-chart-variation { font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+.bar-chart-variation.up { color: var(--success); }
+.bar-chart-variation.down { color: var(--danger); }
+.bar-chart-variation.flat { color: var(--muted); }
+.bars-wrap { display: flex; align-items: flex-end; gap: 8px; height: 80px; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.bar-fill { width: 100%; border-radius: 4px 4px 0 0; background: var(--primary); min-height: 4px; height: var(--bar-h, 4px); transition: height .3s; }
+.bar-fill.current { background: var(--accent); }
+.bar-month { font-size: 10px; color: var(--muted); font-weight: 600; }
+.bar-count { font-size: 10px; color: var(--muted); }
+
+/* Risk card */
+.risk-rows { display: flex; flex-direction: column; gap: 12px; }
+.risk-row { display: flex; align-items: center; gap: 10px; }
+.risk-label { font-size: 12px; font-weight: 600; width: 65px; }
+.risk-bar-bg { flex: 1; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+.risk-bar-fill { height: 100%; border-radius: 4px; width: var(--bar-w, 0%); }
+.risk-faible  { color: var(--success); }
+.risk-modere  { color: #f59e0b; }
+.risk-eleve   { color: var(--warning); }
+.risk-critique{ color: var(--danger); }
+.risk-bar-fill.risk-faible   { background: var(--success); }
+.risk-bar-fill.risk-modere   { background: #f59e0b; }
+.risk-bar-fill.risk-eleve    { background: var(--warning); }
+.risk-bar-fill.risk-critique { background: var(--danger); }
+.risk-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.risk-dot.risk-critique { background: #dc2626; }
+.risk-dot.risk-eleve    { background: #d97706; }
+.risk-dot.risk-modere   { background: #f59e0b; }
+.risk-dot.risk-faible   { background: #16a34a; }
+.risk-pct { font-size: 12px; font-weight: 700; width: 36px; text-align: right; }
+.score-box { margin-top: 18px; padding: 12px 14px; background: #f8fafc; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; }
+.score-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.score-value { font-size: 22px; font-weight: 800; color: var(--primary); }
+
+/* KPI mini row */
+.kpi-mini-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.kpi-mini { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 16px 18px; display: flex; align-items: center; gap: 12px; }
+.kpi-mini-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.kpi-mini-icon.blue { background: #dbeafe; color: var(--info); }
+.kpi-mini-icon.orange { background: #ffedd5; color: var(--warning); }
+.kpi-mini-icon.green { background: #dcfce7; color: var(--success); }
+.kpi-mini-icon.red { background: #fee2e2; color: var(--danger); }
+.kpi-mini-label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
+.kpi-mini-value { font-size: 22px; font-weight: 800; }
+
+/* Table */
+.table-card { background: var(--card); border-radius: 14px; border: 1px solid var(--border); overflow: hidden; }
+.table-head { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+.table-head-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+.table-head-actions { display: flex; gap: 8px; }
+.btn-outline { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; background: #fff; display: flex; align-items: center; gap: 5px; color: var(--text); }
+table { width: 100%; border-collapse: collapse; }
+th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); background: #fafafa; border-bottom: 1px solid var(--border); }
+td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8fafc; }
+.doc-ref { font-weight: 700; font-size: 12px; color: var(--primary); }
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+.badge-orange { background: #ffedd5; color: #c2410c; }
+.badge-green { background: #dcfce7; color: #15803d; }
+.badge-red { background: #fee2e2; color: #dc2626; }
+.badge-gray { background: #f1f5f9; color: #475569; }
+.risk-indicator { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; }
+.action-link { color: var(--accent); font-size: 12px; font-weight: 600; }
+
+/* ≤1024px : sidebar repliée, contenu pleine largeur */
+@media (max-width:1024px) {
+  .page-header { padding: 20px 24px; }
+  .dd-content { padding: 20px 24px; }
+  .kpi-mini-row { grid-template-columns: repeat(4,1fr); gap: 12px; }
+  .charts-row { grid-template-columns: 1fr 1.2fr 1fr; gap: 14px; }
+}
+@media (max-width:800px) {
+  .kpi-mini-row { grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .charts-row { grid-template-columns: 1fr 1fr; gap: 12px; }
+}
+@media (max-width:767px) {
+  .page-header { padding: 14px 16px; }
+  .page-header h1 { font-size: 18px; }
+  .dd-content { padding: 14px; }
+  .kpi-mini-row { grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 14px; }
+  .kpi-mini { padding: 12px 14px; }
+  .kpi-mini-icon { width: 34px; height: 34px; border-radius: 8px; }
+  .kpi-mini-value { font-size: 18px; }
+  .charts-row { grid-template-columns: 1fr; gap: 12px; margin-bottom: 14px; }
+  .donut-wrap { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .donut-svg { align-self: center; }
+  .donut-legend { width: 100%; }
+  .table-card { overflow-x: auto; }
+  table { min-width: 520px; }
+  .table-head-actions { flex-wrap: wrap; gap: 6px; }
+}
+</style>
+
+<div class="dd-layout">
+  {% include "due_diligence/www/_sidebar.html" %}
+
+  <div class="dd-main">
+    <div class="dd-mobile-bar">
+      <button class="dd-hamburger" onclick="openSidebar()"><span></span><span></span><span></span></button>
+      Tableau de Bord
+    </div>
+
+    <div class="page-header">
+      <h1>Tableau de Bord </h1>
+      <p>Indicateurs de performance et analyse de risque des dossiers de Due Diligence.</p>
+    </div>
+
+    <div class="dd-content">
+
+      <!-- KPI mini -->
+      <div class="kpi-mini-row">
+        <div class="kpi-mini">
+          <div class="kpi-mini-icon blue">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div>
+            <div class="kpi-mini-label">Total dossiers</div>
+            <div class="kpi-mini-value">{{ "%02d"|format(total) }}</div>
+          </div>
+        </div>
+        <div class="kpi-mini">
+          <div class="kpi-mini-icon orange">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div>
+            <div class="kpi-mini-label">En cours d'analyse</div>
+            <div class="kpi-mini-value">{{ "%02d"|format(cnt_en_cours) }}</div>
+          </div>
+        </div>
+        <div class="kpi-mini">
+          <div class="kpi-mini-icon green">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div>
+            <div class="kpi-mini-label">Clôturés GO</div>
+            <div class="kpi-mini-value">{{ "%02d"|format(cnt_go) }}</div>
+          </div>
+        </div>
+        <div class="kpi-mini">
+          <div class="kpi-mini-icon red">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <div>
+            <div class="kpi-mini-label">Clôturés NO GO</div>
+            <div class="kpi-mini-value">{{ "%02d"|format(cnt_nogo) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="charts-row">
+
+        <!-- Donut: distribution par statut -->
+        <div class="chart-card">
+          <div class="chart-card-title">Distribution par statut</div>
+          {% if total > 0 %}
+          <div class="donut-wrap">
+            <svg class="donut-svg" width="90" height="90" viewBox="0 0 90 90">
+              {% set cx = 45 %} {% set cy = 45 %} {% set r = 32 %} {% set stroke = 14 %}
+              {% set circumference = 201.06 %}
+              {% set offset = 0 %}
+              {% for d in dist %}
+                {% set dash = (d.pct / 100 * circumference) %}
+                <circle
+                  cx="{{ cx }}" cy="{{ cy }}" r="{{ r }}"
+                  fill="none"
+                  stroke="{{ d.color }}"
+                  stroke-width="{{ stroke }}"
+                  stroke-dasharray="{{ dash }} {{ circumference - dash }}"
+                  stroke-dashoffset="{{ -offset }}"
+                  transform="rotate(-90 {{ cx }} {{ cy }})"
+                  style="transition: stroke-dasharray .4s;"
+                />
+                {% set offset = offset + dash %}
+              {% endfor %}
+              <text x="{{ cx }}" y="{{ cy - 4 }}" text-anchor="middle" font-size="16" font-weight="800" fill="#1a202c">{{ total }}</text>
+              <text x="{{ cx }}" y="{{ cy + 12 }}" text-anchor="middle" font-size="8" fill="#64748b">dossiers</text>
+            </svg>
+            <div class="donut-legend">
+              {% for d in dist %}
+              <div class="legend-item">
+                <div class="legend-dot" style="--dot-color: {{ d.color }};"></div>
+                <span class="legend-label">{{ d.label }}</span>
+                <span class="legend-pct">{{ d.pct }}%</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% else %}
+          <div style="text-align:center;padding:28px;color:var(--muted);font-size:13px;">Aucune donnée</div>
+          {% endif %}
+        </div>
+
+        <!-- Barres: volume 6 mois -->
+        <div class="chart-card">
+          <div class="bar-chart-header">
+            <div class="chart-card-title" style="margin-bottom:0;">Volume des requêtes (6 mois)</div>
+            {% if variation > 0 %}
+            <div class="bar-chart-variation up">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              +{{ variation }}%
+            </div>
+            {% elif variation < 0 %}
+            <div class="bar-chart-variation down">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+              {{ variation }}%
+            </div>
+            {% else %}
+            <div class="bar-chart-variation flat">—</div>
+            {% endif %}
+          </div>
+          <div class="bars-wrap">
+            {% for m in months %}
+            {% set height_pct = (m.count / max_vol * 100) if max_vol > 0 else 0 %}
+            <div class="bar-col">
+              <div class="bar-count">{{ m.count if m.count > 0 else '' }}</div>
+              <div class="bar-fill {% if loop.last %}current{% endif %}" style="--bar-h: {{ [height_pct, 5]|max }}%;"></div>
+              <div class="bar-month">{{ m.label }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Risques globaux -->
+        <div class="chart-card">
+          <div class="chart-card-title">Niveaux de risque global</div>
+          <div class="risk-rows">
+            <div class="risk-row">
+              <span class="risk-label risk-faible">Faible</span>
+              <div class="risk-bar-bg"><div class="risk-bar-fill risk-faible" style="--bar-w: {{ pct_faible }}%;"></div></div>
+              <span class="risk-pct risk-faible">{{ pct_faible }}%</span>
+            </div>
+            <div class="risk-row">
+              <span class="risk-label risk-modere">Modéré</span>
+              <div class="risk-bar-bg"><div class="risk-bar-fill risk-modere" style="--bar-w: {{ pct_modere }}%;"></div></div>
+              <span class="risk-pct risk-modere">{{ pct_modere }}%</span>
+            </div>
+            <div class="risk-row">
+              <span class="risk-label risk-eleve">Élevé</span>
+              <div class="risk-bar-bg"><div class="risk-bar-fill risk-eleve" style="--bar-w: {{ pct_eleve }}%;"></div></div>
+              <span class="risk-pct risk-eleve">{{ pct_eleve }}%</span>
+            </div>
+            <div class="risk-row">
+              <span class="risk-label risk-critique">Critique</span>
+              <div class="risk-bar-bg"><div class="risk-bar-fill risk-critique" style="--bar-w: {{ pct_critique }}%;"></div></div>
+              <span class="risk-pct risk-critique">{{ pct_critique }}%</span>
+            </div>
+          </div>
+          <div class="score-box">
+            <span class="score-label">Score moyen de conformité</span>
+            {% if score_conformite is not none %}
+            <span class="score-value">{{ score_conformite }}/100</span>
+            {% else %}
+            <span class="score-value" style="font-size:14px;color:var(--muted);">N/A</span>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Table récapitulatif -->
+      <div class="table-card">
+        <div class="table-head">
+          <span class="table-head-title">Récapitulatif des dossiers</span>
+          <div class="table-head-actions">
+            <a href="/mes-suivis" class="btn-outline">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><polyline points="8 8 12 4 16 8"/><polyline points="16 16 12 20 8 16"/></svg>
+              Voir tout le suivi
+            </a>
+            <a href="/mes-demandes" class="btn-outline">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              Mes demandes
+            </a>
+          </div>
+        </div>
+
+        {% if recents %}
+        <table>
+          <thead>
+            <tr>
+              <th>Réf. dossier</th>
+              <th>Entité</th>
+              <th>Type DD</th>
+              <th>Risque</th>
+              <th>Statut</th>
+              <th>Dernière MAJ</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in recents %}
+            <tr>
+              <td><span class="doc-ref">{{ r.name }}</span></td>
+              <td style="font-weight:600;">{{ r.tiers_nom or "—" }}</td>
+              <td style="color:var(--muted);font-size:12px;">{{ r.dd_type or "—" }}</td>
+              <td>
+                {% if r.categorie_risque %}
+                {% set rdot = "risk-critique" if r.categorie_risque=='Critique' else ("risk-eleve" if r.categorie_risque in ['Élevé','Eleve','élevé'] else ("risk-modere" if r.categorie_risque=='Modéré' else "risk-faible")) %}
+                <span class="risk-indicator">
+                  <span class="risk-dot {{ rdot }}"></span>
+                  {{ r.categorie_risque }}
+                </span>
+                {% else %}
+                <span style="color:var(--muted);font-size:12px;">—</span>
+                {% endif %}
+              </td>
+              <td>
+                {% set s = r.workflow_state or "Brouillon" %}
+                {% if "Clôturé — GO" == s and "sous" not in s %}
+                  <span class="badge badge-green">CLÔTURÉ GO</span>
+                {% elif "NO GO" in s %}
+                  <span class="badge badge-red">CLÔTURÉ NO GO</span>
+                {% elif "sous réserve" in s %}
+                  <span class="badge badge-orange">GO SOUS RÉSERVE</span>
+                {% elif "attente" in s %}
+                  <span class="badge badge-orange">EN ATTENTE</span>
+                {% elif s in ["En analyse Compliance","En préqualification","En validation Manager","En validation Direction"] %}
+                  <span class="badge badge-blue">{{ s | upper }}</span>
+                {% elif s == "Soumis" %}
+                  <span class="badge badge-gray">SOUMIS</span>
+                {% else %}
+                  <span class="badge badge-gray">{{ s | upper }}</span>
+                {% endif %}
+              </td>
+              <td style="color:var(--muted);font-size:12px;">{{ frappe.format(r.modified, "Date") }}</td>
+              <td>
+                <a href="/suivi?name={{ r.name }}" class="action-link">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div style="padding:12px 20px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);">
+          Affichage des {{ recents|length }} dossiers les plus récents — <a href="/mes-demandes" style="color:var(--accent);font-weight:600;">Voir tous les dossiers</a>
+        </div>
+        {% else %}
+        <div style="padding:48px;text-align:center;color:var(--muted);">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <p style="margin-top:12px;font-size:13px;">Aucun dossier pour l'instant.</p>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <footer style="padding:16px 32px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--border);">
+      DOCUMENT CONFIDENTIEL — AMOAMAN &amp; ASSOCIÉS &nbsp;|&nbsp;
+      <a href="#">Confidentialité</a> &nbsp;|&nbsp;
+      <a href="#">Conditions d'utilisation</a>
+    </footer>
+
+  </div>
+</div>
+{% endblock %}

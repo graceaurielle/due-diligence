@@ -1,0 +1,208 @@
+[
+ {
+  "doctype": "DD Type",
+  "name": "Fournisseur",
+  "type_name": "Fournisseur",
+  "description_metier": "Évaluation des fournisseurs de biens et services avant contractualisation.",
+  "objectifs_controle": "Vérifier la solvabilité, la conformité réglementaire et l'absence de risques de corruption ou de conflits d'intérêts.",
+  "criticite_moyenne": "Modéré",
+  "actif": 1,
+  "documents_requis_template": [
+   {"nom_document": "RCCM", "obligatoire": 1},
+   {"nom_document": "Attestation fiscale", "obligatoire": 1},
+   {"nom_document": "Attestation CNPS", "obligatoire": 1},
+   {"nom_document": "Relevé bancaire", "obligatoire": 1},
+   {"nom_document": "Organigramme", "obligatoire": 1},
+   {"nom_document": "Statuts", "obligatoire": 1},
+   {"nom_document": "Pièce d'identité des dirigeants", "obligatoire": 1},
+   {"nom_document": "Attestations de conformité", "obligatoire": 1},
+   {"nom_document": "Certifications", "obligatoire": 0},
+   {"nom_document": "Politique anticorruption", "obligatoire": 0},
+   {"nom_document": "Politique cybersécurité", "obligatoire": 0},
+   {"nom_document": "Attestations d'assurance", "obligatoire": 1}
+  ]
+ },
+ {
+  "doctype": "DD Type",
+  "name": "Partenaire",
+  "type_name": "Partenaire",
+  "description_metier": "Évaluation des partenaires commerciaux et stratégiques avant accord de partenariat.",
+  "objectifs_controle": "Vérifier la réputation, la solidité financière, les risques éthiques et la conformité aux standards du groupe.",
+  "criticite_moyenne": "Modéré",
+  "actif": 1,
+  "documents_requis_template": [
+   {"nom_document": "États financiers", "obligatoire": 1},
+   {"nom_document": "Références commerciales", "obligatoire": 1},
+   {"nom_document": "Rapports d'audit", "obligatoire": 1},
+   {"nom_document": "Organigramme", "obligatoire": 1},
+   {"nom_document": "Accords antérieurs", "obligatoire": 0},
+   {"nom_document": "Documents de gouvernance", "obligatoire": 1}
+  ]
+ },
+ {
+  "doctype": "DD Type",
+  "name": "Client",
+  "type_name": "Client",
+  "description_metier": "Vérification des clients institutionnels et entreprises dans le cadre du KYC (Know Your Customer).",
+  "objectifs_controle": "Identifier la nature du client, ses bénéficiaires effectifs, et évaluer les risques de blanchiment.",
+  "criticite_moyenne": "Faible",
+  "actif": 1,
+  "documents_requis_template": [
+   {"nom_document": "Pièce d'identité", "obligatoire": 1},
+   {"nom_document": "RCCM", "obligatoire": 1},
+   {"nom_document": "Justificatif d'adresse", "obligatoire": 1},
+   {"nom_document": "Documents bancaires", "obligatoire": 1},
+   {"nom_document": "Déclaration bénéficiaire effectif", "obligatoire": 1}
+  ]
+ },
+ {
+  "doctype": "DD Type",
+  "name": "Sous-traitant",
+  "type_name": "Sous-traitant",
+  "description_metier": "Contrôle des sous-traitants auxquels l'organisation délègue tout ou partie d'une prestation.",
+  "objectifs_controle": "Évaluer le respect des obligations sociales, environnementales et de conformité anticorruption.",
+  "criticite_moyenne": "Modéré",
+  "actif": 1,
+  "documents_requis_template": [
+   {"nom_document": "NDA (accord de confidentialité)", "obligatoire": 1},
+   {"nom_document": "DPA (accord de traitement des données)", "obligatoire": 1},
+   {"nom_document": "Certifications sécurité", "obligatoire": 1},
+   {"nom_document": "Assurances", "obligatoire": 1},
+   {"nom_document": "PCA/PRA (plan de continuité / reprise d'activité)", "obligatoire": 1}
+  ]
+ },
+ {
+  "doctype": "DD Type",
+  "name": "Intermédiaire commercial",
+  "type_name": "Intermédiaire commercial",
+  "description_metier": "Vérification des intermédiaires, agents et apporteurs d'affaires intervenant au nom de l'organisation.",
+  "objectifs_controle": "Détecter les risques de corruption via tiers (loi Sapin II, FCPA), vérifier les justifications économiques.",
+  "criticite_moyenne": "Élevé",
+  "actif": 1,
+  "documents_requis_template": [
+   {"nom_document": "Contrats", "obligatoire": 1},
+   {"nom_document": "Justificatifs de commissions", "obligatoire": 1},
+   {"nom_document": "Attestations anticorruption", "obligatoire": 1},
+   {"nom_document": "Références", "obligatoire": 1}
+  ]
+ },
+ {
+  "doctype": "DD Type",
+  "name": "Consultant",
+  "type_name": "Consultant",
+  "description_metier": "Évaluation des consultants externes et experts mobilisés sur des missions sensibles.",
+  "objectifs_controle": "Vérifier les qualifications, l'absence de conflits d'intérêts et la conformité contractuelle.",
+  "criticite_moyenne": "Modéré",
+  "actif": 1,
+  "documents_requis_template": [
+   {"nom_document": "CV", "obligatoire": 1},
+   {"nom_document": "Références", "obligatoire": 1},
+   {"nom_document": "Diplômes", "obligatoire": 1},
+   {"nom_document": "Contrats", "obligatoire": 1},
+   {"nom_document": "Attestations", "obligatoire": 1}
+  ]
+ },
+ {
+  "doctype": "DD Type",
+  "name": "Fusion-Acquisition",
+  "type_name": "Fusion-Acquisition",
+  "description_metier": "Due diligence approfondie dans le cadre d'opérations de fusions, acquisitions ou prises de participation.",
+  "objectifs_controle": "Analyser les passifs cachés, la conformité réglementaire, les risques juridiques, financiers et ESG de la cible.",
+  "criticite_moyenne": "Élevé",
+  "actif": 1,
+  "documents_requis_template": [
+   {"nom_document": "Data room", "obligatoire": 1},
+   {"nom_document": "Audits", "obligatoire": 1},
+   {"nom_document": "États financiers", "obligatoire": 1},
+   {"nom_document": "Contrats", "obligatoire": 1},
+   {"nom_document": "Registres sociaux", "obligatoire": 1},
+   {"nom_document": "Rapports conformité", "obligatoire": 1}
+  ]
+ },
+ {
+  "doctype": "DD Type",
+  "name": "Protection des données",
+  "type_name": "Protection des données",
+  "description_metier": "Évaluation de la conformité RGPD et des pratiques de protection des données personnelles du tiers.",
+  "objectifs_controle": "Vérifier les mesures de sécurité, les bases légales de traitement, les transferts hors UE et la politique DPO.",
+  "criticite_moyenne": "Élevé",
+  "actif": 1,
+  "documents_requis_template": [
+   {"nom_document": "DPA (accord de traitement des données)", "obligatoire": 1},
+   {"nom_document": "Registre des traitements", "obligatoire": 1},
+   {"nom_document": "Politiques privacy", "obligatoire": 1},
+   {"nom_document": "Procédures violations de données", "obligatoire": 1}
+  ]
+ },
+ {
+  "doctype": "DD Type",
+  "name": "Cybersécurité",
+  "type_name": "Cybersécurité",
+  "description_metier": "Évaluation des risques cyber du tiers ayant accès aux systèmes d'information ou aux données sensibles.",
+  "objectifs_controle": "Contrôler les politiques de sécurité, certifications (ISO 27001), gestion des incidents, accès et cloisonnement.",
+  "criticite_moyenne": "Élevé",
+  "actif": 1,
+  "documents_requis_template": [
+   {"nom_document": "ISO 27001 ou équivalent", "obligatoire": 1},
+   {"nom_document": "Rapports pentest", "obligatoire": 1},
+   {"nom_document": "Politiques sécurité", "obligatoire": 1},
+   {"nom_document": "Architecture SI", "obligatoire": 1}
+  ]
+ },
+ {
+  "doctype": "DD Type",
+  "name": "ESG",
+  "type_name": "ESG",
+  "description_metier": "Évaluation des performances environnementales, sociales et de gouvernance (ESG) du tiers.",
+  "objectifs_controle": "Évaluer les pratiques environnementales, les conditions de travail, la politique anti-discrimination et la gouvernance.",
+  "criticite_moyenne": "Modéré",
+  "actif": 1,
+  "documents_requis_template": [
+   {"nom_document": "Rapport ESG", "obligatoire": 1},
+   {"nom_document": "Certifications ESG", "obligatoire": 0},
+   {"nom_document": "Politique RSE", "obligatoire": 1}
+  ]
+ },
+ {
+  "doctype": "DD Type",
+  "name": "Anticorruption",
+  "type_name": "Anticorruption",
+  "description_metier": "Évaluation spécifique de la conformité anticorruption du tiers selon les exigences Sapin II et FCPA.",
+  "objectifs_controle": "Vérifier l'existence et l'effectivité du programme anticorruption, la formation du personnel, la gestion des cadeaux.",
+  "criticite_moyenne": "Élevé",
+  "actif": 1,
+  "documents_requis_template": [
+   {"nom_document": "Attestation anticorruption", "obligatoire": 1},
+   {"nom_document": "Déclaration de conflits d'intérêts", "obligatoire": 1},
+   {"nom_document": "Code éthique", "obligatoire": 0}
+  ]
+ },
+ {
+  "doctype": "DD Type",
+  "name": "Financière",
+  "type_name": "Financière",
+  "description_metier": "Analyse financière approfondie de la solvabilité, de la liquidité et de la stabilité du tiers.",
+  "objectifs_controle": "Analyser les états financiers, détecter les anomalies comptables, évaluer la dépendance financière et les dettes.",
+  "criticite_moyenne": "Élevé",
+  "actif": 1,
+  "documents_requis_template": [
+   {"nom_document": "Bilans", "obligatoire": 1},
+   {"nom_document": "Comptes de résultat", "obligatoire": 1},
+   {"nom_document": "Rapports commissaires aux comptes", "obligatoire": 1},
+   {"nom_document": "Relevés bancaires", "obligatoire": 1}
+  ]
+ },
+ {
+  "doctype": "DD Type",
+  "name": "Réputationnelle",
+  "type_name": "Réputationnelle",
+  "description_metier": "Évaluation des risques réputationnels liés à l'association avec le tiers.",
+  "objectifs_controle": "Analyser les médias, litiges, antécédents judiciaires, controverses sectorielles et notoriété publique du tiers.",
+  "criticite_moyenne": "Modéré",
+  "actif": 1,
+  "documents_requis_template": [
+   {"nom_document": "Revue de presse", "obligatoire": 0},
+   {"nom_document": "Rapport de screening réputationnel", "obligatoire": 0}
+  ]
+ }
+]

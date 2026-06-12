@@ -1,0 +1,66 @@
+[
+ {
+  "doctype": "Role",
+  "name": "DD Client",
+  "role_name": "DD Client",
+  "desk_access": 0,
+  "is_custom": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "DD Analyste",
+  "role_name": "DD Analyste",
+  "desk_access": 1,
+  "is_custom": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "DD Manager Compliance",
+  "role_name": "DD Manager Compliance",
+  "desk_access": 1,
+  "is_custom": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "DD Validateur",
+  "role_name": "DD Validateur",
+  "desk_access": 1,
+  "is_custom": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "DD Juridique",
+  "role_name": "DD Juridique",
+  "desk_access": 1,
+  "is_custom": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "DD DPO",
+  "role_name": "DD DPO",
+  "desk_access": 1,
+  "is_custom": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "DD Cyber",
+  "role_name": "DD Cyber",
+  "desk_access": 1,
+  "is_custom": 1,
+  "disabled": 0
+ },
+ {
+  "doctype": "Role",
+  "name": "DD Financier",
+  "role_name": "DD Financier",
+  "desk_access": 1,
+  "is_custom": 1,
+  "disabled": 0
+ }
+]

@@ -1,0 +1,140 @@
+<style>
+/* ── Sidebar responsive (commun à toutes les pages) ── */
+.dd-hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; background:none; border:none; padding:6px; flex-shrink:0; }
+.dd-hamburger span { display:block; width:22px; height:2px; background:#1a202c; border-radius:2px; }
+.dd-sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:150; }
+.dd-sidebar-overlay.open { display:block; }
+/* Barre mobile pour pages sans dd-header */
+.dd-mobile-bar { display:none; align-items:center; gap:12px; padding:14px 16px; background:#fff; border-bottom:1px solid #e2e8f0; position:sticky; top:0; z-index:90; font-size:14px; font-weight:700; color:#1a202c; }
+/* Sidebar en drawer dès les tablettes */
+@media (max-width:1024px) {
+  .dd-sidebar { transform:translateX(-100%); transition:transform .25s ease; z-index:200; }
+  .dd-sidebar.open { transform:translateX(0); }
+  .dd-main { margin-left:0 !important; }
+  .dd-hamburger { display:flex; }
+  .dd-mobile-bar { display:flex; }
+}
+/* Pas de défilement horizontal sur l'ensemble du layout */
+.dd-layout { overflow-x:hidden; }
+/* Empêcher les textes longs de casser le layout */
+.dd-main { word-break:break-word; overflow-wrap:break-word; overflow-x:hidden; }
+
+/* Widget utilisateur */
+.dd-sidebar-bottom { position:relative; padding:12px; border-top:1px solid rgba(255,255,255,.08); }
+.dd-user-widget {
+  display:flex; align-items:center; gap:10px; padding:10px 10px;
+  border-radius:8px; cursor:pointer; transition:background .15s;
+  border:1px solid rgba(255,255,255,.1);
+}
+.dd-user-widget:hover { background:rgba(255,255,255,.07); }
+.dd-user-avatar {
+  width:34px; height:34px; border-radius:50%; background:rgba(74,144,217,.6);
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; color:#fff; flex-shrink:0; letter-spacing:.5px;
+}
+.dd-user-info { flex:1; min-width:0; }
+.dd-user-name { font-size:12px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dd-user-email { font-size:10px; color:rgba(255,255,255,.45); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dd-user-chevron { color:rgba(255,255,255,.4); flex-shrink:0; transition:transform .2s; }
+.dd-user-widget.open .dd-user-chevron { transform:rotate(180deg); }
+.dd-user-dropdown {
+  display:none; position:absolute; bottom:calc(100% + 4px); left:12px; right:12px;
+  background:#1a2d42; border:1px solid rgba(255,255,255,.12); border-radius:8px;
+  overflow:hidden; box-shadow:0 -4px 16px rgba(0,0,0,.3);
+}
+.dd-user-dropdown.open { display:block; }
+.dd-dropdown-item {
+  display:flex; align-items:center; gap:10px; padding:11px 14px;
+  font-size:13px; color:rgba(255,255,255,.75); transition:background .15s; cursor:pointer;
+}
+.dd-dropdown-item:hover { background:rgba(255,255,255,.08); color:#fff; }
+</style>
+<aside class="dd-sidebar">
+  <div class="dd-sidebar-brand">
+    <div class="dd-sidebar-logo">AMOAMAN &amp; ASSOCIÉS</div>
+    <div class="dd-sidebar-tagline">Due Diligence Management</div>
+  </div>
+
+  <nav class="dd-sidebar-nav">
+    <a href="/tableau-de-bord" class="dd-nav-item {% if active_page == 'tableau-de-bord' %}active{% endif %}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Tableau de Bord
+    </a>
+    <a href="/mes-demandes" class="dd-nav-item {% if active_page == 'mes-demandes' %}active{% endif %}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Mes demandes
+    </a>
+    <a href="/mes-suivis" class="dd-nav-item {% if active_page == 'mes-suivis' %}active{% endif %}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><polyline points="8 8 12 4 16 8"/><polyline points="16 16 12 20 8 16"/></svg>
+      Suivi des dossiers
+    </a>
+    <a href="/mes-avis" class="dd-nav-item {% if active_page == 'mes-avis' %}active{% endif %}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Mes avis
+    </a>
+    <!--
+    <a href="#" class="dd-nav-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      Data Room
+    </a>
+    <a href="/mes-demandes" class="dd-nav-item {% if active_page == 'audit' %}active{% endif %}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Audit
+    </a>
+    <a href="#" class="dd-nav-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Rapports
+    </a>
+    <a href="#" class="dd-nav-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      Paramètres
+    </a>
+    -->
+  </nav>
+
+  {% set _u_email = frappe.session.user %}
+  {% set _u_full = frappe.db.get_value("User", _u_email, "full_name") or _u_email.split("@")[0] %}
+  {% set _u_initials = (_u_full.split(" ")[0][0] + (_u_full.split(" ")[1][0] if _u_full.split(" ")|length > 1 else "")) | upper %}
+  <div class="dd-sidebar-bottom">
+    <div class="dd-user-widget" id="dd-user-widget">
+      <div class="dd-user-avatar">{{ _u_initials }}</div>
+      <div class="dd-user-info">
+        <div class="dd-user-name">{{ _u_full }}</div>
+        <div class="dd-user-email">{{ _u_email }}</div>
+      </div>
+      <svg class="dd-user-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+    </div>
+    <div class="dd-user-dropdown" id="dd-user-dropdown">
+      <a href="#" class="dd-dropdown-item" id="btn-logout">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Déconnexion
+      </a>
+    </div>
+  </div>
+</aside>
+<div class="dd-sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<script>
+function openSidebar(){document.querySelector('.dd-sidebar').classList.add('open');document.getElementById('sidebar-overlay').classList.add('open');}
+function closeSidebar(){document.querySelector('.dd-sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('open');}
+
+// Toggle dropdown
+document.getElementById('dd-user-widget').addEventListener('click', function(e) {
+  e.stopPropagation();
+  this.classList.toggle('open');
+  document.getElementById('dd-user-dropdown').classList.toggle('open');
+});
+document.addEventListener('click', function() {
+  document.getElementById('dd-user-widget').classList.remove('open');
+  document.getElementById('dd-user-dropdown').classList.remove('open');
+});
+
+document.getElementById('btn-logout').addEventListener('click', async function(e) {
+  e.preventDefault();
+  await fetch('/api/method/logout', {
+    method: 'POST',
+    headers: { 'X-Frappe-CSRF-Token': frappe.csrf_token || 'fetch' },
+  });
+  window.location.href = '/connexion';
+});
+</script>

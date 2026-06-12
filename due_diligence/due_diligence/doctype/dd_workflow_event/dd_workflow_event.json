@@ -1,0 +1,84 @@
+{
+ "actions": [],
+ "creation": "2026-06-10 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "date_evenement",
+  "type_evenement",
+  "description",
+  "utilisateur",
+  "col_break",
+  "ancien_statut",
+  "nouveau_statut",
+  "declencheur"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "date_evenement",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Date",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "type_evenement",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Type",
+   "read_only": 1
+  },
+  {
+   "columns": 5,
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Description",
+   "read_only": 1
+  },
+  {
+   "columns": 3,
+   "fieldname": "utilisateur",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Utilisateur",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ancien_statut",
+   "fieldtype": "Data",
+   "label": "Statut avant",
+   "read_only": 1
+  },
+  {
+   "fieldname": "nouveau_statut",
+   "fieldtype": "Data",
+   "label": "Statut après",
+   "read_only": 1
+  },
+  {
+   "fieldname": "declencheur",
+   "fieldtype": "Data",
+   "label": "Déclencheur",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-06-10 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Due Diligence",
+ "name": "DD Workflow Event",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "date_evenement",
+ "sort_order": "DESC",
+ "states": []
+}

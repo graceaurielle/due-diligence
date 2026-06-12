@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Layout ── */
+    .cx-layout { display: flex; height: 100vh; }
+
+    /* ── Left panel ── */
+    .cx-left {
+      width: 50%;
+      background: #0d1b2a;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 56px 52px;
+      overflow: hidden;
+    }
+
+    /* Building SVG background */
+    .cx-left::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='900'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%230d1b2a' stop-opacity='0.2'/%3E%3Cstop offset='1' stop-color='%230d1b2a' stop-opacity='0.85'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='600' height='900' fill='%23112234'/%3E%3Cg stroke='%231e3a5f' stroke-width='1' fill='none' opacity='0.6'%3E%3Crect x='60' y='80' width='120' height='720'/%3E%3Crect x='200' y='40' width='160' height='760'/%3E%3Crect x='380' y='100' width='100' height='700'/%3E%3Crect x='490' y='130' width='80' height='670'/%3E%3C/g%3E%3Cg stroke='%231e3a5f' stroke-width='0.5' fill='none' opacity='0.4'%3E%3Cline x1='60' y1='120' x2='180' y2='120'/%3E%3Cline x1='60' y1='160' x2='180' y2='160'/%3E%3Cline x1='60' y1='200' x2='180' y2='200'/%3E%3Cline x1='60' y1='240' x2='180' y2='240'/%3E%3Cline x1='60' y1='280' x2='180' y2='280'/%3E%3Cline x1='60' y1='320' x2='180' y2='320'/%3E%3Cline x1='60' y1='360' x2='180' y2='360'/%3E%3Cline x1='60' y1='400' x2='180' y2='400'/%3E%3Cline x1='60' y1='440' x2='180' y2='440'/%3E%3Cline x1='60' y1='480' x2='180' y2='480'/%3E%3Cline x1='60' y1='520' x2='180' y2='520'/%3E%3Cline x1='60' y1='560' x2='180' y2='560'/%3E%3Cline x1='60' y1='600' x2='180' y2='600'/%3E%3Cline x1='60' y1='640' x2='180' y2='640'/%3E%3Cline x1='60' y1='680' x2='180' y2='680'/%3E%3Cline x1='60' y1='720' x2='180' y2='720'/%3E%3Cline x1='200' y1='100' x2='360' y2='100'/%3E%3Cline x1='200' y1='140' x2='360' y2='140'/%3E%3Cline x1='200' y1='180' x2='360' y2='180'/%3E%3Cline x1='200' y1='220' x2='360' y2='220'/%3E%3Cline x1='200' y1='260' x2='360' y2='260'/%3E%3Cline x1='200' y1='300' x2='360' y2='300'/%3E%3Cline x1='200' y1='340' x2='360' y2='340'/%3E%3Cline x1='200' y1='380' x2='360' y2='380'/%3E%3Cline x1='200' y1='420' x2='360' y2='420'/%3E%3Cline x1='200' y1='460' x2='360' y2='460'/%3E%3Cline x1='200' y1='500' x2='360' y2='500'/%3E%3Cline x1='200' y1='540' x2='360' y2='540'/%3E%3Cline x1='200' y1='580' x2='360' y2='580'/%3E%3Cline x1='200' y1='620' x2='360' y2='620'/%3E%3Cline x1='200' y1='660' x2='360' y2='660'/%3E%3Cline x1='200' y1='700' x2='360' y2='700'/%3E%3Cline x1='200' y1='740' x2='360' y2='740'/%3E%3Cline x1='380' y1='140' x2='480' y2='140'/%3E%3Cline x1='380' y1='180' x2='480' y2='180'/%3E%3Cline x1='380' y1='220' x2='480' y2='220'/%3E%3Cline x1='380' y1='260' x2='480' y2='260'/%3E%3Cline x1='380' y1='300' x2='480' y2='300'/%3E%3Cline x1='380' y1='340' x2='480' y2='340'/%3E%3Cline x1='380' y1='380' x2='480' y2='380'/%3E%3Cline x1='380' y1='420' x2='480' y2='420'/%3E%3Cline x1='380' y1='460' x2='480' y2='460'/%3E%3Cline x1='380' y1='500' x2='480' y2='500'/%3E%3Cline x1='380' y1='540' x2='480' y2='540'/%3E%3Cline x1='380' y1='580' x2='480' y2='580'/%3E%3Cline x1='380' y1='620' x2='480' y2='620'/%3E%3Cline x1='380' y1='660' x2='480' y2='660'/%3E%3Cline x1='380' y1='700' x2='480' y2='700'/%3E%3C/g%3E%3Crect width='600' height='900' fill='url(%23g)'/%3E%3C/svg%3E");
+      background-size: cover;
+      background-position: center bottom;
+      opacity: 0.9;
+    }
+
+    .cx-left-content { position: relative; z-index: 1; }
+    .cx-brand-name {
+      font-size: 32px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .cx-brand-sub {
+      font-size: 14px;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.65;
+      max-width: 320px;
+    }
+    .cx-trust { position: relative; z-index: 1; }
+    .cx-trust-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(255,255,255,0.7);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .cx-trust-icon {
+      width: 28px;
+      height: 28px;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Right panel ── */
+    .cx-right {
+      width: 50%;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      overflow-y: auto;
+    }
+    .cx-form-wrap { width: 100%; max-width: 400px; }
+
+    .cx-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #0d1b2a;
+      margin-bottom: 6px;
+      letter-spacing: -0.3px;
+    }
+    .cx-subtitle {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 36px;
+    }
+
+    /* ── Form elements ── */
+    .cx-field { margin-bottom: 20px; }
+    .cx-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 7px;
+    }
+    .cx-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #0d1b2a;
+    }
+    .cx-forgot {
+      font-size: 12px;
+      color: #64748b;
+      cursor: pointer;
+    }
+    .cx-forgot:hover { color: #0d1b2a; }
+
+    .cx-input-wrap { position: relative; }
+    .cx-input {
+      width: 100%;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 13px 16px;
+      font-size: 14px;
+      color: #0d1b2a;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      background: #fff;
+      font-family: inherit;
+    }
+    .cx-input::placeholder { color: #a0aec0; }
+    .cx-input:focus {
+      border-color: #0d1b2a;
+      box-shadow: 0 0 0 3px rgba(13,27,42,0.08);
+    }
+    .cx-input-wrap .cx-eye {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #a0aec0;
+      display: flex;
+      align-items: center;
+      padding: 4px;
+    }
+    .cx-input-wrap .cx-eye:hover { color: #64748b; }
+    input[type="password"] { padding-right: 44px; }
+
+    /* ── Checkbox ── */
+    .cx-check-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      cursor: pointer;
+    }
+    .cx-check-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 4px;
+      cursor: pointer;
+      accent-color: #0d1b2a;
+      flex-shrink: 0;
+    }
+    .cx-check-row span { font-size: 13px; color: #4a5568; }
+
+    /* ── Submit button ── */
+    .cx-btn {
+      width: 100%;
+      background: #0d1b2a;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 15px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: opacity 0.15s;
+      font-family: inherit;
+      letter-spacing: 0.2px;
+    }
+    .cx-btn:hover { opacity: 0.88; }
+    .cx-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* ── Error message ── */
+    .cx-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #dc2626;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .cx-error.visible { display: block; }
+
+    /* ── Divider ── */
+    .cx-divider {
+      border: none;
+      border-top: 1px solid #e2e8f0;
+      margin: 28px 0 20px;
+    }
+
+    /* ── Footer ── */
+    .cx-footer { text-align: center; }
+    .cx-footer-main {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+    .cx-footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+    }
+    .cx-footer-links a {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+    }
+    .cx-footer-links a:hover { color: #0d1b2a; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1024px) {
+      .cx-left { padding: 40px 36px; }
+      .cx-right { padding: 32px; }
+      .cx-brand-name { font-size: 26px; }
+    }
+    @media (max-width: 768px) {
+      body { height: auto; overflow: auto; overflow-x: hidden; }
+      .cx-layout { flex-direction: column; height: auto; min-height: 100vh; }
+      .cx-left { display: flex; width: 100%; padding: 28px 24px 24px; flex-shrink: 0; }
+      .cx-left-content { flex: 1; }
+      .cx-brand-name { font-size: 22px; }
+      .cx-brand-sub { display: none; }
+      .cx-trust { display: none; }
+      .cx-right { width: 100%; padding: 28px 20px 40px; }
+      .cx-form-wrap { max-width: 100%; }
+    }
+    @media (max-width: 400px) {
+      .cx-left { padding: 22px 16px 18px; }
+      .cx-right { padding: 20px 16px 32px; }
+    }
+
+    /* Spinner */
+    .cx-spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .cx-btn.loading .cx-spinner { display: block; }
+    .cx-btn.loading .cx-btn-text { opacity: 0.7; }
+    .cx-btn.loading .cx-btn-arrow { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="cx-layout">
+
+  <!-- ── Panneau gauche ── -->
+  <div class="cx-left">
+    <div class="cx-left-content">
+      <div class="cx-brand-name">AMOAMAN &amp; ASSOCIÉS</div>
+      <p class="cx-brand-sub">L'excellence juridique au service de vos transactions stratégiques. Plateforme sécurisée de gestion de due diligence.</p>
+    </div>
+    <div class="cx-trust">
+      <div class="cx-trust-item">
+        <div class="cx-trust-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        Haute confidentialité
+      </div>
+      <div class="cx-trust-item">
+        <div class="cx-trust-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        Conformité juridique
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Panneau droit ── -->
+  <div class="cx-right">
+    <div class="cx-form-wrap">
+      <h1 class="cx-title">Espace client</h1>
+      <p class="cx-subtitle">Gestion des Due Diligence</p>
+
+      <div class="cx-error" id="cx-error"></div>
+
+      <form id="cx-form" onsubmit="handleLogin(event)">
+        <!-- Email -->
+        <div class="cx-field">
+          <div class="cx-label-row">
+            <label class="cx-label" for="cx-email">Email professionnel</label>
+          </div>
+          <div class="cx-input-wrap">
+            <input
+              class="cx-input"
+              type="email"
+              id="cx-email"
+              name="email"
+              placeholder="nom@cabinet.com"
+              autocomplete="email"
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Mot de passe -->
+        <div class="cx-field">
+          <div class="cx-label-row">
+            <label class="cx-label" for="cx-password">Mot de passe</label>
+            <span class="cx-forgot" onclick="handleForgot()">Mot de passe oublié ?</span>
+          </div>
+          <div class="cx-input-wrap">
+            <input
+              class="cx-input"
+              type="password"
+              id="cx-password"
+              name="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            >
+            <button type="button" class="cx-eye" onclick="togglePassword()" aria-label="Afficher le mot de passe">
+              <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Se souvenir -->
+        <label class="cx-check-row">
+          <input type="checkbox" id="cx-remember">
+          <span>Se souvenir de moi sur cet appareil</span>
+        </label>
+
+        <!-- Bouton -->
+        <button type="submit" class="cx-btn" id="cx-submit">
+          <div class="cx-spinner"></div>
+          <span class="cx-btn-text">Se connecter</span>
+          <svg class="cx-btn-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </form>
+
+      <hr class="cx-divider">
+
+      <footer class="cx-footer">
+        <p class="cx-footer-main">Document confidentiel — AMOAMAN &amp; ASSOCIÉS</p>
+        <div class="cx-footer-links">
+          <a href="#">Confidentialité</a>
+          <a href="mailto:contact@amoaman.com">Assistance</a>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const REDIRECT_TO = "{{ redirect_to }}";
+
+  function togglePassword() {
+    const input = document.getElementById('cx-password');
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    const icon = document.getElementById('eye-icon');
+    if (isPassword) {
+      icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    } else {
+      icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('cx-error');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function hideError() {
+    document.getElementById('cx-error').classList.remove('visible');
+  }
+
+  function setLoading(state) {
+    const btn = document.getElementById('cx-submit');
+    btn.disabled = state;
+    btn.classList.toggle('loading', state);
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    hideError();
+
+    const email = document.getElementById('cx-email').value.trim();
+    const password = document.getElementById('cx-password').value;
+
+    if (!email || !password) {
+      showError('Veuillez remplir tous les champs.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const resp = await fetch('/api/method/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Frappe-CSRF-Token': 'fetch',
+        },
+        body: new URLSearchParams({ usr: email, pwd: password }),
+      });
+
+      const data = await resp.json();
+
+      if (resp.ok) {
+        window.location.href = REDIRECT_TO || '/tableau-de-bord';
+      } else {
+        const msg = data._server_messages
+          ? JSON.parse(JSON.parse(data._server_messages)[0]).message
+          : (data.message || 'Email ou mot de passe incorrect.');
+        showError(msg);
+        setLoading(false);
+      }
+    } catch {
+      showError('Une erreur réseau est survenue. Veuillez réessayer.');
+      setLoading(false);
+    }
+  }
+
+  function handleForgot() {
+    const email = document.getElementById('cx-email').value.trim();
+    const base = '/api/method/frappe.core.doctype.user.user.reset_password';
+    if (!email) {
+      showError('Entrez votre adresse email pour réinitialiser votre mot de passe.');
+      document.getElementById('cx-email').focus();
+      return;
+    }
+    fetch(base + '?user=' + encodeURIComponent(email), {
+      headers: { 'X-Frappe-CSRF-Token': 'fetch' }
+    }).then(r => r.json()).then(data => {
+      if (data.message === 'Password reset instructions have been sent to your email') {
+        hideError();
+        const el = document.getElementById('cx-error');
+        el.style.background = '#f0fdf4';
+        el.style.borderColor = '#bbf7d0';
+        el.style.color = '#16a34a';
+        el.textContent = 'Un email de réinitialisation a été envoyé à ' + email;
+        el.classList.add('visible');
+        setTimeout(() => {
+          el.style.background = '';
+          el.style.borderColor = '';
+          el.style.color = '';
+        }, 5000);
+      } else {
+        showError('Impossible d\'envoyer l\'email de réinitialisation. Vérifiez l\'adresse saisie.');
+      }
+    }).catch(() => showError('Erreur réseau. Veuillez réessayer.'));
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+{
+ "app": "due_diligence",
+ "charts": [],
+ "content": "[]",
+ "creation": "2026-06-05 10:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "shield",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Due Diligence",
+ "links": [
+  {
+   "hidden": 0,
+   "label": "Dossiers",
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Demandes",
+   "link_count": 0,
+   "link_to": "DD Request",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Avis Compliance",
+   "link_count": 0,
+   "link_to": "DD Avis Compliance",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "label": "Configuration",
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Types de DD",
+   "link_count": 0,
+   "link_to": "DD Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sections",
+   "link_count": 0,
+   "link_to": "DD Section",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Questions",
+   "link_count": 0,
+   "link_to": "DD Question",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "label": "Paramétrage",
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Config Scoring",
+   "description": "Paramétrage des poids et seuils du moteur de scoring",
+   "link_count": 0,
+   "link_to": "DD Scoring Config",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-06-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Due Diligence",
+ "name": "Due Diligence",
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "roles": [],
+ "sequence_id": 99,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "label": "Demandes DD",
+   "link_to": "DD Request",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "label": "Avis Compliance",
+   "link_to": "DD Avis Compliance",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "label": "Config Scoring",
+   "link_to": "DD Scoring Config",
+   "type": "DocType"
+  }
+ ],
+ "title": "Due Diligence"
+}

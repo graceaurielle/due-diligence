@@ -1,0 +1,272 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block page_content %}
+<style>
+:root {
+  --sidebar-bg: #0d1b2a;
+  --sidebar-w: 230px;
+  --primary: #0d1b2a;
+  --blue: #1e4d8c;
+  --accent: #4a90d9;
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #1a202c;
+  --muted: #64748b;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #2563eb;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+a { text-decoration: none; color: inherit; }
+
+/* Layout */
+.dd-layout { display: flex; min-height: 100vh; }
+
+/* Sidebar */
+.dd-sidebar {
+  width: var(--sidebar-w); background: var(--sidebar-bg); color: rgba(255,255,255,.75);
+  display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh;
+  z-index: 100; padding: 0;
+}
+.dd-sidebar-brand { padding: 28px 20px 24px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.dd-sidebar-logo { font-size: 13px; font-weight: 700; color: #fff; letter-spacing: .5px; line-height: 1.3; }
+.dd-sidebar-tagline { font-size: 10px; color: rgba(255,255,255,.45); margin-top: 4px; text-transform: uppercase; letter-spacing: .6px; }
+.dd-sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+.dd-nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 7px;
+  font-size: 13px; color: rgba(255,255,255,.6); cursor: pointer; transition: all .15s;
+  margin-bottom: 2px;
+}
+.dd-nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+.dd-nav-item.active { background: rgba(255,255,255,.1); color: #fff; border-left: 3px solid var(--accent); }
+.dd-nav-item svg { flex-shrink: 0; }
+.dd-sidebar-bottom { padding: 12px; border-top: 1px solid rgba(255,255,255,.08); }
+.dd-new-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 10px; background: var(--accent); color: #fff;
+  border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 12px;
+  transition: background .15s;
+}
+.dd-new-btn:hover { background: #357bc2; }
+
+/* Main */
+.dd-main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+.dd-header {
+  background: #fff; border-bottom: 1px solid var(--border);
+  padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between;
+}
+.dd-header-title { font-size: 18px; font-weight: 700; }
+.dd-header-actions { display: flex; gap: 10px; align-items: center; }
+.btn-primary {
+  background: var(--primary); color: #fff; padding: 8px 18px; border-radius: 8px;
+  font-size: 13px; font-weight: 600; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  transition: opacity .15s;
+}
+.btn-primary:hover { opacity: .88; }
+.dd-content { padding: 28px 32px; flex: 1; }
+
+/* KPI Cards */
+.kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+.kpi-card {
+  background: var(--card); border-radius: 12px; padding: 22px 24px;
+  border: 1px solid var(--border); display: flex; align-items: center; gap: 16px;
+}
+.kpi-icon {
+  width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.kpi-icon.blue { background: #dbeafe; color: var(--info); }
+.kpi-icon.orange { background: #ffedd5; color: var(--warning); }
+.kpi-icon.green { background: #dcfce7; color: var(--success); }
+.kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+.kpi-value { font-size: 30px; font-weight: 800; color: var(--text); line-height: 1; }
+
+/* Table */
+.table-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+.table-header { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+.table-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+.table-actions { display: flex; gap: 8px; }
+.btn-outline { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; background: #fff; display: flex; align-items: center; gap: 5px; }
+table { width: 100%; border-collapse: collapse; }
+th { padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); background: #fafafa; border-bottom: 1px solid var(--border); }
+td { padding: 14px 16px; font-size: 13px; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8fafc; }
+.doc-ref { font-weight: 700; font-size: 12px; color: var(--primary); }
+
+/* Status badges */
+.badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+.badge-orange { background: #ffedd5; color: #c2410c; }
+.badge-green { background: #dcfce7; color: #15803d; }
+.badge-red { background: #fee2e2; color: #dc2626; }
+.badge-gray { background: #f1f5f9; color: #475569; }
+
+/* Action links */
+.action-link { color: var(--accent); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.btn-continue { background: var(--primary); color: #fff; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 64px 32px; color: var(--muted); }
+.empty-state svg { margin-bottom: 16px; opacity: .4; }
+.empty-state h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+.empty-state p { font-size: 13px; }
+
+/* Pagination */
+.pagination { padding: 14px 20px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); }
+
+/* ≤1024px : sidebar repliée, contenu pleine largeur */
+@media (max-width:1024px) {
+  .dd-header { padding: 0 20px; gap: 10px; }
+  .kpi-grid { grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .dd-content { padding: 20px; }
+}
+@media (max-width:767px) {
+  .dd-header { padding: 0 12px; gap: 8px; height: auto; min-height: 60px; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; }
+  .dd-header-title { font-size: 14px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dd-content { padding: 14px; }
+  .kpi-grid { grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 14px; }
+  .kpi-card { padding: 14px 12px; }
+  .kpi-icon { width: 38px; height: 38px; }
+  .kpi-value { font-size: 24px; }
+  .table-card { overflow-x: auto; }
+  table { min-width: 560px; }
+  .empty-state { padding: 40px 16px; }
+}
+@media (max-width:520px) {
+  .kpi-grid { grid-template-columns: repeat(2,1fr); }
+  .dd-header-actions .btn-primary { padding: 7px 10px; font-size: 12px; }
+  .dd-header-actions .btn-label { display: none; }
+}
+</style>
+
+<div class="dd-layout">
+  {% include "due_diligence/www/_sidebar.html" %}
+
+  <div class="dd-main">
+    <header class="dd-header">
+      <button class="dd-hamburger" onclick="openSidebar()"><span></span><span></span><span></span></button>
+      <div class="dd-header-title">Mes demandes de Due Diligence</div>
+      <div class="dd-header-actions">
+        <a href="/nouvelle-demande" class="btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span class="btn-label">Créer une nouvelle Due Diligence</span>
+        </a>
+      </div>
+    </header>
+
+    <div class="dd-content">
+      <!-- KPI -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon blue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          </div>
+          <div>
+            <div class="kpi-label">Dossiers en cours</div>
+            <div class="kpi-value">{{ "%02d"|format(kpi_en_cours) }}</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon orange">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div>
+            <div class="kpi-label">En attente de compléments</div>
+            <div class="kpi-value">{{ "%02d"|format(kpi_attente) }}</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div>
+            <div class="kpi-label">Clôturés</div>
+            <div class="kpi-value">{{ "%02d"|format(kpi_clotures) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title">Récapitulatif des dossiers</span>
+          <div class="table-actions">
+            <button class="btn-outline">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="4" x2="3" y2="4"/><line x1="17" y1="8" x2="7" y2="8"/><line x1="13" y1="12" x2="11" y2="12"/></svg>
+              Filtrer
+            </button>
+            <button class="btn-outline">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exporter
+            </button>
+          </div>
+        </div>
+
+        {% if requests %}
+        <table>
+          <thead>
+            <tr>
+              <th>N° de dossier</th>
+              <th>Type de DD</th>
+              <th>Tiers concerné</th>
+              <th>Statut</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in requests %}
+            <tr>
+              <td><span class="doc-ref">{{ r.name }}</span></td>
+              <td>{{ r.dd_type or "—" }}</td>
+              <td>{{ r.tiers_nom or "—" }}</td>
+              <td>
+                {% set s = r.workflow_state or "Brouillon" %}
+                {% if s in ["Clôturé — GO"] %}
+                  <span class="badge badge-green">CLÔTURÉ GO</span>
+                {% elif s in ["Clôturé — NO GO"] %}
+                  <span class="badge badge-red">CLÔTURÉ NO GO</span>
+                {% elif s in ["Clôturé — GO sous réserve"] %}
+                  <span class="badge badge-orange">GO SOUS RÉSERVE</span>
+                {% elif s in ["En attente de documents"] %}
+                  <span class="badge badge-orange">EN ATTENTE DE DOCUMENTS</span>
+                {% elif s in ["En analyse Compliance", "En préqualification", "En validation Manager", "En validation Direction"] %}
+                  <span class="badge badge-blue">{{ s | upper }}</span>
+                {% elif s == "Soumis" %}
+                  <span class="badge badge-gray">SOUMIS</span>
+                {% else %}
+                  <span class="badge badge-gray">{{ s | upper }}</span>
+                {% endif %}
+              </td>
+              <td>{{ frappe.format(r.creation, "Date") }}</td>
+              <td>
+                {% if r.workflow_state == "Brouillon" %}
+                  <a href="/suivi?name={{ r.name }}" class="btn-continue">Continuer la saisie</a>
+                {% else %}
+                  <a href="/suivi?name={{ r.name }}" class="action-link">Consulter le suivi &rsaquo;</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="pagination">Affichage de {{ requests|length }} dossier{{ 's' if requests|length > 1 }}</div>
+
+        {% else %}
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <h3>Aucun dossier pour l'instant</h3>
+          <p>Créez votre première demande de Due Diligence.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

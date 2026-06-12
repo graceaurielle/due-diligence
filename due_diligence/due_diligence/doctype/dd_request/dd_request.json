@@ -1,0 +1,1186 @@
+{
+ "actions": [],
+ "autoname": "DD-.YYYY.-.#####",
+ "creation": "2026-06-04 10:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "workflow_state",
+  "sb_demandeur",
+  "client_user",
+  "demandeur_nom",
+  "demandeur_fonction",
+  "matricule_interne",
+  "departement",
+  "pays_rattachement",
+  "responsable_hierarchique",
+  "cb_demandeur",
+  "direction_metier",
+  "email_contact",
+  "telephone_professionnel",
+  "niveau_hierarchique",
+  "sb_type",
+  "dd_type",
+  "sb_tiers",
+  "tiers_nom",
+  "tiers_nom_commercial",
+  "tiers_rccm",
+  "tiers_nif",
+  "tiers_forme_juridique",
+  "tiers_date_creation",
+  "tiers_pays",
+  "cb_tiers",
+  "tiers_adresse_siege",
+  "tiers_pays_activites",
+  "tiers_filiales_internationales",
+  "tiers_appartient_groupe",
+  "sb_id_operationnelle",
+  "tiers_secteur",
+  "tiers_description_activites",
+  "tiers_nb_employes",
+  "tiers_montant_contrat",
+  "cb_id_operationnelle",
+  "tiers_principaux_clients",
+  "tiers_marches_geographiques",
+  "tiers_secteurs_reglementes",
+  "interaction_publique",
+  "donnees_personnelles",
+  "acces_si",
+  "sb_id_capitalistique",
+  "tiers_actionnaires_principaux",
+  "tiers_beneficiaires_effectifs",
+  "tiers_structure_actionnariat",
+  "tiers_actionnaires_pep",
+  "cb_id_capitalistique",
+  "tiers_responsables_publics_participations",
+  "tiers_detenu_etat",
+  "tiers_structures_offshore",
+  "tiers_trusts_holdings",
+  "sb_risque_pays",
+  "tiers_pays_risque_detecte",
+  "tiers_nature_operations_pays_risque",
+  "tiers_flux_financiers_internationaux",
+  "tiers_licences_reglementaires",
+  "tiers_relations_entites_publiques_locales",
+  "tiers_risques_sanctions_secondaires",
+  "tiers_figure_listes_sanctions",
+  "tiers_paiements_offshore",
+  "sb_relation",
+  "relation_description",
+  "relation_objectif_metier",
+  "relation_justification_choix",
+  "relation_strategique",
+  "relation_strategique_explication",
+  "relation_strategique_impact",
+  "relation_dependance_critique",
+  "relation_urgence",
+  "relation_urgence_justification",
+  "relation_urgence_impact_retard",
+  "relation_procedure_exceptionnelle",
+  "sb_questionnaire",
+  "answers",
+  "sb_documents",
+  "required_documents",
+  "sb_evaluation",
+  "score_brut",
+  "score_pondere",
+  "score_residuel",
+  "score_reputationnel",
+  "resume_reputationnel",
+  "sb_cyber_p2",
+  "tiers_sans_mfa",
+  "tiers_sans_pra_pca",
+  "tiers_incident_cyber",
+  "cb_cyber_p2",
+  "tiers_donnees_biometriques",
+  "tiers_violation_rgpd",
+  "tiers_dpo_absent",
+  "sb_attenuants",
+  "tiers_certif_iso27001",
+  "tiers_certif_iso37001",
+  "tiers_audit_big4",
+  "cb_attenuants",
+  "tiers_garantie_bancaire",
+  "tiers_etats_certifies",
+  "tiers_solvabilite_forte",
+  "categorie_risque",
+  "justification_score_manuel",
+  "detail_scoring",
+  "sb_score_history",
+  "score_history",
+  "circuit_workflow",
+  "date_echeance_sla",
+  "sla_depasse",
+  "niveau_escalade",
+  "sb_workflow_steps",
+  "workflow_steps",
+  "sb_workflow_events",
+  "workflow_events",
+  "cb_evaluation",
+  "analyste_assigne",
+  "commentaire_interne",
+  "sb_decision",
+  "decision_finale",
+  "reserves",
+  "cb_decision",
+  "date_decision"
+ ],
+ "fields": [
+  {
+   "allow_on_submit": 1,
+   "fieldname": "workflow_state",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "État",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_demandeur",
+   "fieldtype": "Section Break",
+   "label": "Demandeur"
+  },
+  {
+   "default": "__user",
+   "fieldname": "client_user",
+   "fieldtype": "Link",
+   "label": "Utilisateur demandeur",
+   "options": "User"
+  },
+  {
+   "fieldname": "demandeur_nom",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Nom du demandeur",
+   "reqd": 1
+  },
+  {
+   "fieldname": "demandeur_fonction",
+   "fieldtype": "Data",
+   "label": "Fonction"
+  },
+  {
+   "fieldname": "matricule_interne",
+   "fieldtype": "Data",
+   "label": "Matricule interne"
+  },
+  {
+   "fieldname": "departement",
+   "fieldtype": "Data",
+   "label": "Département"
+  },
+  {
+   "fieldname": "pays_rattachement",
+   "fieldtype": "Link",
+   "label": "Pays de rattachement",
+   "options": "Country"
+  },
+  {
+   "fieldname": "responsable_hierarchique",
+   "fieldtype": "Data",
+   "label": "Responsable hiérarchique direct"
+  },
+  {
+   "fieldname": "cb_demandeur",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "direction_metier",
+   "fieldtype": "Data",
+   "label": "Direction / Service"
+  },
+  {
+   "fieldname": "email_contact",
+   "fieldtype": "Data",
+   "label": "Email de contact",
+   "options": "Email"
+  },
+  {
+   "fieldname": "telephone_professionnel",
+   "fieldtype": "Data",
+   "label": "Numéro de téléphone professionnel",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "niveau_hierarchique",
+   "fieldtype": "Select",
+   "label": "Niveau hiérarchique du demandeur",
+   "options": "\nDirection Générale\nDirection\nManagement\nCadre\nTechnicien / Agent"
+  },
+  {
+   "fieldname": "sb_type",
+   "fieldtype": "Section Break",
+   "label": "Type de Due Diligence"
+  },
+  {
+   "fieldname": "dd_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Type de DD",
+   "options": "DD Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_tiers",
+   "fieldtype": "Section Break",
+   "label": "Tiers évalué"
+  },
+  {
+   "fieldname": "tiers_nom",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Raison sociale complète",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tiers_pays",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Pays d'immatriculation",
+   "options": "Country"
+  },
+  {
+   "fieldname": "tiers_secteur",
+   "fieldtype": "Data",
+   "label": "Secteur d'activité principal"
+  },
+  {
+   "fieldname": "tiers_montant_contrat",
+   "fieldtype": "Currency",
+   "label": "Montant du contrat (FCFA)"
+  },
+  {
+   "fieldname": "cb_tiers",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "interaction_publique",
+   "fieldtype": "Check",
+   "label": "Interaction avec acteurs publics"
+  },
+  {
+   "default": "0",
+   "fieldname": "donnees_personnelles",
+   "fieldtype": "Check",
+   "label": "Traitement de données personnelles"
+  },
+  {
+   "default": "0",
+   "fieldname": "acces_si",
+   "fieldtype": "Check",
+   "label": "Accès au Système d'Information"
+  },
+  {
+   "fieldname": "tiers_nom_commercial",
+   "fieldtype": "Data",
+   "label": "Nom commercial"
+  },
+  {
+   "fieldname": "tiers_rccm",
+   "fieldtype": "Data",
+   "label": "RCCM / Registre de commerce",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tiers_nif",
+   "fieldtype": "Data",
+   "label": "Numéro d'identification fiscale (NIF)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tiers_forme_juridique",
+   "fieldtype": "Select",
+   "label": "Forme juridique",
+   "options": "\nSA\nSARL\nSAS\nGIE\nONG\nAssociation\nEntreprise Publique\nSociété d'État\nFiliale\nAutre",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tiers_date_creation",
+   "fieldtype": "Date",
+   "label": "Date de création"
+  },
+  {
+   "fieldname": "tiers_adresse_siege",
+   "fieldtype": "Text",
+   "label": "Adresse du siège social",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tiers_pays_activites",
+   "fieldtype": "Table MultiSelect",
+   "label": "Pays d'exercice des activités",
+   "options": "DD Pays Activite"
+  },
+  {
+   "fieldname": "tiers_filiales_internationales",
+   "fieldtype": "Select",
+   "label": "Le tiers dispose-t-il de filiales internationales ?",
+   "options": "\nOui\nNon",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tiers_appartient_groupe",
+   "fieldtype": "Select",
+   "label": "Le tiers appartient-il à un groupe international ?",
+   "options": "\nOui\nNon",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_id_operationnelle",
+   "fieldtype": "Section Break",
+   "label": "Identification Opérationnelle"
+  },
+  {
+   "fieldname": "tiers_description_activites",
+   "fieldtype": "Long Text",
+   "label": "Description des activités opérationnelles",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tiers_nb_employes",
+   "fieldtype": "Select",
+   "label": "Nombre d'employés",
+   "options": "\n< 10\n10 – 50\n51 – 200\n201 – 500\n501 – 2 000\n> 2 000"
+  },
+  {
+   "fieldname": "cb_id_operationnelle",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tiers_principaux_clients",
+   "fieldtype": "Text",
+   "label": "Principaux clients"
+  },
+  {
+   "fieldname": "tiers_marches_geographiques",
+   "fieldtype": "Text",
+   "label": "Principaux marchés géographiques"
+  },
+  {
+   "fieldname": "tiers_secteurs_reglementes",
+   "fieldtype": "Select",
+   "label": "Le tiers intervient-il dans des secteurs réglementés ?",
+   "options": "\nOui\nNon",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_id_capitalistique",
+   "fieldtype": "Section Break",
+   "label": "Identification Capitalistique"
+  },
+  {
+   "fieldname": "tiers_actionnaires_principaux",
+   "fieldtype": "Text",
+   "label": "Actionnaires principaux",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tiers_beneficiaires_effectifs",
+   "fieldtype": "Select",
+   "label": "Bénéficiaires effectifs identifiés",
+   "options": "\nOui\nNon",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tiers_beneficiaires_detail",
+   "fieldtype": "Long Text",
+   "label": "Identités des bénéficiaires effectifs"
+  },
+  {
+   "fieldname": "tiers_structure_actionnariat",
+   "fieldtype": "Long Text",
+   "label": "Structure détaillée de l'actionnariat"
+  },
+  {
+   "fieldname": "tiers_actionnaires_pep",
+   "fieldtype": "Select",
+   "label": "Actionnaires politiquement exposés (PEP) ?",
+   "options": "\nOui\nNon",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tiers_pep_detail",
+   "fieldtype": "Small Text",
+   "label": "Fonction ou mandat politique exercé"
+  },
+  {
+   "fieldname": "cb_id_capitalistique",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tiers_responsables_publics_participations",
+   "fieldtype": "Select",
+   "label": "Des responsables publics détiennent-ils des participations ?",
+   "options": "\nOui\nNon",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tiers_detenu_etat",
+   "fieldtype": "Select",
+   "label": "Le tiers est-il détenu partiellement ou totalement par un État ?",
+   "options": "\nOui\nNon",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tiers_structures_offshore",
+   "fieldtype": "Select",
+   "label": "Structures offshore dans l'actionnariat ?",
+   "options": "\nOui\nNon",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tiers_trusts_holdings",
+   "fieldtype": "Select",
+   "label": "Trusts, holdings ou structures complexes ?",
+   "options": "\nOui\nNon",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sb_risque_pays",
+   "fieldtype": "Section Break",
+   "label": "Risque Géopolitique"
+  },
+  {
+   "default": "0",
+   "fieldname": "tiers_pays_risque_detecte",
+   "fieldtype": "Check",
+   "label": "Pays à risque détecté",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.tiers_pays_risque_detecte==1",
+   "fieldname": "tiers_nature_operations_pays_risque",
+   "fieldtype": "Long Text",
+   "label": "Nature des opérations prévues dans ce pays",
+   "mandatory_depends_on": "eval:doc.tiers_pays_risque_detecte==1"
+  },
+  {
+   "depends_on": "eval:doc.tiers_pays_risque_detecte==1",
+   "fieldname": "tiers_flux_financiers_internationaux",
+   "fieldtype": "Select",
+   "label": "Les opérations impliquent-elles des flux financiers internationaux ?",
+   "mandatory_depends_on": "eval:doc.tiers_pays_risque_detecte==1",
+   "options": "\nOui\nNon"
+  },
+  {
+   "depends_on": "eval:doc.tiers_pays_risque_detecte==1",
+   "fieldname": "tiers_licences_reglementaires",
+   "fieldtype": "Select",
+   "label": "Des licences réglementaires ou autorisations gouvernementales sont-elles nécessaires ?",
+   "mandatory_depends_on": "eval:doc.tiers_pays_risque_detecte==1",
+   "options": "\nOui\nNon"
+  },
+  {
+   "depends_on": "eval:doc.tiers_pays_risque_detecte==1",
+   "fieldname": "tiers_relations_entites_publiques_locales",
+   "fieldtype": "Select",
+   "label": "Le tiers entretient-il des relations avec des entités publiques locales ?",
+   "mandatory_depends_on": "eval:doc.tiers_pays_risque_detecte==1",
+   "options": "\nOui\nNon"
+  },
+  {
+   "depends_on": "eval:doc.tiers_pays_risque_detecte==1",
+   "fieldname": "tiers_risques_sanctions_secondaires",
+   "fieldtype": "Select",
+   "label": "Existe-t-il des risques de sanctions secondaires ?",
+   "mandatory_depends_on": "eval:doc.tiers_pays_risque_detecte==1",
+   "options": "\nOui\nNon"
+  },
+  {
+   "depends_on": "eval:doc.tiers_pays_risque_detecte==1",
+   "fieldname": "tiers_figure_listes_sanctions",
+   "fieldtype": "Select",
+   "label": "Le tiers ou ses actionnaires figurent-ils sur des listes de sanctions ?",
+   "mandatory_depends_on": "eval:doc.tiers_pays_risque_detecte==1",
+   "options": "\nOui\nNon"
+  },
+  {
+   "depends_on": "eval:doc.tiers_pays_risque_detecte==1",
+   "fieldname": "tiers_paiements_offshore",
+   "fieldtype": "Select",
+   "label": "Des paiements transitent-ils par des juridictions offshore ?",
+   "mandatory_depends_on": "eval:doc.tiers_pays_risque_detecte==1",
+   "options": "\nOui\nNon"
+  },
+  {
+   "fieldname": "sb_relation",
+   "fieldtype": "Section Break",
+   "label": "Nature de votre relation avec nous"
+  },
+  {
+   "fieldname": "relation_description",
+   "fieldtype": "Long Text",
+   "label": "Description de la relation",
+   "reqd": 1
+  },
+  {
+   "fieldname": "relation_objectif_metier",
+   "fieldtype": "Long Text",
+   "label": "Objectif métier",
+   "reqd": 1
+  },
+  {
+   "fieldname": "relation_justification_choix",
+   "fieldtype": "Long Text",
+   "label": "Justifier votre choix",
+   "reqd": 1
+  },
+  {
+   "fieldname": "relation_strategique",
+   "fieldtype": "Select",
+   "label": "Relation stratégique",
+   "options": "\nOui\nNon",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.relation_strategique=='Oui'",
+   "fieldname": "relation_strategique_explication",
+   "fieldtype": "Long Text",
+   "label": "Explication du caractère stratégique",
+   "mandatory_depends_on": "eval:doc.relation_strategique=='Oui'"
+  },
+  {
+   "depends_on": "eval:doc.relation_strategique=='Oui'",
+   "fieldname": "relation_strategique_impact",
+   "fieldtype": "Long Text",
+   "label": "Impact en cas d'échec de la relation",
+   "mandatory_depends_on": "eval:doc.relation_strategique=='Oui'"
+  },
+  {
+   "depends_on": "eval:doc.relation_strategique=='Oui'",
+   "fieldname": "relation_dependance_critique",
+   "fieldtype": "Select",
+   "label": "Dépendance critique vis-à-vis du tiers",
+   "mandatory_depends_on": "eval:doc.relation_strategique=='Oui'",
+   "options": "\nOui\nNon"
+  },
+  {
+   "fieldname": "relation_urgence",
+   "fieldtype": "Select",
+   "label": "Urgence opérationnelle",
+   "options": "\nOui\nNon",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.relation_urgence=='Oui'",
+   "fieldname": "relation_urgence_justification",
+   "fieldtype": "Long Text",
+   "label": "Justification de l'urgence",
+   "mandatory_depends_on": "eval:doc.relation_urgence=='Oui'"
+  },
+  {
+   "depends_on": "eval:doc.relation_urgence=='Oui'",
+   "fieldname": "relation_urgence_impact_retard",
+   "fieldtype": "Long Text",
+   "label": "Impacts métiers en cas de retard",
+   "mandatory_depends_on": "eval:doc.relation_urgence=='Oui'"
+  },
+  {
+   "depends_on": "eval:doc.relation_urgence=='Oui'",
+   "fieldname": "relation_procedure_exceptionnelle",
+   "fieldtype": "Select",
+   "label": "Procédure exceptionnelle demandée",
+   "mandatory_depends_on": "eval:doc.relation_urgence=='Oui'",
+   "options": "\nOui\nNon"
+  },
+  {
+   "fieldname": "sb_questionnaire",
+   "fieldtype": "Section Break",
+   "label": "Questionnaire"
+  },
+  {
+   "fieldname": "answers",
+   "fieldtype": "Table",
+   "label": "Réponses au questionnaire",
+   "options": "DD Answer"
+  },
+  {
+   "fieldname": "sb_documents",
+   "fieldtype": "Section Break",
+   "label": "Documents requis"
+  },
+  {
+   "fieldname": "required_documents",
+   "fieldtype": "Table",
+   "label": "Documents",
+   "options": "DD Required Document"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb_evaluation",
+   "fieldtype": "Section Break",
+   "label": "Évaluation (équipe)"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "score_brut",
+   "fieldtype": "Int",
+   "label": "Score brut",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "score_pondere",
+   "fieldtype": "Int",
+   "label": "Score pondéré",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "score_residuel",
+   "fieldtype": "Int",
+   "label": "Score résiduel",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "score_reputationnel",
+   "fieldtype": "Int",
+   "label": "Score réputationnel (IA)",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "resume_reputationnel",
+   "fieldtype": "Small Text",
+   "label": "Résumé réputationnel (IA)",
+   "permlevel": 1,
+   "read_only": 1,
+   "description": "Vider ce champ pour forcer le recalcul par l'IA"
+  },
+  {
+   "fieldname": "score_humain",
+   "fieldtype": "Int",
+   "label": "Score de l'analyste (0–100)",
+   "in_list_view": 0,
+   "description": "Score attribué par l'analyste, indépendant du score IA"
+  },
+  {
+   "fieldname": "justification_score_humain",
+   "fieldtype": "Long Text",
+   "label": "Justification du score analyste",
+   "depends_on": "eval:doc.score_humain"
+  },
+  {
+   "fieldname": "ecart_score",
+   "fieldtype": "Int",
+   "label": "Écart IA / Analyste",
+   "read_only": 1,
+   "depends_on": "eval:doc.score_humain",
+   "description": "Écart absolu entre le score résiduel IA et le score analyste"
+  },
+  {
+   "allow_on_submit": 1,
+   "collapsible": 1,
+   "fieldname": "sb_cyber_p2",
+   "fieldtype": "Section Break",
+   "label": "Cybersécurité & Données (analyse)",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "tiers_sans_mfa",
+   "fieldtype": "Check",
+   "label": "Absence d'authentification MFA (+20)",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "tiers_sans_pra_pca",
+   "fieldtype": "Check",
+   "label": "Absence de PRA / PCA (+15)",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "tiers_incident_cyber",
+   "fieldtype": "Check",
+   "label": "Incident de cybersécurité majeur (12 mois) (+30)",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "cb_cyber_p2",
+   "fieldtype": "Column Break",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "tiers_donnees_biometriques",
+   "fieldtype": "Check",
+   "label": "Traitement de données biométriques (+25)",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "tiers_violation_rgpd",
+   "fieldtype": "Check",
+   "label": "Violation RGPD documentée (+30)",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "tiers_dpo_absent",
+   "fieldtype": "Check",
+   "label": "Absence de DPO (+15)",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "collapsible": 1,
+   "fieldname": "sb_attenuants",
+   "fieldtype": "Section Break",
+   "label": "Atténuants",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "tiers_certif_iso27001",
+   "fieldtype": "Check",
+   "label": "Certifié ISO 27001 (−15 pts)",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "tiers_certif_iso37001",
+   "fieldtype": "Check",
+   "label": "Certifié ISO 37001 (−20 pts)",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "tiers_audit_big4",
+   "fieldtype": "Check",
+   "label": "Audit Big Four récent (−10 pts)",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "cb_attenuants",
+   "fieldtype": "Column Break",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "tiers_garantie_bancaire",
+   "fieldtype": "Check",
+   "label": "Garantie bancaire (−10 pts)",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "tiers_etats_certifies",
+   "fieldtype": "Check",
+   "label": "États financiers certifiés (−15 pts)",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "tiers_solvabilite_forte",
+   "fieldtype": "Check",
+   "label": "Solvabilité forte documentée (−20 pts)",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "categorie_risque",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Catégorie de risque",
+   "options": "\nFaible\nModéré\nÉlevé\nCritique\nInterdit",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Obligatoire si la catégorie de risque est modifiée manuellement par rapport au calcul automatique",
+   "fieldname": "justification_score_manuel",
+   "fieldtype": "Small Text",
+   "label": "Justification de la modification du score",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "collapsible": 1,
+   "fieldname": "detail_scoring",
+   "fieldtype": "Long Text",
+   "label": "Détail du scoring (JSON)",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:doc.score_history && doc.score_history.length > 1",
+   "fieldname": "sb_score_history",
+   "fieldtype": "Section Break",
+   "label": "Historique du scoring",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "score_history",
+   "fieldtype": "Table",
+   "label": "Historique des scores",
+   "options": "DD Score History",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_evaluation",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "analyste_assigne",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Analyste assigné",
+   "options": "User"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "commentaire_interne",
+   "fieldtype": "Text",
+   "label": "Commentaire interne Compliance",
+   "permlevel": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb_decision",
+   "fieldtype": "Section Break",
+   "label": "Décision finale"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "decision_finale",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Décision",
+   "options": "\nGO\nNO GO\nGO sous réserve"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "reserves",
+   "fieldtype": "Text",
+   "label": "Réserves / Conditions"
+  },
+  {
+   "fieldname": "cb_decision",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "date_decision",
+   "fieldtype": "Datetime",
+   "label": "Date de décision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "circuit_workflow",
+   "fieldtype": "Data",
+   "label": "Circuit de traitement",
+   "read_only": 1,
+   "bold": 1,
+   "in_list_view": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "date_echeance_sla",
+   "fieldtype": "Date",
+   "label": "Échéance SLA",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "sla_depasse",
+   "fieldtype": "Check",
+   "label": "SLA dépassé",
+   "default": "0",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "niveau_escalade",
+   "fieldtype": "Int",
+   "label": "Niveau d'escalade",
+   "default": "0",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "sb_workflow_steps",
+   "fieldtype": "Section Break",
+   "label": "Circuit de traitement",
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:doc.workflow_steps && doc.workflow_steps.length > 0",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "workflow_steps",
+   "fieldtype": "Table",
+   "label": "Étapes du workflow",
+   "options": "DD Workflow Step",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "sb_workflow_events",
+   "fieldtype": "Section Break",
+   "label": "Journal des événements",
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:doc.workflow_events && doc.workflow_events.length > 0",
+   "permlevel": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "workflow_events",
+   "fieldtype": "Table",
+   "label": "Événements",
+   "options": "DD Workflow Event",
+   "read_only": 1,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "sb_avis",
+   "fieldtype": "Section Break",
+   "label": "Avis"
+  },
+  {
+   "fieldname": "avis_ia",
+   "fieldtype": "Long Text",
+   "label": "Avis de l'IA",
+   "read_only": 1,
+   "description": "Synthèse compliance générée par l'IA"
+  },
+  {
+   "fieldname": "avis_analyste",
+   "fieldtype": "Long Text",
+   "label": "Avis de l'analyste",
+   "description": "Avis formel rédigé par l'analyste compliance"
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-06-04 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Due Diligence",
+ "name": "DD Request",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "if_owner": 1,
+   "permlevel": 0,
+   "read": 1,
+   "role": "DD Client",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "DD Analyste",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "DD Analyste",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "DD Manager Compliance",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "DD Manager Compliance",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "DD Validateur",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "DD Validateur",
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "DD Juridique",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "DD DPO",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "DD Cyber",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "DD Financier",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "write": 1,
+   "submit": 1,
+   "role": "DD RSSI"
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "write": 1,
+   "role": "DD RSSI"
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "DD CCO",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "write": 1,
+   "role": "DD CCO"
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "DD DG",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "write": 1,
+   "role": "DD DG"
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "permlevel": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "DD Manager Metier",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "write": 1,
+   "role": "DD Manager Metier"
+  }
+ ],
+ "search_fields": "tiers_nom,dd_type,demandeur_nom",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "tiers_nom",
+ "track_changes": 1,
+ "track_seen": 1
+}

@@ -1,0 +1,177 @@
+[
+  {
+    "doctype": "DD Section",
+    "name": "FOUR-SEC-A",
+    "dd_type": "Fournisseur",
+    "section_label": "A — Informations générales",
+    "ordre": 10
+  },
+  {
+    "doctype": "DD Section",
+    "name": "FOUR-SEC-B",
+    "dd_type": "Fournisseur",
+    "section_label": "B — Gouvernance et actionnariat",
+    "ordre": 20
+  },
+  {
+    "doctype": "DD Section",
+    "name": "FOUR-SEC-C",
+    "dd_type": "Fournisseur",
+    "section_label": "C — Conformité réglementaire",
+    "ordre": 30
+  },
+  {
+    "doctype": "DD Section",
+    "name": "FOUR-SEC-D",
+    "dd_type": "Fournisseur",
+    "section_label": "D — Capacité opérationnelle",
+    "ordre": 40
+  },
+  {
+    "doctype": "DD Section",
+    "name": "FOUR-SEC-E",
+    "dd_type": "Fournisseur",
+    "section_label": "E — Protection des données",
+    "ordre": 50
+  },
+  {
+    "doctype": "DD Section",
+    "name": "PART-SEC-A",
+    "dd_type": "Partenaire",
+    "section_label": "A — Vision stratégique",
+    "ordre": 10
+  },
+  {
+    "doctype": "DD Section",
+    "name": "PART-SEC-B",
+    "dd_type": "Partenaire",
+    "section_label": "B — Réputation",
+    "ordre": 20
+  },
+  {
+    "doctype": "DD Section",
+    "name": "PART-SEC-C",
+    "dd_type": "Partenaire",
+    "section_label": "C — Gouvernance",
+    "ordre": 30
+  },
+  {
+    "doctype": "DD Section",
+    "name": "PART-SEC-D",
+    "dd_type": "Partenaire",
+    "section_label": "D — Risques stratégiques",
+    "ordre": 40
+  },
+  {
+    "doctype": "DD Section",
+    "name": "CLI-SEC-A",
+    "dd_type": "Client",
+    "section_label": "A — Identification client",
+    "ordre": 10
+  },
+  {
+    "doctype": "DD Section",
+    "name": "CLI-SEC-B",
+    "dd_type": "Client",
+    "section_label": "B — Risque financier",
+    "ordre": 20
+  },
+  {
+    "doctype": "DD Section",
+    "name": "CLI-SEC-C",
+    "dd_type": "Client",
+    "section_label": "C — AML / KYC",
+    "ordre": 30
+  },
+  {
+    "doctype": "DD Section",
+    "name": "INT-SEC-A",
+    "dd_type": "Intermédiaire commercial",
+    "section_label": "Questionnaire intermédiaire",
+    "ordre": 10
+  },
+  {
+    "doctype": "DD Section",
+    "name": "CONS-SEC-A",
+    "dd_type": "Consultant",
+    "section_label": "Questionnaire consultant",
+    "ordre": 10
+  },
+  {
+    "doctype": "DD Section",
+    "name": "MA-SEC-A",
+    "dd_type": "Fusion-Acquisition",
+    "section_label": "A — Juridique",
+    "ordre": 10
+  },
+  {
+    "doctype": "DD Section",
+    "name": "MA-SEC-B",
+    "dd_type": "Fusion-Acquisition",
+    "section_label": "B — Financier",
+    "ordre": 20
+  },
+  {
+    "doctype": "DD Section",
+    "name": "MA-SEC-C",
+    "dd_type": "Fusion-Acquisition",
+    "section_label": "C — Compliance",
+    "ordre": 30
+  },
+  {
+    "doctype": "DD Section",
+    "name": "PD-SEC-A",
+    "dd_type": "Protection des données",
+    "section_label": "Conformité privacy",
+    "ordre": 10
+  },
+  {
+    "doctype": "DD Section",
+    "name": "CYBER-SEC-A",
+    "dd_type": "Cybersécurité",
+    "section_label": "Évaluation cybersécurité",
+    "ordre": 10
+  },
+  {
+    "doctype": "DD Section",
+    "name": "ESG-SEC-A",
+    "dd_type": "ESG",
+    "section_label": "A — Environnement",
+    "ordre": 10
+  },
+  {
+    "doctype": "DD Section",
+    "name": "ESG-SEC-B",
+    "dd_type": "ESG",
+    "section_label": "B — Social",
+    "ordre": 20
+  },
+  {
+    "doctype": "DD Section",
+    "name": "ESG-SEC-C",
+    "dd_type": "ESG",
+    "section_label": "C — Gouvernance",
+    "ordre": 30
+  },
+  {
+    "doctype": "DD Section",
+    "name": "ANTI-SEC-A",
+    "dd_type": "Anticorruption",
+    "section_label": "Contrôles anticorruption",
+    "ordre": 10
+  },
+  {
+    "doctype": "DD Section",
+    "name": "FIN-SEC-A",
+    "dd_type": "Financière",
+    "section_label": "Analyse financière",
+    "ordre": 10
+  },
+  {
+    "doctype": "DD Section",
+    "name": "REP-SEC-A",
+    "dd_type": "Réputationnelle",
+    "section_label": "Analyse réputationnelle",
+    "ordre": 10
+  }
+]

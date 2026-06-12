@@ -1,0 +1,38 @@
+{
+ "actions": [],
+ "creation": "2026-06-05 10:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Setup",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "nom_document",
+  "obligatoire"
+ ],
+ "fields": [
+  {
+   "fieldname": "nom_document",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Nom du document",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "obligatoire",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Obligatoire"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-06-05 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Due Diligence",
+ "name": "DD Document Requis Template",
+ "owner": "Administrator",
+ "permissions": [],
+ "states": [],
+ "track_changes": 0
+}

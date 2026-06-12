@@ -1,0 +1,72 @@
+[
+  {
+    "doctype": "Notification",
+    "name": "DD - Nouveau dossier soumis",
+    "channel": "Email",
+    "enabled": 1,
+    "document_type": "DD Request",
+    "event": "After Submit",
+    "subject": "[DD] Nouveau dossier à traiter — {{ doc.name }}",
+    "message": "<p>Un nouveau dossier de Due Diligence vient d’être soumis et est en attente de traitement.</p>\n<table style=\"border-collapse:collapse;width:100%;margin:16px 0;\">\n  <tr style=\"border-bottom:1px solid #e2e8f0;\">\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;width:40%;\">Référence</td>\n    <td style=\"padding:8px 12px;\">{{ doc.name }}</td>\n  </tr>\n  <tr style=\"border-bottom:1px solid #e2e8f0;\">\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;\">Tiers analysé</td>\n    <td style=\"padding:8px 12px;\">{{ doc.tiers_nom or '—' }}</td>\n  </tr>\n  <tr style=\"border-bottom:1px solid #e2e8f0;\">\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;\">Type de DD</td>\n    <td style=\"padding:8px 12px;\">{{ doc.dd_type or '—' }}</td>\n  </tr>\n  <tr style=\"border-bottom:1px solid #e2e8f0;\">\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;\">Demandeur</td>\n    <td style=\"padding:8px 12px;\">{{ doc.demandeur_nom or '—' }}</td>\n  </tr>\n  <tr>\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;\">Score préliminaire</td>\n    <td style=\"padding:8px 12px;\">{{ doc.score_brut if doc.score_brut else '—' }}</td>\n  </tr>\n</table>\n<p style=\"margin-top:20px;\">\n  <a href=\"{{ frappe.utils.get_url() }}/app/dd-request/{{ doc.name }}\"\n     style=\"background:#0d1b2a;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;\">\n    Ouvrir le dossier\n  </a>\n</p>",
+    "recipients": [
+      {
+        "doctype": "Notification Recipient",
+        "receiver_by_role": "DD Analyste"
+      }
+    ]
+  },
+  {
+    "doctype": "Notification",
+    "name": "DD - Documents supplémentaires requis",
+    "channel": "Email",
+    "enabled": 1,
+    "document_type": "DD Request",
+    "event": "Value Change",
+    "value_changed": "workflow_state",
+    "condition": "doc.workflow_state == \"En attente de documents\"",
+    "subject": "[AMOAMAN] Documents requis pour votre dossier — {{ doc.name }}",
+    "message": "<p>Bonjour {{ doc.demandeur_nom or '' }},</p>\n<p>Dans le cadre de l’instruction de votre dossier de Due Diligence, notre équipe a besoin de documents complémentaires avant de poursuivre l’analyse.</p>\n<p>Merci de vous connecter à votre espace client pour consulter les éléments demandés et déposer les pièces manquantes.</p>\n<table style=\"border-collapse:collapse;width:100%;margin:16px 0;\">\n  <tr style=\"border-bottom:1px solid #e2e8f0;\">\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;width:40%;\">Dossier</td>\n    <td style=\"padding:8px 12px;\">{{ doc.name }}</td>\n  </tr>\n  <tr>\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;\">Tiers analysé</td>\n    <td style=\"padding:8px 12px;\">{{ doc.tiers_nom or '—' }}</td>\n  </tr>\n</table>\n<p style=\"margin-top:20px;\">\n  <a href=\"{{ frappe.utils.get_url() }}/suivi?name={{ doc.name }}\"\n     style=\"background:#0d1b2a;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;\">\n    Accéder à mon espace\n  </a>\n</p>\n<p style=\"margin-top:24px;font-size:12px;color:#94a3b8;\">AMOAMAN &amp; ASSOCIÉS — Due Diligence Management<br>Ce message est confidentiel et destiné exclusivement à son destinataire.</p>",
+    "recipients": [
+      {
+        "doctype": "Notification Recipient",
+        "receiver_by_document_field": "email_contact"
+      }
+    ]
+  },
+  {
+    "doctype": "Notification",
+    "name": "DD - Dossier clôturé avis disponible",
+    "channel": "Email",
+    "enabled": 1,
+    "document_type": "DD Request",
+    "event": "Value Change",
+    "value_changed": "workflow_state",
+    "condition": "doc.workflow_state in (\"Clôturé — GO\", \"Clôturé — NO GO\", \"Clôturé — GO sous réserve\")",
+    "subject": "[AMOAMAN] Votre avis de conformité est disponible — {{ doc.name }}",
+    "message": "<p>Bonjour {{ doc.demandeur_nom or '' }},</p>\n<p>L’instruction de votre dossier de Due Diligence est terminée. L’avis officiel de conformité émis par AMOAMAN &amp; ASSOCIÉS est désormais disponible dans votre espace client.</p>\n<table style=\"border-collapse:collapse;width:100%;margin:16px 0;\">\n  <tr style=\"border-bottom:1px solid #e2e8f0;\">\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;width:40%;\">Dossier</td>\n    <td style=\"padding:8px 12px;\">{{ doc.name }}</td>\n  </tr>\n  <tr style=\"border-bottom:1px solid #e2e8f0;\">\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;\">Tiers analysé</td>\n    <td style=\"padding:8px 12px;\">{{ doc.tiers_nom or '—' }}</td>\n  </tr>\n  <tr>\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;\">Décision</td>\n    <td style=\"padding:8px 12px;font-weight:700;\">{{ doc.workflow_state.replace('Clôturé — ', '') }}</td>\n  </tr>\n</table>\n<p style=\"margin-top:20px;\">\n  <a href=\"{{ frappe.utils.get_url() }}/suivi?name={{ doc.name }}\"\n     style=\"background:#0d1b2a;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;\">\n    Consulter l’avis\n  </a>\n</p>\n<p style=\"margin-top:24px;font-size:12px;color:#94a3b8;\">AMOAMAN &amp; ASSOCIÉS — Due Diligence Management<br>Ce message est confidentiel et destiné exclusivement à son destinataire.</p>",
+    "recipients": [
+      {
+        "doctype": "Notification Recipient",
+        "receiver_by_document_field": "email_contact"
+      }
+    ]
+  },
+  {
+    "doctype": "Notification",
+    "name": "DD - En attente de validation Manager",
+    "channel": "Email",
+    "enabled": 1,
+    "document_type": "DD Request",
+    "event": "Value Change",
+    "value_changed": "workflow_state",
+    "condition": "doc.workflow_state == \"En validation Manager\"",
+    "subject": "[DD] Dossier en attente de validation — {{ doc.name }}",
+    "message": "<p>Un dossier de Due Diligence vient d’être transmis pour validation et requiert votre attention.</p>\n<table style=\"border-collapse:collapse;width:100%;margin:16px 0;\">\n  <tr style=\"border-bottom:1px solid #e2e8f0;\">\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;width:40%;\">Référence</td>\n    <td style=\"padding:8px 12px;\">{{ doc.name }}</td>\n  </tr>\n  <tr style=\"border-bottom:1px solid #e2e8f0;\">\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;\">Tiers analysé</td>\n    <td style=\"padding:8px 12px;\">{{ doc.tiers_nom or '—' }}</td>\n  </tr>\n  <tr style=\"border-bottom:1px solid #e2e8f0;\">\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;\">Type de DD</td>\n    <td style=\"padding:8px 12px;\">{{ doc.dd_type or '—' }}</td>\n  </tr>\n  <tr style=\"border-bottom:1px solid #e2e8f0;\">\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;\">Analyste</td>\n    <td style=\"padding:8px 12px;\">{{ doc.modified_by or '—' }}</td>\n  </tr>\n  <tr>\n    <td style=\"padding:8px 12px;font-weight:600;color:#64748b;\">Score pondéré</td>\n    <td style=\"padding:8px 12px;\">{{ doc.score_pondere if doc.score_pondere else (doc.score_brut if doc.score_brut else '—') }}</td>\n  </tr>\n</table>\n<p style=\"margin-top:20px;\">\n  <a href=\"{{ frappe.utils.get_url() }}/app/dd-request/{{ doc.name }}\"\n     style=\"background:#0d1b2a;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;\">\n    Accéder au dossier\n  </a>\n</p>",
+    "recipients": [
+      {
+        "doctype": "Notification Recipient",
+        "receiver_by_role": "DD Manager Compliance"
+      }
+    ]
+  }
+]
