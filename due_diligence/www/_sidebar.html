@@ -11,7 +11,7 @@
   .dd-sidebar { transform:translateX(-100%); transition:transform .25s ease; z-index:200; }
   .dd-sidebar.open { transform:translateX(0); }
   .dd-main { margin-left:0 !important; }
-  .dd-hamburger { display:flex; }
+  .dd-hamburger { display:none; }
   .dd-mobile-bar { display:flex; }
 }
 /* Pas de défilement horizontal sur l'ensemble du layout */
@@ -48,6 +48,43 @@
   font-size:13px; color:rgba(255,255,255,.75); transition:background .15s; cursor:pointer;
 }
 .dd-dropdown-item:hover { background:rgba(255,255,255,.08); color:#fff; }
+
+/* ── Avatar utilisateur mobile (dans .dd-mobile-bar) ── */
+.dd-mob-user-btn { display:none; margin-left:auto; background:rgba(74,144,217,.85); border:2px solid rgba(74,144,217,.4); border-radius:50%; width:34px; height:34px; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; letter-spacing:.5px; cursor:pointer; -webkit-tap-highlight-color:transparent; flex-shrink:0; }
+@media (max-width:1024px) { .dd-mob-user-btn { display:flex; } }
+
+/* Bottom sheet utilisateur mobile */
+.dd-mob-sheet-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:500; }
+.dd-mob-sheet-overlay.open { display:block; }
+.dd-mob-sheet {
+  position:fixed; bottom:0; left:0; right:0; z-index:501;
+  background:#fff; border-radius:18px 18px 0 0;
+  padding:0 0 env(safe-area-inset-bottom,0px);
+  transform:translateY(100%); transition:transform .28s cubic-bezier(.32,0,.67,0);
+  box-shadow:0 -8px 32px rgba(0,0,0,.18);
+}
+.dd-mob-sheet.open { transform:translateY(0); transition-timing-function:cubic-bezier(.33,1,.68,1); }
+.dd-mob-sheet-handle { width:36px; height:4px; background:#e2e8f0; border-radius:2px; margin:12px auto 16px; }
+.dd-mob-sheet-user { display:flex; align-items:center; gap:14px; padding:0 20px 18px; border-bottom:1px solid #f0f4f8; }
+.dd-mob-sheet-avatar { width:46px; height:46px; border-radius:50%; background:rgba(74,144,217,.85); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#fff; flex-shrink:0; }
+.dd-mob-sheet-name { font-size:15px; font-weight:700; color:#1a202c; }
+.dd-mob-sheet-email { font-size:12px; color:#718096; margin-top:2px; }
+.dd-mob-sheet-actions { padding:8px 0 16px; }
+.dd-mob-sheet-item { display:flex; align-items:center; gap:14px; padding:15px 20px; font-size:14px; color:#e53e3e; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.dd-mob-sheet-item:hover { background:#fff5f5; }
+.dd-mob-sheet-item svg { stroke:#e53e3e; }
+
+/* ── Bottom nav mobile (commun à toutes les pages) ── */
+.dd-bottom-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:#0d1b2a; border-top:1px solid rgba(255,255,255,.12); z-index:300; padding-bottom:env(safe-area-inset-bottom,0px); }
+.dd-bottom-nav-inner { display:flex; height:56px; }
+.dd-bnav-link { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:rgba(255,255,255,.45); font-size:10px; font-weight:600; letter-spacing:.3px; -webkit-tap-highlight-color:transparent; transition:color .15s; padding:0; }
+.dd-bnav-link.active { color:#fff; }
+.dd-bnav-link.active svg { stroke:#4a90d9; }
+.dd-bnav-link:hover { color:#fff; }
+@media (max-width:1024px) {
+  .dd-bottom-nav { display:block; }
+  .dd-main { padding-bottom:66px !important; }
+}
 </style>
 <aside class="dd-sidebar">
   <div class="dd-sidebar-brand">
@@ -114,11 +151,53 @@
 </aside>
 <div class="dd-sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
+<nav class="dd-bottom-nav" aria-label="Navigation principale">
+  <div class="dd-bottom-nav-inner">
+    <a href="/tableau-de-bord" class="dd-bnav-link {% if active_page == 'tableau-de-bord' %}active{% endif %}">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Tableau
+    </a>
+    <a href="/mes-demandes" class="dd-bnav-link {% if active_page == 'mes-demandes' %}active{% endif %}">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Demandes
+    </a>
+    <a href="/mes-suivis" class="dd-bnav-link {% if active_page == 'mes-suivis' %}active{% endif %}">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><polyline points="8 8 12 4 16 8"/><polyline points="16 16 12 20 8 16"/></svg>
+      Suivi
+    </a>
+    <a href="/mes-avis" class="dd-bnav-link {% if active_page == 'mes-avis' %}active{% endif %}">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Avis
+    </a>
+  </div>
+</nav>
+
+<!-- Avatar utilisateur injecté dans .dd-mobile-bar par le script ci-dessous -->
+
+<!-- Bottom sheet utilisateur mobile -->
+<div class="dd-mob-sheet-overlay" id="dd-mob-sheet-overlay"></div>
+<div class="dd-mob-sheet" id="dd-mob-sheet" role="dialog" aria-modal="true">
+  <div class="dd-mob-sheet-handle"></div>
+  <div class="dd-mob-sheet-user">
+    <div class="dd-mob-sheet-avatar">{{ _u_initials }}</div>
+    <div>
+      <div class="dd-mob-sheet-name">{{ _u_full }}</div>
+      <div class="dd-mob-sheet-email">{{ _u_email }}</div>
+    </div>
+  </div>
+  <div class="dd-mob-sheet-actions">
+    <div class="dd-mob-sheet-item" id="dd-mob-logout">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Déconnexion
+    </div>
+  </div>
+</div>
+
 <script>
 function openSidebar(){document.querySelector('.dd-sidebar').classList.add('open');document.getElementById('sidebar-overlay').classList.add('open');}
 function closeSidebar(){document.querySelector('.dd-sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('open');}
 
-// Toggle dropdown
+// Toggle dropdown desktop
 document.getElementById('dd-user-widget').addEventListener('click', function(e) {
   e.stopPropagation();
   this.classList.toggle('open');
@@ -129,12 +208,41 @@ document.addEventListener('click', function() {
   document.getElementById('dd-user-dropdown').classList.remove('open');
 });
 
-document.getElementById('btn-logout').addEventListener('click', async function(e) {
-  e.preventDefault();
+// Injecter l'avatar dans .dd-mobile-bar (attendre que le DOM soit complet)
+document.addEventListener('DOMContentLoaded', function() {
+  var bar = document.querySelector('.dd-mobile-bar');
+  if (!bar) return;
+  var btn = document.createElement('button');
+  btn.className = 'dd-mob-user-btn';
+  btn.id = 'dd-mob-user-btn';
+  btn.setAttribute('aria-label', 'Mon compte');
+  btn.textContent = '{{ _u_initials }}';
+  bar.appendChild(btn);
+  btn.addEventListener('click', openMobSheet);
+});
+
+// Bottom sheet mobile
+function openMobSheet() {
+  document.getElementById('dd-mob-sheet-overlay').classList.add('open');
+  document.getElementById('dd-mob-sheet').classList.add('open');
+}
+function closeMobSheet() {
+  document.getElementById('dd-mob-sheet-overlay').classList.remove('open');
+  document.getElementById('dd-mob-sheet').classList.remove('open');
+}
+// Le bouton est injecté dynamiquement — listener posé dans l'IIFE ci-dessus
+document.getElementById('dd-mob-sheet-overlay').addEventListener('click', closeMobSheet);
+
+async function doLogout() {
   await fetch('/api/method/logout', {
     method: 'POST',
     headers: { 'X-Frappe-CSRF-Token': frappe.csrf_token || 'fetch' },
   });
   window.location.href = '/connexion';
+}
+document.getElementById('btn-logout').addEventListener('click', async function(e) {
+  e.preventDefault();
+  await doLogout();
 });
+document.getElementById('dd-mob-logout').addEventListener('click', doLogout);
 </script>

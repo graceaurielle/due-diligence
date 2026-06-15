@@ -134,8 +134,15 @@ tr:hover td { background: #f8fafc; }
   .kpi-card { padding: 14px 12px; }
   .kpi-icon { width: 38px; height: 38px; }
   .kpi-value { font-size: 24px; }
-  .table-card { overflow-x: auto; }
-  table { min-width: 560px; }
+  /* Table → cartes sur mobile */
+  .table-card { overflow-x: initial; }
+  .table-card table { display: block; min-width: 0; }
+  .table-card thead { display: none; }
+  .table-card tbody { display: block; }
+  .table-card tr { display: block; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+  .table-card td { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #f0f4f8; min-height: 44px; gap: 8px; border-radius: 0; }
+  .table-card td:last-child { border-bottom: none; }
+  .table-card td::before { content: attr(data-label); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); flex-shrink: 0; min-width: 74px; }
   .empty-state { padding: 40px 16px; }
 }
 @media (max-width:520px) {
@@ -150,7 +157,6 @@ tr:hover td { background: #f8fafc; }
 
   <div class="dd-main">
     <header class="dd-header">
-      <button class="dd-hamburger" onclick="openSidebar()"><span></span><span></span><span></span></button>
       <div class="dd-header-title">Mes demandes de Due Diligence</div>
       <div class="dd-header-actions">
         <a href="/nouvelle-demande" class="btn-primary">
@@ -197,15 +203,34 @@ tr:hover td { background: #f8fafc; }
         <div class="table-header">
           <span class="table-title">Récapitulatif des dossiers</span>
           <div class="table-actions">
-            <button class="btn-outline">
+            <button class="btn-outline" id="btn-filtrer" onclick="toggleFilters()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="4" x2="3" y2="4"/><line x1="17" y1="8" x2="7" y2="8"/><line x1="13" y1="12" x2="11" y2="12"/></svg>
               Filtrer
             </button>
-            <button class="btn-outline">
+            <button class="btn-outline" onclick="exportCSV()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Exporter
             </button>
           </div>
+        </div>
+        <div id="filter-panel" style="display:none; padding:12px 20px; border-bottom:1px solid var(--border); background:#fafafa; flex-wrap:wrap; gap:10px; align-items:flex-end;">
+          <div style="display:flex; flex-direction:column; gap:4px; min-width:160px;">
+            <label style="font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.4px;">Statut</label>
+            <select id="f-statut" onchange="applyFilters()" style="padding:6px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; background:#fff; color:var(--text);">
+              <option value="">Tous</option>
+            </select>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px; min-width:160px;">
+            <label style="font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.4px;">Type de DD</label>
+            <select id="f-type" onchange="applyFilters()" style="padding:6px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; background:#fff; color:var(--text);">
+              <option value="">Tous</option>
+            </select>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:160px;">
+            <label style="font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.4px;">Recherche (tiers / N°)</label>
+            <input id="f-search" type="text" oninput="applyFilters()" placeholder="Nom du tiers ou numéro…" style="padding:6px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; background:#fff; color:var(--text);">
+          </div>
+          <button onclick="clearFilters()" style="padding:6px 14px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-weight:600; background:#fff; color:var(--muted); cursor:pointer; white-space:nowrap; align-self:flex-end;">Effacer</button>
         </div>
 
         {% if requests %}
@@ -223,10 +248,10 @@ tr:hover td { background: #f8fafc; }
           <tbody>
             {% for r in requests %}
             <tr>
-              <td><span class="doc-ref">{{ r.name }}</span></td>
-              <td>{{ r.dd_type or "—" }}</td>
-              <td>{{ r.tiers_nom or "—" }}</td>
-              <td>
+              <td data-label="N° dossier"><span class="doc-ref">{{ r.name }}</span></td>
+              <td data-label="Type DD">{{ r.dd_type or "—" }}</td>
+              <td data-label="Tiers">{{ r.tiers_nom or "—" }}</td>
+              <td data-label="Statut">
                 {% set s = r.workflow_state or "Brouillon" %}
                 {% if s in ["Clôturé — GO"] %}
                   <span class="badge badge-green">CLÔTURÉ GO</span>
@@ -244,8 +269,8 @@ tr:hover td { background: #f8fafc; }
                   <span class="badge badge-gray">{{ s | upper }}</span>
                 {% endif %}
               </td>
-              <td>{{ frappe.format(r.creation, "Date") }}</td>
-              <td>
+              <td data-label="Date">{{ frappe.format(r.creation, "Date") }}</td>
+              <td data-label="Action">
                 {% if r.workflow_state == "Brouillon" %}
                   <a href="/suivi?name={{ r.name }}" class="btn-continue">Continuer la saisie</a>
                 {% else %}
@@ -269,4 +294,88 @@ tr:hover td { background: #f8fafc; }
     </div>
   </div>
 </div>
+
+<script>
+// ── Filtres ──
+var filterOpen = false;
+
+function toggleFilters() {
+  filterOpen = !filterOpen;
+  var panel = document.getElementById('filter-panel');
+  panel.style.display = filterOpen ? 'flex' : 'none';
+  document.getElementById('btn-filtrer').style.background = filterOpen ? '#e8f0fb' : '';
+  document.getElementById('btn-filtrer').style.borderColor = filterOpen ? 'var(--accent)' : '';
+  if (filterOpen) populateSelects();
+}
+
+function populateSelects() {
+  var rows = document.querySelectorAll('tbody tr');
+  var statuts = new Set(), types = new Set();
+  rows.forEach(function(row) {
+    var badge = row.querySelector('td[data-label="Statut"] .badge');
+    if (badge) statuts.add(badge.textContent.trim());
+    var type = row.querySelector('td[data-label="Type DD"]');
+    if (type && type.textContent.trim() !== '—') types.add(type.textContent.trim());
+  });
+  var sel = document.getElementById('f-statut');
+  var curS = sel.value;
+  sel.innerHTML = '<option value="">Tous</option>';
+  statuts.forEach(function(s) { sel.innerHTML += '<option value="' + s + '"' + (s===curS?' selected':'') + '>' + s + '</option>'; });
+  var sel2 = document.getElementById('f-type');
+  var curT = sel2.value;
+  sel2.innerHTML = '<option value="">Tous</option>';
+  types.forEach(function(t) { sel2.innerHTML += '<option value="' + t + '"' + (t===curT?' selected':'') + '>' + t + '</option>'; });
+}
+
+function applyFilters() {
+  var statut = document.getElementById('f-statut').value.toLowerCase();
+  var type   = document.getElementById('f-type').value.toLowerCase();
+  var search = document.getElementById('f-search').value.toLowerCase();
+  var rows   = document.querySelectorAll('tbody tr');
+  var visible = 0;
+  rows.forEach(function(row) {
+    var badge  = (row.querySelector('td[data-label="Statut"] .badge') || {textContent:''}).textContent.trim().toLowerCase();
+    var typeEl = (row.querySelector('td[data-label="Type DD"]') || {textContent:''}).textContent.trim().toLowerCase();
+    var tiers  = (row.querySelector('td[data-label="Tiers"]') || {textContent:''}).textContent.trim().toLowerCase();
+    var ref    = (row.querySelector('td[data-label="N° dossier"]') || {textContent:''}).textContent.trim().toLowerCase();
+    var ok = (!statut || badge === statut)
+          && (!type   || typeEl === type)
+          && (!search || tiers.includes(search) || ref.includes(search));
+    row.style.display = ok ? '' : 'none';
+    if (ok) visible++;
+  });
+  var pg = document.querySelector('.pagination');
+  if (pg) pg.textContent = 'Affichage de ' + visible + ' dossier' + (visible > 1 ? 's' : '');
+}
+
+function clearFilters() {
+  document.getElementById('f-statut').value = '';
+  document.getElementById('f-type').value = '';
+  document.getElementById('f-search').value = '';
+  applyFilters();
+}
+
+// ── Export CSV ──
+function exportCSV() {
+  var headers = ['N° dossier', 'Type DD', 'Tiers concerné', 'Statut', 'Date'];
+  var rows = document.querySelectorAll('tbody tr');
+  var lines = [headers.join(';')];
+  rows.forEach(function(row) {
+    if (row.style.display === 'none') return;
+    var ref    = (row.querySelector('td[data-label="N° dossier"]') || {textContent:''}).textContent.trim();
+    var type   = (row.querySelector('td[data-label="Type DD"]') || {textContent:''}).textContent.trim();
+    var tiers  = (row.querySelector('td[data-label="Tiers"]') || {textContent:''}).textContent.trim();
+    var statut = (row.querySelector('td[data-label="Statut"] .badge') || {textContent:''}).textContent.trim();
+    var date   = (row.querySelector('td[data-label="Date"]') || {textContent:''}).textContent.trim();
+    lines.push([ref, type, tiers, statut, date].map(function(v){ return '"' + v.replace(/"/g,'""') + '"'; }).join(';'));
+  });
+  var csv = '﻿' + lines.join('\r\n');
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'demandes-due-diligence.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+</script>
 {% endblock %}

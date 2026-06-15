@@ -150,8 +150,15 @@ tr:hover td { background: #f8fafc; }
   .donut-wrap { flex-direction: column; align-items: flex-start; gap: 14px; }
   .donut-svg { align-self: center; }
   .donut-legend { width: 100%; }
-  .table-card { overflow-x: auto; }
-  table { min-width: 520px; }
+  /* Table → cartes sur mobile */
+  .table-card { overflow-x: initial; }
+  .table-card table { display: block; min-width: 0; }
+  .table-card thead { display: none; }
+  .table-card tbody { display: block; }
+  .table-card tr { display: block; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+  .table-card td { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #f0f4f8; min-height: 44px; gap: 8px; border-radius: 0; }
+  .table-card td:last-child { border-bottom: none; }
+  .table-card td::before { content: attr(data-label); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); flex-shrink: 0; min-width: 74px; }
   .table-head-actions { flex-wrap: wrap; gap: 6px; }
 }
 </style>
@@ -161,7 +168,6 @@ tr:hover td { background: #f8fafc; }
 
   <div class="dd-main">
     <div class="dd-mobile-bar">
-      <button class="dd-hamburger" onclick="openSidebar()"><span></span><span></span><span></span></button>
       Tableau de Bord
     </div>
 
@@ -355,10 +361,10 @@ tr:hover td { background: #f8fafc; }
           <tbody>
             {% for r in recents %}
             <tr>
-              <td><span class="doc-ref">{{ r.name }}</span></td>
-              <td style="font-weight:600;">{{ r.tiers_nom or "—" }}</td>
-              <td style="color:var(--muted);font-size:12px;">{{ r.dd_type or "—" }}</td>
-              <td>
+              <td data-label="Réf."><span class="doc-ref">{{ r.name }}</span></td>
+              <td data-label="Entité" style="font-weight:600;">{{ r.tiers_nom or "—" }}</td>
+              <td data-label="Type DD" style="color:var(--muted);font-size:12px;">{{ r.dd_type or "—" }}</td>
+              <td data-label="Risque">
                 {% if r.categorie_risque %}
                 {% set rdot = "risk-critique" if r.categorie_risque=='Critique' else ("risk-eleve" if r.categorie_risque in ['Élevé','Eleve','élevé'] else ("risk-modere" if r.categorie_risque=='Modéré' else "risk-faible")) %}
                 <span class="risk-indicator">
@@ -369,7 +375,7 @@ tr:hover td { background: #f8fafc; }
                 <span style="color:var(--muted);font-size:12px;">—</span>
                 {% endif %}
               </td>
-              <td>
+              <td data-label="Statut">
                 {% set s = r.workflow_state or "Brouillon" %}
                 {% if "Clôturé — GO" == s and "sous" not in s %}
                   <span class="badge badge-green">CLÔTURÉ GO</span>
@@ -387,8 +393,8 @@ tr:hover td { background: #f8fafc; }
                   <span class="badge badge-gray">{{ s | upper }}</span>
                 {% endif %}
               </td>
-              <td style="color:var(--muted);font-size:12px;">{{ frappe.format(r.modified, "Date") }}</td>
-              <td>
+              <td data-label="MAJ" style="color:var(--muted);font-size:12px;">{{ frappe.format(r.modified, "Date") }}</td>
+              <td data-label="Voir">
                 <a href="/suivi?name={{ r.name }}" class="action-link">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </a>
