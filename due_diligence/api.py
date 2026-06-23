@@ -132,6 +132,80 @@ def check_country_risk(country):
 
 
 @frappe.whitelist()
+def get_dd_draft(dd_name):
+    """Charge les données nécessaires au wizard pour compléter un DD existant."""
+    doc = frappe.get_doc("DD Request", dd_name)
+    if doc.client_user != frappe.session.user:
+        frappe.throw(_("Accès non autorisé."), frappe.PermissionError)
+    return {
+        "dd_type": doc.dd_type or "",
+        "tiers_montant_contrat": doc.tiers_montant_contrat or 0,
+        "workflow_state": doc.workflow_state or "",
+    }
+
+
+@frappe.whitelist()
+def complete_dd_request(dd_name, data):
+    """Met à jour un DD existant (partie client : tiers, questionnaire, documents)."""
+    if isinstance(data, str):
+        data = json.loads(data)
+
+    doc = frappe.get_doc("DD Request", dd_name)
+    if doc.client_user != frappe.session.user:
+        frappe.throw(_("Accès non autorisé."), frappe.PermissionError)
+
+    tiers_fields = [
+        "tiers_nom", "tiers_nom_commercial", "tiers_rccm", "tiers_nif",
+        "tiers_forme_juridique", "tiers_date_creation", "tiers_pays",
+        "tiers_adresse_siege", "tiers_filiales_internationales", "tiers_appartient_groupe",
+        "tiers_secteur", "tiers_description_activites", "tiers_nb_employes",
+        "tiers_principaux_clients", "tiers_marches_geographiques", "tiers_secteurs_reglementes",
+        "tiers_actionnaires_principaux", "tiers_beneficiaires_effectifs",
+        "tiers_beneficiaires_detail", "tiers_structure_actionnariat", "tiers_actionnaires_pep",
+        "tiers_pep_detail", "tiers_responsables_publics_participations", "tiers_detenu_etat",
+        "tiers_structures_offshore", "tiers_trusts_holdings", "tiers_nature_operations_pays_risque",
+        "tiers_flux_financiers_internationaux", "tiers_licences_reglementaires",
+        "tiers_relations_entites_publiques_locales", "tiers_risques_sanctions_secondaires",
+        "tiers_figure_listes_sanctions", "tiers_paiements_offshore",
+    ]
+    for field in tiers_fields:
+        if field in data:
+            setattr(doc, field, data[field])
+
+    doc.tiers_pays_activites = []
+    for p in json.loads(data.get("tiers_pays_activites", "[]") or "[]"):
+        if p:
+            doc.append("tiers_pays_activites", {"pays": p})
+
+    doc.tiers_pays_risque_detecte = int(data.get("tiers_pays_risque_detecte", 0))
+    doc.interaction_publique = int(data.get("interaction_publique", 0))
+    doc.donnees_personnelles = int(data.get("donnees_personnelles", 0))
+    doc.acces_si = int(data.get("acces_si", 0))
+
+    doc.answers = []
+    for ans in data.get("answers", []):
+        doc.append("answers", {
+            "question": ans.get("question"),
+            "question_label": ans.get("question_label"),
+            "reponse": ans.get("reponse"),
+            "poids_applique": int(ans.get("poids_applique", 0)),
+        })
+
+    doc.required_documents = []
+    for req in data.get("required_documents", []):
+        doc.append("required_documents", {
+            "nom_document": req.get("nom_document"),
+            "obligatoire": int(req.get("obligatoire", 0)),
+            "fichier": req.get("fichier", ""),
+            "statut": "Reçu" if req.get("fichier") else "Attendu",
+        })
+
+    doc.save(ignore_permissions=True)
+    apply_workflow(doc, "Soumettre le dossier")
+    return {"name": doc.name}
+
+
+@frappe.whitelist()
 def create_dd_request(data):
     """Crée un DD Request depuis le wizard portail et renvoie son nom."""
     if isinstance(data, str):

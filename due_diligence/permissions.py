@@ -18,12 +18,12 @@ def has_website_permission(doc, ptype, user, verbose=False):
 	if frappe.db.get_value("User", user, "user_type") == "System User":
 		return True
 
-	# Website Users (DD Client) → uniquement leurs propres dossiers
-	return doc.owner == user
+	# Website Users (DD Client) → uniquement les dossiers qui leur sont assignés (client_user)
+	return doc.client_user == user
 
 
 def get_permission_query_conditions(user):
-	"""Filtre liste DD Request : DD Client ne voit que ses propres dossiers.
+	"""Filtre liste DD Request : DD Client ne voit que les dossiers où il est le client assigné.
 	Les rôles d'équipe (analyste, manager…) et System Manager voient tout."""
 	if not user:
 		user = frappe.session.user
@@ -34,7 +34,7 @@ def get_permission_query_conditions(user):
 		return ""
 
 	if "DD Client" in roles:
-		return "`tabDD Request`.`owner` = {user}".format(
+		return "`tabDD Request`.`client_user` = {user}".format(
 			user=frappe.db.escape(user)
 		)
 

@@ -88,6 +88,40 @@ _ATTENUANTS = [
 
 class DDRequest(Document):
 
+	def before_insert(self):
+		if not self.client_user and "DD Client" in frappe.get_roles():
+			self.client_user = frappe.session.user
+
+	def before_submit(self):
+		self._valider_champs_client()
+
+	def _valider_champs_client(self):
+		champs_requis = [
+			("tiers_nom",                              "Raison sociale complète"),
+			("tiers_rccm",                             "RCCM / Registre de commerce"),
+			("tiers_nif",                              "Numéro d'identification fiscale (NIF)"),
+			("tiers_forme_juridique",                  "Forme juridique"),
+			("tiers_adresse_siege",                    "Adresse du siège social"),
+			("tiers_filiales_internationales",         "Le tiers dispose-t-il de filiales internationales ?"),
+			("tiers_appartient_groupe",                "Le tiers appartient-il à un groupe international ?"),
+			("tiers_description_activites",            "Description des activités opérationnelles"),
+			("tiers_secteurs_reglementes",             "Le tiers intervient-il dans des secteurs réglementés ?"),
+			("tiers_actionnaires_principaux",          "Actionnaires principaux"),
+			("tiers_beneficiaires_effectifs",          "Bénéficiaires effectifs identifiés"),
+			("tiers_actionnaires_pep",                 "Actionnaires politiquement exposés (PEP) ?"),
+			("tiers_responsables_publics_participations", "Des responsables publics détiennent-ils des participations ?"),
+			("tiers_detenu_etat",                      "Le tiers est-il détenu partiellement ou totalement par un État ?"),
+			("tiers_structures_offshore",              "Structures offshore dans l'actionnariat ?"),
+			("tiers_trusts_holdings",                  "Trusts, holdings ou structures complexes ?"),
+		]
+		manquants = [label for field, label in champs_requis if not self.get(field)]
+		if manquants:
+			frappe.throw(
+				_("Le client n'a pas encore rempli tous les champs obligatoires :<br>")
+				+ "<br>".join(f"• {l}" for l in manquants),
+				title=_("Dossier incomplet"),
+			)
+
 	def validate(self):
 		self._verrou_portail()
 		self.calculer_score()
@@ -103,6 +137,64 @@ class DDRequest(Document):
 		self._assigner_analyste()
 		self._notifier_soumission()
 		self._initialiser_workflow()
+		self._generer_avis_ia_auto()
+
+	# ------------------------------------------------------------------
+	# 4.8d  Contrôle séquentiel des étapes workflow
+	# ------------------------------------------------------------------
+	def before_workflow_action(self, action):
+		"""Bloque l'action si l'étape précédente n'est pas encore complétée par le bon rôle,
+		puis valide automatiquement la première étape disponible pour le rôle courant."""
+		_ACTIONS_LIBRES = {"Soumettre le dossier", "Suspendre le dossier", "Reprendre le dossier"}
+		if action in _ACTIONS_LIBRES:
+			return
+
+		steps = frappe.get_all(
+			"DD Workflow Step",
+			filters={"parent": self.name, "parenttype": "DD Request"},
+			fields=["name", "ordre", "etape", "role_validateur", "statut", "obligatoire"],
+			order_by="ordre asc",
+		)
+		if not steps:
+			return
+
+		roles_courants = set(frappe.get_roles())
+		if "System Manager" in roles_courants:
+			return
+
+		etapes_obligatoires = [s for s in steps if s.obligatoire]
+		premiere_en_attente = next(
+			(s for s in etapes_obligatoires if s.statut == "En attente"), None
+		)
+		if premiere_en_attente and premiere_en_attente.role_validateur not in roles_courants:
+			frappe.throw(
+				_(
+					"L'étape <b>{0}</b> (rôle requis : {1}) doit être complétée "
+					"avant de pouvoir prendre cette action."
+				).format(premiere_en_attente.etape, premiere_en_attente.role_validateur),
+				title=_("Étape précédente non complétée"),
+			)
+
+		# Valider automatiquement la première étape En attente du rôle courant
+		premiere_role = next(
+			(s for s in etapes_obligatoires
+			 if s.statut == "En attente" and s.role_validateur in roles_courants),
+			None,
+		)
+		if premiere_role:
+			frappe.db.set_value("DD Workflow Step", premiere_role.name, {
+				"statut":          "Validé",
+				"validateur":      frappe.session.user,
+				"date_validation": now_datetime(),
+			})
+			from due_diligence.due_diligence.workflow_engine import _journaliser
+			_journaliser(
+				self.name,
+				"Étape validée",
+				f"Étape « {premiere_role.etape} » validée par {frappe.session.user} "
+				f"— action : {action}",
+				declencheur=action,
+			)
 
 	# ------------------------------------------------------------------
 	# 4.1  Verrou portail — DD Client bloqué dès que le dossier est soumis
@@ -113,7 +205,7 @@ class DDRequest(Document):
 		previous_state = (doc_before.workflow_state if doc_before else None) or "Brouillon"
 		if previous_state not in _ETATS_VERROUS:
 			return
-		if frappe.session.user == self.owner and "DD Client" in frappe.get_roles():
+		if frappe.session.user == self.client_user and "DD Client" in frappe.get_roles():
 			frappe.throw(
 				_("Ce dossier est en cours de traitement et ne peut plus être modifié par le demandeur."),
 				title=_("Dossier verrouillé"),
@@ -522,7 +614,56 @@ class DDRequest(Document):
 			frappe.log_error(frappe.get_traceback(), "DD Request — erreur notification soumission")
 
 	# ------------------------------------------------------------------
-	# 4.8b  Moteur de workflow — initialisation au submit (spec §§3-8)
+	# 4.8b  Avis IA automatique — déclenché à la soumission
+	# ------------------------------------------------------------------
+	def _generer_avis_ia_auto(self):
+		"""Génère l'avis compliance IA via Gemini dès que le client soumet le dossier."""
+		api_key = frappe.conf.get("gemini_api_key", "")
+		if not api_key:
+			return
+		if self.avis_ia:
+			return  # déjà généré (ne pas écraser)
+		try:
+			import json as _json
+			import requests as _requests
+
+			prompt = (
+				f"Tu es un analyste compliance senior. Rédige un avis compliance formel "
+				f"pour le dossier de due diligence suivant.\n\n"
+				f"Tiers évalué : {self.tiers_nom or '—'}\n"
+				f"Type de DD : {self.dd_type or '—'}\n"
+				f"Pays : {self.tiers_pays or '—'}\n"
+				f"Secteur : {self.tiers_secteur or '—'}\n"
+				f"Score brut : {self.score_brut or 0}/100\n"
+				f"Score résiduel : {self.score_residuel or 0}/100\n"
+				f"Catégorie de risque : {self.categorie_risque or '—'}\n"
+				f"Résumé réputationnel : {self.resume_reputationnel or 'Non disponible'}\n\n"
+				f"Rédige un avis en français de 200 à 300 mots structuré ainsi :\n"
+				f"1. Synthèse du profil de risque\n"
+				f"2. Points d'attention principaux\n"
+				f"3. Recommandation (GO / NO GO / GO sous réserve) avec conditions éventuelles\n\n"
+				f"Ton : formel, factuel, sans jargon excessif. Pas de markdown."
+			)
+			url = (
+				"https://generativelanguage.googleapis.com/v1beta/models/"
+				f"gemini-2.5-flash-lite:generateContent?key={api_key}"
+			)
+			payload = {
+				"contents": [{"parts": [{"text": prompt}]}],
+				"generationConfig": {
+					"temperature": 0.2,
+					"maxOutputTokens": 600,
+				},
+			}
+			resp = _requests.post(url, json=payload, timeout=30)
+			resp.raise_for_status()
+			avis = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+			frappe.db.set_value("DD Request", self.name, "avis_ia", avis)
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), "DD — génération avis IA (auto submit)")
+
+	# ------------------------------------------------------------------
+	# 4.8e  Moteur de workflow — initialisation au submit (spec §§3-8)
 	# ------------------------------------------------------------------
 	def _initialiser_workflow(self):
 		from due_diligence.due_diligence.workflow_engine import (
@@ -807,6 +948,24 @@ def _sha256_fichier(file_url):
 		for chunk in iter(lambda: f.read(65536), b""):
 			h.update(chunk)
 	return h.hexdigest()
+
+
+@frappe.whitelist()
+def get_dd_clients(doctype, txt, searchfield, start, page_len, filters):
+	"""Retourne les utilisateurs actifs ayant le rôle DD Client (pour le champ client_user)."""
+	return frappe.db.sql(
+		"""
+		SELECT u.name, u.full_name
+		FROM `tabUser` u
+		INNER JOIN `tabHas Role` r ON r.parent = u.name AND r.parenttype = 'User'
+		WHERE r.role = 'DD Client'
+		  AND u.enabled = 1
+		  AND (u.name LIKE %(txt)s OR u.full_name LIKE %(txt)s)
+		ORDER BY u.full_name
+		LIMIT %(page_len)s OFFSET %(start)s
+		""",
+		{"txt": f"%{txt}%", "page_len": int(page_len), "start": int(start)},
+	)
 
 
 def _emails_role(role):

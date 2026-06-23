@@ -20,7 +20,8 @@
    "fieldname": "ordre",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "N°"
+   "label": "N°",
+   "read_only": 1
   },
   {
    "columns": 4,
@@ -28,14 +29,16 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Étape",
-   "reqd": 1
+   "reqd": 1,
+   "read_only": 1
   },
   {
    "columns": 2,
    "fieldname": "role_validateur",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Rôle"
+   "label": "Rôle",
+   "read_only": 1
   },
   {
    "columns": 2,
@@ -44,13 +47,15 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Statut",
-   "options": "\nEn attente\nEn cours\nValidé\nRefusé\nIgnoré"
+   "options": "\nEn attente\nEn cours\nValidé\nRefusé\nIgnoré",
+   "read_only": 1
   },
   {
    "default": "1",
    "fieldname": "obligatoire",
    "fieldtype": "Check",
-   "label": "Obligatoire"
+   "label": "Obligatoire",
+   "read_only": 1
   },
   {
    "fieldname": "col_break",
@@ -71,8 +76,8 @@
   },
   {
    "fieldname": "commentaire",
-   "fieldtype": "Small Text",
-   "label": "Commentaire"
+   "fieldtype": "Long Text",
+   "label": "Avis"
   }
  ],
  "istable": 1,

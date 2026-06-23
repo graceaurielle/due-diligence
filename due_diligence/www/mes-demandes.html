@@ -158,12 +158,6 @@ tr:hover td { background: #f8fafc; }
   <div class="dd-main">
     <header class="dd-header">
       <div class="dd-header-title">Mes demandes de Due Diligence</div>
-      <div class="dd-header-actions">
-        <a href="/nouvelle-demande" class="btn-primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span class="btn-label">Créer une nouvelle Due Diligence</span>
-        </a>
-      </div>
     </header>
 
     <div class="dd-content">
@@ -271,8 +265,8 @@ tr:hover td { background: #f8fafc; }
               </td>
               <td data-label="Date">{{ frappe.format(r.creation, "Date") }}</td>
               <td data-label="Action">
-                {% if r.workflow_state == "Brouillon" %}
-                  <a href="/suivi?name={{ r.name }}" class="btn-continue">Continuer la saisie</a>
+                {% if r.workflow_state in ["Brouillon", "En attente client"] %}
+                  <a href="/nouvelle-demande?dd_name={{ r.name }}" class="btn-continue">Compléter le dossier</a>
                 {% else %}
                   <a href="/suivi?name={{ r.name }}" class="action-link">Consulter le suivi &rsaquo;</a>
                 {% endif %}
@@ -287,7 +281,7 @@ tr:hover td { background: #f8fafc; }
         <div class="empty-state">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           <h3>Aucun dossier pour l'instant</h3>
-          <p>Créez votre première demande de Due Diligence.</p>
+          <p>Notre équipe ouvrira un dossier de Due Diligence pour vous. Vous pourrez le compléter ici dès réception.</p>
         </div>
         {% endif %}
       </div>

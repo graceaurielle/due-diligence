@@ -9,7 +9,6 @@
  "field_order": [
   "workflow_state",
   "sb_demandeur",
-  "client_user",
   "demandeur_nom",
   "demandeur_fonction",
   "matricule_interne",
@@ -23,7 +22,20 @@
   "niveau_hierarchique",
   "sb_type",
   "dd_type",
+  "sb_relation",
+  "relation_description",
+  "relation_objectif_metier",
+  "relation_justification_choix",
+  "relation_strategique",
+  "relation_strategique_explication",
+  "relation_strategique_impact",
+  "relation_dependance_critique",
+  "relation_urgence",
+  "relation_urgence_justification",
+  "relation_urgence_impact_retard",
+  "relation_procedure_exceptionnelle",
   "sb_tiers",
+  "client_user",
   "tiers_nom",
   "tiers_nom_commercial",
   "tiers_rccm",
@@ -67,18 +79,6 @@
   "tiers_risques_sanctions_secondaires",
   "tiers_figure_listes_sanctions",
   "tiers_paiements_offshore",
-  "sb_relation",
-  "relation_description",
-  "relation_objectif_metier",
-  "relation_justification_choix",
-  "relation_strategique",
-  "relation_strategique_explication",
-  "relation_strategique_impact",
-  "relation_dependance_critique",
-  "relation_urgence",
-  "relation_urgence_justification",
-  "relation_urgence_impact_retard",
-  "relation_procedure_exceptionnelle",
   "sb_questionnaire",
   "answers",
   "sb_documents",
@@ -145,11 +145,12 @@
    "label": "Demandeur"
   },
   {
-   "default": "__user",
    "fieldname": "client_user",
    "fieldtype": "Link",
-   "label": "Utilisateur demandeur",
-   "options": "User"
+   "in_list_view": 1,
+   "label": "Client",
+   "options": "User",
+   "description": "Utilisateur DD Client propriétaire de ce dossier"
   },
   {
    "fieldname": "demandeur_nom",
@@ -212,6 +213,11 @@
    "options": "\nDirection Générale\nDirection\nManagement\nCadre\nTechnicien / Agent"
   },
   {
+   "fieldname": "tiers_montant_contrat",
+   "fieldtype": "Currency",
+   "label": "Montant du contrat (FCFA)"
+  },
+  {
    "fieldname": "sb_type",
    "fieldtype": "Section Break",
    "label": "Type de Due Diligence"
@@ -234,8 +240,7 @@
    "fieldname": "tiers_nom",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Raison sociale complète",
-   "reqd": 1
+   "label": "Raison sociale complète"
   },
   {
    "fieldname": "tiers_pays",
@@ -249,11 +254,6 @@
    "fieldname": "tiers_secteur",
    "fieldtype": "Data",
    "label": "Secteur d'activité principal"
-  },
-  {
-   "fieldname": "tiers_montant_contrat",
-   "fieldtype": "Currency",
-   "label": "Montant du contrat (FCFA)"
   },
   {
    "fieldname": "cb_tiers",
@@ -285,21 +285,18 @@
   {
    "fieldname": "tiers_rccm",
    "fieldtype": "Data",
-   "label": "RCCM / Registre de commerce",
-   "reqd": 1
+   "label": "RCCM / Registre de commerce"
   },
   {
    "fieldname": "tiers_nif",
    "fieldtype": "Data",
-   "label": "Numéro d'identification fiscale (NIF)",
-   "reqd": 1
+   "label": "Numéro d'identification fiscale (NIF)"
   },
   {
    "fieldname": "tiers_forme_juridique",
    "fieldtype": "Select",
    "label": "Forme juridique",
-   "options": "\nSA\nSARL\nSAS\nGIE\nONG\nAssociation\nEntreprise Publique\nSociété d'État\nFiliale\nAutre",
-   "reqd": 1
+   "options": "\nSA\nSARL\nSAS\nGIE\nONG\nAssociation\nEntreprise Publique\nSociété d'État\nFiliale\nAutre"
   },
   {
    "fieldname": "tiers_date_creation",
@@ -309,8 +306,7 @@
   {
    "fieldname": "tiers_adresse_siege",
    "fieldtype": "Text",
-   "label": "Adresse du siège social",
-   "reqd": 1
+   "label": "Adresse du siège social"
   },
   {
    "fieldname": "tiers_pays_activites",
@@ -322,15 +318,13 @@
    "fieldname": "tiers_filiales_internationales",
    "fieldtype": "Select",
    "label": "Le tiers dispose-t-il de filiales internationales ?",
-   "options": "\nOui\nNon",
-   "reqd": 1
+   "options": "\nOui\nNon"
   },
   {
    "fieldname": "tiers_appartient_groupe",
    "fieldtype": "Select",
    "label": "Le tiers appartient-il à un groupe international ?",
-   "options": "\nOui\nNon",
-   "reqd": 1
+   "options": "\nOui\nNon"
   },
   {
    "fieldname": "sb_id_operationnelle",
@@ -340,8 +334,7 @@
   {
    "fieldname": "tiers_description_activites",
    "fieldtype": "Long Text",
-   "label": "Description des activités opérationnelles",
-   "reqd": 1
+   "label": "Description des activités opérationnelles"
   },
   {
    "fieldname": "tiers_nb_employes",
@@ -367,8 +360,7 @@
    "fieldname": "tiers_secteurs_reglementes",
    "fieldtype": "Select",
    "label": "Le tiers intervient-il dans des secteurs réglementés ?",
-   "options": "\nOui\nNon",
-   "reqd": 1
+   "options": "\nOui\nNon"
   },
   {
    "fieldname": "sb_id_capitalistique",
@@ -378,15 +370,13 @@
   {
    "fieldname": "tiers_actionnaires_principaux",
    "fieldtype": "Text",
-   "label": "Actionnaires principaux",
-   "reqd": 1
+   "label": "Actionnaires principaux"
   },
   {
    "fieldname": "tiers_beneficiaires_effectifs",
    "fieldtype": "Select",
    "label": "Bénéficiaires effectifs identifiés",
-   "options": "\nOui\nNon",
-   "reqd": 1
+   "options": "\nOui\nNon"
   },
   {
    "fieldname": "tiers_beneficiaires_detail",
@@ -402,8 +392,7 @@
    "fieldname": "tiers_actionnaires_pep",
    "fieldtype": "Select",
    "label": "Actionnaires politiquement exposés (PEP) ?",
-   "options": "\nOui\nNon",
-   "reqd": 1
+   "options": "\nOui\nNon"
   },
   {
    "fieldname": "tiers_pep_detail",
@@ -418,29 +407,25 @@
    "fieldname": "tiers_responsables_publics_participations",
    "fieldtype": "Select",
    "label": "Des responsables publics détiennent-ils des participations ?",
-   "options": "\nOui\nNon",
-   "reqd": 1
+   "options": "\nOui\nNon"
   },
   {
    "fieldname": "tiers_detenu_etat",
    "fieldtype": "Select",
    "label": "Le tiers est-il détenu partiellement ou totalement par un État ?",
-   "options": "\nOui\nNon",
-   "reqd": 1
+   "options": "\nOui\nNon"
   },
   {
    "fieldname": "tiers_structures_offshore",
    "fieldtype": "Select",
    "label": "Structures offshore dans l'actionnariat ?",
-   "options": "\nOui\nNon",
-   "reqd": 1
+   "options": "\nOui\nNon"
   },
   {
    "fieldname": "tiers_trusts_holdings",
    "fieldtype": "Select",
    "label": "Trusts, holdings ou structures complexes ?",
-   "options": "\nOui\nNon",
-   "reqd": 1
+   "options": "\nOui\nNon"
   },
   {
    "fieldname": "sb_risque_pays",
@@ -947,7 +932,6 @@
    "fieldtype": "Table",
    "label": "Étapes du workflow",
    "options": "DD Workflow Step",
-   "read_only": 1,
    "permlevel": 1
   },
   {

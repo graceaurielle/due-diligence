@@ -291,7 +291,7 @@ input[type=file] { display: none; }
 
     <!-- Stepper -->
     <div class="wizard-stepper" id="stepper">
-      {% for step in [("1","Type"),("2","Demandeur"),("3","Notre relation"),("4","Tiers"),("5","Questionnaire"),("6","Documents"),("7","Récapitulatif")] %}
+      {% for step in [("1","Tiers"),("2","Questionnaire"),("3","Documents"),("4","Récapitulatif")] %}
       <div class="step-item">
         <div class="step-circle" id="circle-{{ step[0] }}">{{ step[0] }}</div>
         <span class="step-label" id="label-{{ step[0] }}">{{ step[1] }}</span>
@@ -302,200 +302,33 @@ input[type=file] { display: none; }
 
     <div class="wizard-body">
 
-      <!-- ═══ STEP 1 : Type de DD ═══ -->
+      <!-- Champs cachés : Type, Demandeur, Relation (remplis par utilisateur système) -->
+      <div id="hidden-fields-sys" style="display:none">
+        <input type="hidden" id="f-demandeur_nom" value="{{ user_fullname }}">
+        <input type="hidden" id="f-demandeur_fonction" value="">
+        <input type="hidden" id="f-matricule_interne" value="">
+        <input type="hidden" id="f-departement" value="">
+        <input type="hidden" id="f-pays_rattachement" value="">
+        <input type="hidden" id="f-responsable_hierarchique" value="">
+        <input type="hidden" id="f-direction_metier" value="">
+        <input type="hidden" id="f-email_contact" value="{{ user_email }}">
+        <input type="hidden" id="f-telephone_professionnel" value="">
+        <input type="hidden" id="f-niveau_hierarchique" value="">
+        <input type="hidden" id="f-relation_description" value="">
+        <input type="hidden" id="f-relation_objectif_metier" value="">
+        <input type="hidden" id="f-relation_justification_choix" value="">
+        <input type="hidden" id="f-relation_strategique" value="">
+        <input type="hidden" id="f-relation_strategique_explication" value="">
+        <input type="hidden" id="f-relation_strategique_impact" value="">
+        <input type="hidden" id="f-relation_dependance_critique" value="">
+        <input type="hidden" id="f-relation_urgence" value="">
+        <input type="hidden" id="f-relation_urgence_justification" value="">
+        <input type="hidden" id="f-relation_urgence_impact_retard" value="">
+        <input type="hidden" id="f-relation_procedure_exceptionnelle" value="">
+      </div>
+
+      <!-- ═══ STEP 1 : Tiers évalué ═══ -->
       <div class="wizard-panel" id="step-1">
-        <div class="panel-title">Choisissez le type de Due Diligence</div>
-        <div class="panel-sub">Sélectionnez la catégorie qui correspond le mieux à la nature du tiers pour adapter le protocole d'audit.</div>
-        <div class="type-grid">
-          {% for t in dd_types %}
-          <div class="type-card" data-type="{{ t.type_name }}" data-desc="{{ t.description_metier or '' }}" onclick="selectType(this)">
-            <span class="type-criticite crit-{{ t.criticite_moyenne }}">{{ t.criticite_moyenne or "—" }}</span>
-            <div class="type-name">{{ t.type_name }}</div>
-            <div class="type-desc">{{ t.description_metier or "" }}</div>
-            <span class="type-select-link">Sélectionner &rarr;</span>
-            <div class="check-overlay">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <!-- ═══ STEP 2 : Demandeur ═══ -->
-      <div class="wizard-panel" id="step-2" style="display:none">
-        <div class="panel-title">Informations du demandeur</div>
-        <div class="panel-sub">Veuillez renseigner les coordonnées de la personne responsable de cette demande de due diligence.</div>
-        <div class="form-grid">
-          <div class="field-group">
-            <label class="field-label">Nom et prénom</label>
-            <input class="field-input" id="f-demandeur_nom" type="text" placeholder="Ex: Jean-Marc Koffi" value="{{ user_fullname }}">
-          </div>
-          <div class="field-group">
-            <label class="field-label">Fonction</label>
-            <input class="field-input" id="f-demandeur_fonction" type="text" placeholder="Ex: Directeur Juridique">
-          </div>
-          <div class="field-group">
-            <label class="field-label">Matricule interne</label>
-            <input class="field-input" id="f-matricule_interne" type="text" placeholder="Ex: EMP-00123">
-          </div>
-          <div class="field-group">
-            <label class="field-label">Département</label>
-            <input class="field-input" id="f-departement" type="text" placeholder="Ex: Département Conformité">
-          </div>
-          <div class="field-group">
-            <label class="field-label">Pays de rattachement</label>
-            <select class="field-select" id="f-pays_rattachement">
-              <option value="">Sélectionner un pays</option>
-              {% for c in countries %}
-              <option value="{{ c.name }}">{{ c.country_name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="field-group">
-            <label class="field-label">Responsable hiérarchique direct</label>
-            <input class="field-input" id="f-responsable_hierarchique" type="text" placeholder="Ex: Marie Dupont">
-          </div>
-          <div class="field-group">
-            <label class="field-label">Direction métier</label>
-            <input class="field-input" id="f-direction_metier" type="text" placeholder="Ex: Direction Juridique">
-          </div>
-          <div class="field-group">
-            <label class="field-label">Email de contact</label>
-            <input class="field-input" id="f-email_contact" type="email" placeholder="nom@entreprise.ci" value="{{ user_email }}">
-          </div>
-          <div class="field-group">
-            <label class="field-label">Numéro de téléphone professionnel</label>
-            <input class="field-input" id="f-telephone_professionnel" type="tel" placeholder="Ex: +225 07 00 00 00 00">
-          </div>
-          <div class="field-group">
-            <label class="field-label">Niveau hiérarchique du demandeur</label>
-            <select class="field-select" id="f-niveau_hierarchique">
-              <option value="">Sélectionner un niveau</option>
-              <option value="Direction Générale">Direction Générale</option>
-              <option value="Direction">Direction</option>
-              <option value="Management">Management</option>
-              <option value="Cadre">Cadre</option>
-              <option value="Technicien / Agent">Technicien / Agent</option>
-            </select>
-          </div>
-        </div>
-        <div class="field-hint" style="margin-top:16px; padding:12px 16px; background:#f0f7ff; border-radius:8px; color:#1e4d8c;">
-          Ces informations seront utilisées pour toute communication relative au suivi de ce dossier. Assurez-vous de leur exactitude.
-        </div>
-        <div class="wizard-footer">
-          <button class="btn-prev" onclick="goStep(1)">&larr; Précédent</button>
-          <div style="display:flex;gap:10px">
-            <button class="btn-save" onclick="saveAndQuit()">Enregistrer et quitter</button>
-            <button class="btn-next" onclick="goStep(3)">Suivant &rarr;</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ═══ STEP 3 : Relation ═══ -->
-      <div class="wizard-panel" id="step-3" style="display:none">
-        <div class="panel-title">Nature de votre relation avec nous</div>
-        <div class="panel-sub">Cette section est obligatoire. Elle permet d'évaluer la légitimité et la proportionnalité de la relation envisagée dans une logique de conformité.</div>
-
-        <div class="form-grid">
-
-          <!-- Description de la relation -->
-          <div class="field-group field-span-full">
-            <label class="field-label">Description de la relation <span class="field-req">*</span></label>
-            <textarea class="field-textarea" id="f-relation_description" rows="4" placeholder="Veuillez décrire précisément la nature de la relation envisagée avec le tiers ainsi que les services, produits ou prestations concernés."></textarea>
-          </div>
-
-          <!-- Objectif métier -->
-          <div class="field-group field-span-full">
-            <label class="field-label">Objectif métier <span class="field-req">*</span></label>
-            <textarea class="field-textarea" id="f-relation_objectif_metier" rows="3" placeholder="Quel est l'objectif opérationnel, commercial, stratégique ou réglementaire de cette relation avec le tiers ?"></textarea>
-          </div>
-
-          <!-- Justification du choix du tiers -->
-          <div class="field-group field-span-full">
-            <label class="field-label">Justification du choix du tiers <span class="field-req">*</span></label>
-            <textarea class="field-textarea" id="f-relation_justification_choix" rows="3" placeholder="Pour quelles raisons ce tiers a-t-il été sélectionné par rapport aux autres acteurs du marché ?"></textarea>
-          </div>
-
-          <!-- Caractère stratégique -->
-          <div class="field-group field-span-full">
-            <label class="field-label">Cette relation est-elle considérée comme stratégique pour l'organisation ? <span class="field-req">*</span></label>
-            <input type="hidden" id="f-relation_strategique" value="">
-            <div class="yn-btns">
-              <button class="yn-btn" id="btn-strategique-oui" onclick="setRelationField('relation_strategique','Oui',this,'btn-strategique-non','block-strategique')">Oui</button>
-              <button class="yn-btn" id="btn-strategique-non" onclick="setRelationField('relation_strategique','Non',this,'btn-strategique-oui','block-strategique')">Non</button>
-            </div>
-          </div>
-
-          <!-- Bloc conditionnel : stratégique = Oui -->
-          <div class="field-span-full" id="block-strategique" style="display:none">
-            <div class="relation-block">
-              <div class="field-group">
-                <label class="field-label">Pourquoi cette relation est-elle stratégique ? <span class="field-req">*</span></label>
-                <textarea class="field-textarea" id="f-relation_strategique_explication" rows="3" placeholder="Veuillez expliquer pourquoi cette relation est considérée comme stratégique."></textarea>
-              </div>
-              <div class="field-group">
-                <label class="field-label">Impact opérationnel ou financier en cas d'échec <span class="field-req">*</span></label>
-                <textarea class="field-textarea" id="f-relation_strategique_impact" rows="3" placeholder="Quel serait l'impact opérationnel ou financier en cas d'échec de cette relation ?"></textarea>
-              </div>
-              <div class="field-group">
-                <label class="field-label">Dépendance critique vis-à-vis de ce tiers ? <span class="field-req">*</span></label>
-                <input type="hidden" id="f-relation_dependance_critique" value="">
-                <div class="yn-btns">
-                  <button class="yn-btn" id="btn-dependance-oui" onclick="setRelationField('relation_dependance_critique','Oui',this,'btn-dependance-non',null)">Oui</button>
-                  <button class="yn-btn" id="btn-dependance-non" onclick="setRelationField('relation_dependance_critique','Non',this,'btn-dependance-oui',null)">Non</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Urgence métier -->
-          <div class="field-group field-span-full">
-            <label class="field-label">La demande présente-t-elle un caractère d'urgence opérationnelle ? <span class="field-req">*</span></label>
-            <input type="hidden" id="f-relation_urgence" value="">
-            <div class="yn-btns">
-              <button class="yn-btn" id="btn-urgence-oui" onclick="setRelationField('relation_urgence','Oui',this,'btn-urgence-non','block-urgence')">Oui</button>
-              <button class="yn-btn" id="btn-urgence-non" onclick="setRelationField('relation_urgence','Non',this,'btn-urgence-oui','block-urgence')">Non</button>
-            </div>
-          </div>
-
-          <!-- Bloc conditionnel : urgence = Oui -->
-          <div class="field-span-full" id="block-urgence" style="display:none">
-            <div class="relation-block relation-block--warning">
-              <div class="relation-note">
-                <strong>Important :</strong> Une urgence opérationnelle ne dispense pas des validations obligatoires. Le dossier suivra le circuit de validation standard.
-              </div>
-              <div class="field-group">
-                <label class="field-label">Justification précise de l'urgence <span class="field-req">*</span></label>
-                <textarea class="field-textarea" id="f-relation_urgence_justification" rows="3" placeholder="Quelle est la justification précise de cette urgence ?"></textarea>
-              </div>
-              <div class="field-group">
-                <label class="field-label">Impacts métiers en cas de retard <span class="field-req">*</span></label>
-                <textarea class="field-textarea" id="f-relation_urgence_impact_retard" rows="3" placeholder="Quels seraient les impacts métiers en cas de retard ?"></textarea>
-              </div>
-              <div class="field-group">
-                <label class="field-label">Une procédure exceptionnelle est-elle demandée ? <span class="field-req">*</span></label>
-                <input type="hidden" id="f-relation_procedure_exceptionnelle" value="">
-                <div class="yn-btns">
-                  <button class="yn-btn" id="btn-procedure-oui" onclick="setRelationField('relation_procedure_exceptionnelle','Oui',this,'btn-procedure-non',null)">Oui</button>
-                  <button class="yn-btn" id="btn-procedure-non" onclick="setRelationField('relation_procedure_exceptionnelle','Non',this,'btn-procedure-oui',null)">Non</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div><!-- form-grid -->
-
-        <div class="wizard-footer">
-          <button class="btn-prev" onclick="goStep(2)">&larr; Précédent</button>
-          <div style="display:flex;gap:10px">
-            <button class="btn-save" onclick="saveAndQuit()">Enregistrer et quitter</button>
-            <button class="btn-next" onclick="goStep(4)">Suivant &rarr;</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ═══ STEP 4 : Tiers évalué ═══ -->
-      <div class="wizard-panel" id="step-4" style="display:none">
         <div class="panel-title">Identification du Tiers Évalué</div>
         <div class="panel-sub">Renseignez l'ensemble des informations juridiques, opérationnelles et capitalistiques du tiers. Ces données alimentent le moteur d'analyse de risque.</div>
 
@@ -674,15 +507,19 @@ input[type=file] { display: none; }
             <textarea class="field-textarea" id="f-tiers_marches_geographiques" rows="2" placeholder="Ex: Afrique de l'Ouest, Europe, MENA…"></textarea>
           </div>
           <div class="field-group">
-            <label class="field-label">Montant du contrat (FCFA)</label>
-            <input class="field-input" id="f-tiers_montant_contrat" type="number" min="0" placeholder="0">
-          </div>
-          <div class="field-group">
             <label class="field-label">Le tiers intervient-il dans des secteurs réglementés ? <span class="field-req">*</span></label>
             <input type="hidden" id="f-tiers_secteurs_reglementes" value="">
             <div class="yn-btns">
               <button class="yn-btn" id="btn-secreg-oui" onclick="setField('tiers_secteurs_reglementes','Oui',this,'btn-secreg-non',null)">Oui</button>
               <button class="yn-btn" id="btn-secreg-non" onclick="setField('tiers_secteurs_reglementes','Non',this,'btn-secreg-oui',null)">Non</button>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Le tiers interagit-il avec le secteur public (agents publics, entités gouvernementales) ? <span class="field-req">*</span></label>
+            <input type="hidden" id="f-interaction_publique" value="">
+            <div class="yn-btns">
+              <button class="yn-btn" id="btn-intpub-oui" onclick="setField('interaction_publique','Oui',this,'btn-intpub-non',null)">Oui</button>
+              <button class="yn-btn" id="btn-intpub-non" onclick="setField('interaction_publique','Non',this,'btn-intpub-oui',null)">Non</button>
             </div>
           </div>
         </div>
@@ -692,7 +529,7 @@ input[type=file] { display: none; }
         <div class="form-grid">
           <div class="field-group field-span-full">
             <label class="field-label">Actionnaires principaux <span class="field-req">*</span></label>
-            <textarea class="field-textarea" id="f-tiers_actionnaires_principaux" rows="2" placeholder="Nommez les actionnaires principaux avec leurs parts respectives"></textarea>
+            <textarea class="field-textarea" id="f-tiers_actionnaires_principaux" rows="2" placeholder="Nommez les actionnaires principaux"></textarea>
           </div>
           <div class="field-group field-span-full">
             <label class="field-label">Structure détaillée de l'actionnariat <span class="field-req">*</span></label>
@@ -757,16 +594,16 @@ input[type=file] { display: none; }
         </div>
 
         <div class="wizard-footer">
-          <button class="btn-prev" onclick="goStep(3)">&larr; Précédent</button>
+          <div></div>
           <div style="display:flex;gap:10px">
             <button class="btn-save" onclick="saveAndQuit()">Enregistrer et quitter</button>
-            <button class="btn-next" onclick="goStep(5)">Suivant &rarr;</button>
+            <button class="btn-next" onclick="goStep(2)">Suivant &rarr;</button>
           </div>
         </div>
       </div>
 
-      <!-- ═══ STEP 5 : Questionnaire ═══ -->
-      <div class="wizard-panel" id="step-5" style="display:none">
+      <!-- ═══ STEP 2 : Questionnaire ═══ -->
+      <div class="wizard-panel" id="step-2" style="display:none">
         <div class="panel-title">Questionnaire d'Audit Préliminaire</div>
         <div class="panel-sub">Veuillez répondre aux questions suivantes avec précision. Ces données alimentent directement l'analyse de risque automatisée.</div>
         <div id="questions-container">
@@ -784,13 +621,13 @@ input[type=file] { display: none; }
           </div>
         </div>
         <div class="wizard-footer">
-          <button class="btn-prev" onclick="goStep(4)">&larr; Précédent</button>
-          <button class="btn-next" onclick="goStep(6)">Suivant &rarr;</button>
+          <button class="btn-prev" onclick="goStep(1)">&larr; Précédent</button>
+          <button class="btn-next" onclick="goStep(3)">Suivant &rarr;</button>
         </div>
       </div>
 
-      <!-- ═══ STEP 6 : Documents ═══ -->
-      <div class="wizard-panel" id="step-6" style="display:none">
+      <!-- ═══ STEP 3 : Documents ═══ -->
+      <div class="wizard-panel" id="step-3" style="display:none">
         <div class="panel-title">Assistant de Due Diligence</div>
         <div class="panel-sub">Veuillez fournir les documents nécessaires pour finaliser l'étape d'audit. Vos fichiers sont chiffrés et stockés en toute sécurité.</div>
         <div class="upload-layout">
@@ -823,16 +660,16 @@ input[type=file] { display: none; }
           </div>
         </div>
         <div class="wizard-footer">
-          <button class="btn-prev" onclick="goStep(5)">&larr; Précédent</button>
+          <button class="btn-prev" onclick="goStep(2)">&larr; Précédent</button>
           <div style="display:flex;gap:10px">
             <button class="btn-save" onclick="saveAndQuit()">Enregistrer et quitter</button>
-            <button class="btn-next" onclick="goStep(7)">Suivant &rarr;</button>
+            <button class="btn-next" onclick="goStep(4)">Suivant &rarr;</button>
           </div>
         </div>
       </div>
 
-      <!-- ═══ STEP 7 : Récapitulatif ═══ -->
-      <div class="wizard-panel" id="step-7" style="display:none">
+      <!-- ═══ STEP 4 : Récapitulatif ═══ -->
+      <div class="wizard-panel" id="step-4" style="display:none">
         <div class="panel-title">Récapitulatif de la Requête</div>
         <div class="panel-sub">Dernière étape avant la soumission définitive au cabinet</div>
 
@@ -926,7 +763,7 @@ input[type=file] { display: none; }
         <div class="security-note">Transaction sécurisée par chiffrement AES-256</div>
 
         <div class="wizard-footer">
-          <button class="btn-prev" onclick="goStep(6)">&larr; Retour à l'étape 6</button>
+          <button class="btn-prev" onclick="goStep(3)">&larr; Retour à l'étape 3</button>
           <div></div>
         </div>
       </div>
@@ -939,17 +776,19 @@ input[type=file] { display: none; }
 // ── State ──────────────────────────────────────────────────────────────
 const wizard = {
   currentStep: 1,
-  totalSteps: 7,
+  totalSteps: 4,
   ddType: null,
+  ddName: null,
+  montantContrat: 0,
   questions: [],
   rootQuestions: [],          // questions sans parent
   childMap: {},               // {parent_name: [children]}
   answers: {},                // question_name → {reponse, poids}
   uploadedFiles: {},          // nom_document → file_url
-  requiredDocs: [],           // [{nom_document, obligatoire}] — chargés depuis API
-  conditionalDocs: {},        // question_name → {nom_document, obligatoire}
+  requiredDocs: [],           // [{nom_document, obligatoire:0}] — chargés depuis API (tous optionnels)
+  docFromAnswer: {},          // question_name → {nom_document, obligatoire:1} quand répondu "Oui"
   financialThreshold: null,   // 'faible'|'modere'|'eleve'|'critique' pour DD financière
-  thresholdDocs: [],          // documents supplémentaires déclenchés par le seuil
+  thresholdDocs: [],          // documents supplémentaires déclenchés par le seuil (tous optionnels)
   financialAnswers: {},       // fin_qXX → valeur pour les questions financières
 };
 
@@ -967,9 +806,9 @@ function goStep(n) {
   closeSidebar();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  if (n === 5) loadQuestions();
-  if (n === 6) buildDocChecklist();
-  if (n === 7) buildRecap();
+  if (n === 2) loadQuestions();
+  if (n === 3) buildDocChecklist();
+  if (n === 4) buildRecap();
 }
 
 function updateStepper() {
@@ -997,49 +836,6 @@ function updateStepper() {
 // ── Validation ────────────────────────────────────────────────────────
 function validateStep(n) {
   if (n === 1) {
-    if (!wizard.ddType) { alert('Veuillez sélectionner un type de Due Diligence.'); return false; }
-  }
-  if (n === 2) {
-    const nom = document.getElementById('f-demandeur_nom').value.trim();
-    const email = document.getElementById('f-email_contact').value.trim();
-    if (!nom) { alert('Le nom du demandeur est obligatoire.'); return false; }
-    if (!email) { alert("L'email de contact est obligatoire."); return false; }
-  }
-  if (n === 3) {
-    const desc = document.getElementById('f-relation_description').value.trim();
-    if (!desc) { alert('La description de la relation est obligatoire.'); return false; }
-    const obj = document.getElementById('f-relation_objectif_metier').value.trim();
-    if (!obj) { alert("L'objectif métier est obligatoire."); return false; }
-    const just = document.getElementById('f-relation_justification_choix').value.trim();
-    if (!just) { alert('La justification du choix du tiers est obligatoire.'); return false; }
-    const strat = document.getElementById('f-relation_strategique').value;
-    if (!strat) { alert('Veuillez indiquer si la relation est stratégique.'); return false; }
-    if (strat === 'Oui') {
-      if (!document.getElementById('f-relation_strategique_explication').value.trim()) {
-        alert('Veuillez expliquer pourquoi la relation est stratégique.'); return false;
-      }
-      if (!document.getElementById('f-relation_strategique_impact').value.trim()) {
-        alert("Veuillez décrire l'impact en cas d'échec de la relation."); return false;
-      }
-      if (!document.getElementById('f-relation_dependance_critique').value) {
-        alert('Veuillez indiquer s\'il existe une dépendance critique.'); return false;
-      }
-    }
-    const urg = document.getElementById('f-relation_urgence').value;
-    if (!urg) { alert("Veuillez indiquer si la demande présente une urgence opérationnelle."); return false; }
-    if (urg === 'Oui') {
-      if (!document.getElementById('f-relation_urgence_justification').value.trim()) {
-        alert("Veuillez justifier l'urgence."); return false;
-      }
-      if (!document.getElementById('f-relation_urgence_impact_retard').value.trim()) {
-        alert('Veuillez décrire les impacts métiers en cas de retard.'); return false;
-      }
-      if (!document.getElementById('f-relation_procedure_exceptionnelle').value) {
-        alert("Veuillez indiquer si une procédure exceptionnelle est demandée."); return false;
-      }
-    }
-  }
-  if (n === 4) {
     const checks = [
       ['f-tiers_nom',              'La raison sociale complète est obligatoire.'],
       ['f-tiers_rccm',             'Le numéro RCCM / registre de commerce est obligatoire.'],
@@ -1056,6 +852,7 @@ function validateStep(n) {
       ['f-tiers_principaux_clients','Les principaux clients sont obligatoires.'],
       ['f-tiers_marches_geographiques','Les marchés géographiques sont obligatoires.'],
       ['f-tiers_secteurs_reglementes','Veuillez indiquer si le tiers intervient dans des secteurs réglementés.'],
+      ['f-interaction_publique','Veuillez indiquer si le tiers interagit avec le secteur public.'],
       ['f-tiers_actionnaires_principaux','Les actionnaires principaux sont obligatoires.'],
       ['f-tiers_structure_actionnariat','La structure de l\'actionnariat est obligatoire.'],
       ['f-tiers_beneficiaires_effectifs','Veuillez indiquer si des bénéficiaires effectifs ont été identifiés.'],
@@ -1095,7 +892,7 @@ function validateStep(n) {
       }
     }
   }
-  if (n === 5) {
+  if (n === 2) {
     if (wizard.ddType && wizard.ddType.toLowerCase().includes('financ')) {
       const finBase = [
         ['f-fin_q02', 'La devise utilisée est obligatoire.'],
@@ -1140,10 +937,9 @@ function validateStep(n) {
         }
       }
     }
-    const tDpd = (wizard.ddType || '').toLowerCase();
-    if (tDpd.includes('protection') || tDpd.includes('donn') || tDpd.includes('rgpd') || tDpd.includes('dpd')) {
+    {
       const gwDpd = document.getElementById('f-dpd_gateway');
-      if (!gwDpd || !gwDpd.value.trim()) { alert('Veuillez indiquer si le tiers aura accès à des données personnelles ou des systèmes d\'information (question gateway Protection des Données).'); return false; }
+      if (!gwDpd || !gwDpd.value.trim()) { alert('Veuillez indiquer si le tiers aura accès à des données personnelles ou des systèmes d\'information (question Protection des Données).'); return false; }
       if (gwDpd.value === 'Oui') {
         const dpdChecks = [
           ['f-dpd_q01', 'Veuillez décrire les catégories de données personnelles qui seront traitées.'],
@@ -1175,10 +971,9 @@ function validateStep(n) {
         }
       }
     }
-    const tCyber = (wizard.ddType || '').toLowerCase();
-    if (tCyber.includes('cyber') || tCyber.includes('secu') || tCyber.includes('sécur')) {
+    {
       const gwCyber = document.getElementById('f-cyber_gateway');
-      if (!gwCyber || !gwCyber.value.trim()) { alert('Veuillez indiquer si le tiers aura accès à des données personnelles ou des systèmes d\'information (question gateway Cybersécurité).'); return false; }
+      if (!gwCyber || !gwCyber.value.trim()) { alert('Veuillez indiquer si le tiers aura accès à des données personnelles ou des systèmes d\'information (question Cybersécurité).'); return false; }
       if (gwCyber.value === 'Oui') {
         const cyberChecks = [
           ['f-cyber_q01', 'Veuillez indiquer si le tiers disposera d\'un accès VPN aux infrastructures.'],
@@ -1220,6 +1015,13 @@ function validateStep(n) {
       }
     }
   }
+  if (n === 3) {
+    const missing = (wizard.currentDocs || []).filter(d => d.obligatoire == 1 && !wizard.uploadedFiles[d.nom_document]);
+    if (missing.length > 0) {
+      alert('Veuillez téléverser les documents obligatoires avant de continuer :\n• ' + missing.map(d => d.nom_document).join('\n• '));
+      return false;
+    }
+  }
   return true;
 }
 
@@ -1255,7 +1057,6 @@ function saveAndQuit() {
     tiers_pays_activites: (document.getElementById('f-tiers_pays_activites') || {}).value || '[]',
     tiers_secteur: (document.getElementById('f-tiers_secteur') || {}).value || '',
     tiers_description_activites: (document.getElementById('f-tiers_description_activites') || {}).value || '',
-    tiers_montant_contrat: (document.getElementById('f-tiers_montant_contrat') || {}).value || 0,
     relation_description: (document.getElementById('f-relation_description') || {}).value || '',
     relation_objectif_metier: (document.getElementById('f-relation_objectif_metier') || {}).value || '',
   };
@@ -1428,13 +1229,7 @@ function loadQuestions() {
     args: { dd_type: wizard.ddType },
     callback: function(r) {
       wizard.questions = r.message || [];
-      // Docs des questions racines toujours requis (indépendamment d'une réponse)
-      wizard.questionBaseDocs = [];
-      wizard.questions.forEach(q => {
-        if (!q.question_parente && q.demander_document && q.label_document) {
-          wizard.questionBaseDocs.push({ nom_document: q.label_document, obligatoire: q.obligatoire || 0 });
-        }
-      });
+      wizard.docFromAnswer = {};
       renderQuestions();
       renderFinancialSection();
       renderDpdSection();
@@ -1587,8 +1382,7 @@ function renderFinancialSection() {
 }
 
 function detectFinancialThreshold() {
-  const el = document.getElementById('f-tiers_montant_contrat');
-  const montant = el ? (parseFloat(el.value) || 0) : 0;
+  const montant = wizard.montantContrat || 0;
   let level, label, controls, extraQuestions = [], extraDocs = [];
 
   if (montant < 5000000) {
@@ -1679,8 +1473,6 @@ function answerFin(qKey, value, activeBtnEl, otherBtnId, blockId) {
 
 // ── Questionnaire Protection des Données ────────────────────────────
 function renderDpdSection() {
-  const t = (wizard.ddType || '').toLowerCase();
-  if (!t.includes('protection') && !t.includes('donn') && !t.includes('rgpd') && !t.includes('dpd')) return;
   const container = document.getElementById('questions-container');
   container.insertAdjacentHTML('beforeend', `
 <div style="margin-top:28px;">
@@ -1865,8 +1657,6 @@ function renderDpdPaysTags(list, tagsId, selectId, hiddenId) {
 }
 
 function renderCyberSection() {
-  const t = (wizard.ddType || '').toLowerCase();
-  if (!t.includes('cyber') && !t.includes('secu') && !t.includes('sécur')) return;
   const container = document.getElementById('questions-container');
   if (!container) return;
   container.insertAdjacentHTML('beforeend', `
@@ -2020,8 +1810,7 @@ function shouldShowAnticorruption() {
   if ((document.getElementById('f-tiers_pays_risque_detecte') || {}).value === '1') return true;
   const finQ08 = document.getElementById('f-fin_q08');
   if (finQ08 && finQ08.value === 'Oui') return true;
-  const montant = parseFloat((document.getElementById('f-tiers_montant_contrat') || {}).value || 0);
-  if (montant >= 25000000) return true;
+  if ((wizard.montantContrat || 0) >= 25000000) return true;
   return false;
 }
 
@@ -2135,6 +1924,7 @@ function answerYN(btn, qname, val, poids) {
   wizard.answers[qname] = { reponse: val, poids: isOui ? poids : 0 };
   updateRiskBar();
   triggerConditionals(qname, val);
+  updateDocFromAnswer(qname, val);
 }
 
 function triggerConditionals(qname, val) {
@@ -2146,24 +1936,35 @@ function triggerConditionals(qname, val) {
         val.toLowerCase() === child.valeur_declenchante.toLowerCase();
     card.style.display = triggered ? 'block' : 'none';
     if (!triggered) {
-      // Réinitialiser la réponse et le doc conditionnel si cachée
       delete wizard.answers[child.name];
       if (child.demander_document && child.label_document) {
-        delete wizard.conditionalDocs[child.name];
+        delete wizard.docFromAnswer[child.name];
         delete wizard.uploadedFiles[child.label_document];
       }
-    } else if (child.demander_document && child.label_document) {
-      wizard.conditionalDocs[child.name] = {
-        nom_document: child.label_document,
-        obligatoire: child.obligatoire || 0,
-      };
     }
+    // Ne pas ajouter le doc ici — il sera ajouté quand le client répond "Oui"
   });
+}
+
+function updateDocFromAnswer(qname, val) {
+  const q = wizard.questions.find(x => x.name === qname);
+  if (!q || !q.demander_document || !q.label_document) return;
+  if (val === 'Oui') {
+    wizard.docFromAnswer[qname] = { nom_document: q.label_document, obligatoire: 1 };
+  } else {
+    delete wizard.docFromAnswer[qname];
+    delete wizard.uploadedFiles[q.label_document];
+  }
+  // Rafraîchir la checklist si on est à l'étape documents
+  if (wizard.currentStep === 3 && document.getElementById('doc-items')) {
+    buildDocChecklist();
+  }
 }
 
 function answerSelect(sel, qname, poids) {
   wizard.answers[qname] = { reponse: sel.value, poids: sel.value ? poids : 0 };
   updateRiskBar();
+  updateDocFromAnswer(qname, sel.value);
 }
 
 function answerText(ta, qname) {
@@ -2197,28 +1998,35 @@ function deduplicateDocs(docs) {
 }
 
 function buildDocChecklist() {
-  // Combiner docs type + docs conditionnels des sous-questions + docs seuil financier
-  const conditionalDocsList = Object.values(wizard.conditionalDocs);
-  const baseDocs = wizard.questionBaseDocs || [];
-  const thresholdDocsList = wizard.thresholdDocs || [];
+  // Docs depuis les réponses "Oui" aux questions demander_document
+  const docFromAnswerList = Object.values(wizard.docFromAnswer || {});
+  // Docs seuil financier — tous optionnels
+  const thresholdDocsList = (wizard.thresholdDocs || []).map(d => ({...d, obligatoire: 0}));
+
+  function assemble(baseList) {
+    // Tous les docs du type DD sont optionnels ; seuls les docFromAnswer sont obligatoires
+    const optionalBase = baseList.map(d => ({...d, obligatoire: 0}));
+    return deduplicateDocs([...optionalBase, ...docFromAnswerList, ...thresholdDocsList]);
+  }
+
   if (wizard.requiredDocs.length === 0) {
     frappe.call({
       method: 'due_diligence.api.get_required_documents',
       args: { dd_type: wizard.ddType },
       callback: function(r) {
         wizard.requiredDocs = r.message || [];
-        const allDocs = deduplicateDocs([...wizard.requiredDocs, ...baseDocs, ...conditionalDocsList, ...thresholdDocsList]);
+        const allDocs = assemble(wizard.requiredDocs);
         renderDocChecklist(allDocs);
         updateDocProgress(allDocs);
       },
       error: function() {
-        const allDocs = deduplicateDocs([...baseDocs, ...conditionalDocsList, ...thresholdDocsList]);
+        const allDocs = assemble([]);
         renderDocChecklist(allDocs);
         updateDocProgress(allDocs);
       }
     });
   } else {
-    const allDocs = deduplicateDocs([...wizard.requiredDocs, ...baseDocs, ...conditionalDocsList, ...thresholdDocsList]);
+    const allDocs = assemble(wizard.requiredDocs);
     renderDocChecklist(allDocs);
     updateDocProgress(allDocs);
   }
@@ -2230,17 +2038,21 @@ function renderDocChecklist(docs) {
   let html = '';
   wizard.currentDocs.forEach((d, i) => {
     const uploaded = wizard.uploadedFiles[d.nom_document];
-    html += `<div class="doc-item">
+    const isMandatory = d.obligatoire == 1;
+    const badge = isMandatory
+      ? `<span style="font-size:10px;font-weight:700;color:#dc2626;background:#fee2e2;padding:1px 6px;border-radius:10px;margin-left:6px;">Obligatoire</span>`
+      : `<span style="font-size:10px;color:var(--muted);background:#f1f5f9;padding:1px 6px;border-radius:10px;margin-left:6px;">Optionnel</span>`;
+    html += `<div class="doc-item" style="${isMandatory && !uploaded ? 'border-left:3px solid #dc2626;' : ''}">
       <div class="doc-check ${uploaded ? 'done' : ''}">
         ${uploaded ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
       </div>
       <div style="flex:1">
         <div class="doc-info-name">
-          ${d.nom_document}
+          ${d.nom_document}${badge}
         </div>
         ${uploaded
           ? `<div class="doc-status received">&#x2713; Reçu : ${uploaded.name}</div>`
-          : '<div class="doc-status waiting">Attendu</div>'}
+          : `<div class="doc-status waiting">${isMandatory ? '&#9888; Requis' : 'Attendu'}</div>`}
       </div>
       <button onclick="triggerUploadFor(${i})" style="font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:#fff;">
         ${uploaded ? 'Remplacer' : 'Ajouter'}
@@ -2414,9 +2226,8 @@ function submitRequest() {
     });
   }
 
-  // Ajouter les réponses DPD (Protection des Données)
-  const tDpd = (wizard.ddType || '').toLowerCase();
-  if (tDpd.includes('protection') || tDpd.includes('donn') || tDpd.includes('rgpd') || tDpd.includes('dpd')) {
+  // Ajouter les réponses DPD (Protection des Données) — toujours collectées
+  {
     const dpdQuestions = [
       {id:'dpd_gateway', label:'Accès aux données personnelles, SI ou données stratégiques'},
       {id:'dpd_q01', label:'Catégories de données personnelles traitées'},
@@ -2445,9 +2256,8 @@ function submitRequest() {
     });
   }
 
-  // Ajouter les réponses Cybersécurité
-  const tCyber = (wizard.ddType || '').toLowerCase();
-  if (tCyber.includes('cyber') || tCyber.includes('secu') || tCyber.includes('sécur')) {
+  // Ajouter les réponses Cybersécurité — toujours collectées
+  {
     const cyberQuestions = [
       {id:'cyber_gateway', label:'Accès aux données personnelles, SI ou données stratégiques'},
       {id:'cyber_q01', label:'Accès VPN aux infrastructures de l\'organisation'},
@@ -2525,13 +2335,12 @@ function submitRequest() {
     tiers_secteur: document.getElementById('f-tiers_secteur').value,
     tiers_description_activites: document.getElementById('f-tiers_description_activites').value,
     tiers_nb_employes: document.getElementById('f-tiers_nb_employes').value,
-    tiers_montant_contrat: document.getElementById('f-tiers_montant_contrat').value || 0,
     tiers_principaux_clients: document.getElementById('f-tiers_principaux_clients').value,
     tiers_marches_geographiques: document.getElementById('f-tiers_marches_geographiques').value,
     tiers_secteurs_reglementes: document.getElementById('f-tiers_secteurs_reglementes').value,
-    interaction_publique: 0,
-    donnees_personnelles: 0,
-    acces_si: 0,
+    interaction_publique: document.getElementById('f-interaction_publique') && document.getElementById('f-interaction_publique').value === 'Oui' ? 1 : 0,
+    donnees_personnelles: document.getElementById('f-dpd_gateway') && document.getElementById('f-dpd_gateway').value === 'Oui' ? 1 : 0,
+    acces_si: document.getElementById('f-cyber_gateway') && document.getElementById('f-cyber_gateway').value === 'Oui' ? 1 : 0,
     tiers_actionnaires_principaux: document.getElementById('f-tiers_actionnaires_principaux').value,
     tiers_beneficiaires_effectifs: document.getElementById('f-tiers_beneficiaires_effectifs').value,
     tiers_beneficiaires_detail: (document.getElementById('f-tiers_beneficiaires_detail') || {}).value || '',
@@ -2565,9 +2374,16 @@ function submitRequest() {
     required_documents,
   };
 
+  const apiMethod = wizard.ddName
+    ? 'due_diligence.api.complete_dd_request'
+    : 'due_diligence.api.create_dd_request';
+  const apiArgs = wizard.ddName
+    ? { dd_name: wizard.ddName, data: JSON.stringify(data) }
+    : { data: JSON.stringify(data) };
+
   frappe.call({
-    method: 'due_diligence.api.create_dd_request',
-    args: { data: JSON.stringify(data) },
+    method: apiMethod,
+    args: apiArgs,
     callback: function(r) {
       if (r.message && r.message.name) {
         window.location.href = '/dd-confirmation?name=' + r.message.name;
@@ -2584,7 +2400,30 @@ function submitRequest() {
   });
 }
 
-// Init
-updateStepper();
+// Init — lire dd_name ou dd_type depuis l'URL
+(function() {
+  const p = new URLSearchParams(window.location.search);
+  const ddName = p.get('dd_name') || '';
+  if (ddName) {
+    wizard.ddName = ddName;
+    frappe.call({
+      method: 'due_diligence.api.get_dd_draft',
+      args: { dd_name: ddName },
+      callback: function(r) {
+        if (r.message) {
+          if (r.message.dd_type) wizard.ddType = r.message.dd_type;
+          wizard.montantContrat = parseFloat(r.message.tiers_montant_contrat) || 0;
+        }
+        updateStepper();
+      },
+      error: function() { updateStepper(); }
+    });
+  } else {
+    const t = p.get('dd_type') || p.get('type') || '';
+    if (t) wizard.ddType = decodeURIComponent(t);
+    wizard.montantContrat = 0;
+    updateStepper();
+  }
+})();
 </script>
 {% endblock %}
