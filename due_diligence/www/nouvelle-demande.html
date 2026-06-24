@@ -1222,12 +1222,25 @@ function setRelationField(fieldId, value, activeBtn, otherBtnId, blockId) {
 
 // ── Step 5 — Questionnaire ───────────────────────────────────────────
 function loadQuestions() {
-  if (wizard.questions.length > 0) { renderQuestions(); return; }
+  console.log('[DD] loadQuestions() — ddType:', wizard.ddType, '— cached questions:', wizard.questions.length);
+  if (wizard.questions.length > 0) {
+    renderQuestions();
+    renderFinancialSection();
+    renderDpdSection();
+    renderCyberSection();
+    renderAnticorruptionSection();
+    return;
+  }
+  if (!wizard.ddType) {
+    document.getElementById('questions-container').innerHTML = '<div style="text-align:center;padding:40px;color:#dc2626;">⚠️ Type DD non défini — impossible de charger les questions. Rechargez la page.</div>';
+    return;
+  }
   document.getElementById('questions-container').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">Chargement…</div>';
   frappe.call({
     method: 'due_diligence.api.get_questions',
     args: { dd_type: wizard.ddType },
     callback: function(r) {
+      console.log('[DD] get_questions réponse:', r.message ? r.message.length + ' questions' : 'vide', r);
       wizard.questions = r.message || [];
       wizard.docFromAnswer = {};
       renderQuestions();
@@ -1235,6 +1248,10 @@ function loadQuestions() {
       renderDpdSection();
       renderCyberSection();
       renderAnticorruptionSection();
+    },
+    error: function(r) {
+      console.error('[DD] get_questions ERREUR:', r);
+      document.getElementById('questions-container').innerHTML = '<div style="text-align:center;padding:40px;color:#dc2626;">⚠️ Erreur lors du chargement des questions. Vérifiez la console.</div>';
     }
   });
 }
@@ -1307,7 +1324,9 @@ function renderQuestionCard(q, hidden) {
 
 // ── Questionnaire financier ──────────────────────────────────────────
 function renderFinancialSection() {
-  if (!wizard.ddType || !wizard.ddType.toLowerCase().includes('financ')) return;
+  // Si le type EST Financière, les questions viennent de renderQuestions() — pas de doublon
+  if (!wizard.ddType || wizard.ddType.toLowerCase() === 'financière') return;
+  if (document.getElementById('fin-section-header')) return; // déjà injecté
   const container = document.getElementById('questions-container');
   container.insertAdjacentHTML('beforeend', `
 <div class="dd-section-header" id="fin-section-header">Flux Financiers &amp; Conditions de Paiement</div>
@@ -1473,6 +1492,9 @@ function answerFin(qKey, value, activeBtnEl, otherBtnId, blockId) {
 
 // ── Questionnaire Protection des Données ────────────────────────────
 function renderDpdSection() {
+  // Si le type EST Protection des données, les questions viennent de renderQuestions() — pas de doublon
+  if ((wizard.ddType || '').toLowerCase() === 'protection des données') return;
+  if (document.getElementById('dpd-gateway-card')) return; // déjà injecté
   const container = document.getElementById('questions-container');
   container.insertAdjacentHTML('beforeend', `
 <div style="margin-top:28px;">
@@ -1657,6 +1679,9 @@ function renderDpdPaysTags(list, tagsId, selectId, hiddenId) {
 }
 
 function renderCyberSection() {
+  // Si le type EST Cybersécurité, les questions viennent de renderQuestions() — pas de doublon
+  if ((wizard.ddType || '').toLowerCase() === 'cybersécurité') return;
+  if (document.getElementById('cyber-gateway-card')) return; // déjà injecté
   const container = document.getElementById('questions-container');
   if (!container) return;
   container.insertAdjacentHTML('beforeend', `
@@ -1806,6 +1831,8 @@ function updateCyberQ11() {
 
 function shouldShowAnticorruption() {
   const t = (wizard.ddType || '').toLowerCase();
+  // Si le type EST Anticorruption, les questions viennent déjà de renderQuestions() — pas de doublon
+  if (t === 'anticorruption') return false;
   if (t.includes('anticorrup') || t.includes('corrupt') || t.includes('intégrit') || t.includes('integrit')) return true;
   if ((document.getElementById('f-tiers_pays_risque_detecte') || {}).value === '1') return true;
   const finQ08 = document.getElementById('f-fin_q08');
@@ -2010,16 +2037,19 @@ function buildDocChecklist() {
   }
 
   if (wizard.requiredDocs.length === 0) {
+    console.log('[DD] buildDocChecklist() — ddType:', wizard.ddType);
     frappe.call({
       method: 'due_diligence.api.get_required_documents',
       args: { dd_type: wizard.ddType },
       callback: function(r) {
+        console.log('[DD] get_required_documents réponse:', r.message ? r.message.length + ' docs' : 'vide', r);
         wizard.requiredDocs = r.message || [];
         const allDocs = assemble(wizard.requiredDocs);
         renderDocChecklist(allDocs);
         updateDocProgress(allDocs);
       },
-      error: function() {
+      error: function(r) {
+        console.error('[DD] get_required_documents ERREUR:', r);
         const allDocs = assemble([]);
         renderDocChecklist(allDocs);
         updateDocProgress(allDocs);
@@ -2401,29 +2431,37 @@ function submitRequest() {
 }
 
 // Init — lire dd_name ou dd_type depuis l'URL
-(function() {
+// frappe.ready() garantit que frappe.call est disponible avant l'exécution
+frappe.ready(function() {
   const p = new URLSearchParams(window.location.search);
   const ddName = p.get('dd_name') || '';
   if (ddName) {
     wizard.ddName = ddName;
+    console.log('[DD] init — dd_name trouvé:', ddName);
     frappe.call({
       method: 'due_diligence.api.get_dd_draft',
       args: { dd_name: ddName },
       callback: function(r) {
+        console.log('[DD] get_dd_draft réponse:', r.message);
         if (r.message) {
           if (r.message.dd_type) wizard.ddType = r.message.dd_type;
           wizard.montantContrat = parseFloat(r.message.tiers_montant_contrat) || 0;
         }
+        console.log('[DD] wizard.ddType après init:', wizard.ddType);
         updateStepper();
       },
-      error: function() { updateStepper(); }
+      error: function(r) {
+        console.error('[DD] get_dd_draft ERREUR:', r);
+        updateStepper();
+      }
     });
   } else {
     const t = p.get('dd_type') || p.get('type') || '';
     if (t) wizard.ddType = decodeURIComponent(t);
+    console.log('[DD] init — ddType depuis URL:', wizard.ddType);
     wizard.montantContrat = 0;
     updateStepper();
   }
-})();
+});
 </script>
 {% endblock %}

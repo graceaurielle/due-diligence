@@ -2,7 +2,7 @@
 
 **Projet :** Application Frappe `due_diligence` — Cabinet AMOAMAN & ASSOCIÉS  
 **Site cible :** `compliance`  
-**Dernière mise à jour :** 2026-06-11
+**Dernière mise à jour :** 2026-06-24
 
 ---
 
@@ -20,6 +20,8 @@
 | 8 | Responsive design (toutes pages) | ✅ Terminé |
 | 9 | Sidebar — widget utilisateur | ✅ Terminé |
 | 10 | Conformité CSS (CSS custom properties) | ✅ Terminé |
+
+| 11 | Bugs portail client — questions & documents | ✅ Terminé |
 
 ### À faire (backlog)
 - [ ] Surveillance continue : logique de réévaluation périodique (`Sous surveillance continue`)
@@ -174,6 +176,47 @@
 - Classes sémantiques `.risk-faible / .risk-modere / .risk-eleve / .risk-critique` pour couleurs
 - Classe `.risk-dot` pour l'indicateur de risque dans les tableaux
 - Fichier concerné : `tableau-de-bord.html`
+
+---
+
+---
+
+## Phase 11 — Bugs portail client (questions & documents)
+
+**Statut :** Terminé — 2026-06-24
+
+### Contexte
+Flux : utilisateur interne (desk) crée le DD Request, choisit le type et assigne un client.
+Le client reçoit un lien `/nouvelle-demande?dd_name=XXX` et doit remplir le questionnaire (étape 2) et les documents (étape 3).
+Les questions et les documents n'apparaissaient pas, quelle que soit le type de DD.
+
+### Bugs identifiés et corrigés
+
+#### Bug 1 — `frappe.call is not a function` (cause racine principale)
+- **Fichier :** `www/nouvelle-demande.html`
+- **Cause :** L'IIFE d'initialisation `(function(){...})()` s'exécutait immédiatement au parsing du `<script>`, avant que Frappe JS ait fini de s'initialiser. `frappe.call` n'existait donc pas encore → `wizard.ddType` restait vide → aucune question chargée.
+- **Correction :** Remplacement de l'IIFE par `frappe.ready(function() { ... })` qui attend l'initialisation complète de Frappe JS.
+
+#### Bug 2 — Permission refusée sur `frappe.get_doc("DD Request", ...)` pour les portal users
+- **Fichier :** `due_diligence/api.py` — fonctions `get_dd_draft` et `complete_dd_request`
+- **Cause :** `frappe.get_doc` applique les permissions standard Frappe. Le rôle "DD Client" est un Website User (desk_access=0) sans permission standard de lecture sur "DD Request" (seul `has_website_permission` est défini, qui ne s'applique pas aux appels whitelist). Résultat : exception silencieuse, `dd_type` jamais retourné.
+- **Correction :**
+  - `get_dd_draft` : remplacé par `frappe.db.get_value(...)` (bypass permissions, vérification manuelle du `client_user`)
+  - `complete_dd_request` : vérification du `client_user` via `frappe.db.get_value`, puis `frappe.flags.ignore_permissions = True` avant `frappe.get_doc`
+
+#### Bug 3 — `frappe.get_all` retourne vide pour les Website Users sans `ignore_permissions=True`
+- **Fichier :** `due_diligence/api.py` — fonctions `get_dd_types`, `get_questions`, `get_required_documents`
+- **Cause :** `frappe.get_all` sur des doctypes internes (`DD Question`, `DD Section`, `DD Document Requis Template`) retourne silencieusement une liste vide pour les Website Users, même si le rôle `All` a `read=1`.
+- **Correction :** Ajout de `ignore_permissions=True` sur tous les `frappe.get_all` de ces fonctions.
+
+#### Bug 4 — `loadQuestions()` early-exit sans appeler les sections DPD/Cyber/Financière
+- **Fichier :** `www/nouvelle-demande.html` — fonction `loadQuestions()`
+- **Cause :** Le branch `if (wizard.questions.length > 0)` appelait uniquement `renderQuestions()` et retournait, sautant `renderDpdSection()`, `renderCyberSection()`, etc. De plus, `renderQuestions()` remplace tout le `innerHTML` du container, effaçant les sections précédemment injectées.
+- **Correction :** L'early-exit appelle maintenant toutes les fonctions render. Gardes anti-double-injection ajoutées (`if (document.getElementById('dpd-gateway-card')) return;`).
+
+### Fichiers modifiés
+- `apps/due_diligence/due_diligence/api.py`
+- `apps/due_diligence/due_diligence/www/nouvelle-demande.html`
 
 ---
 

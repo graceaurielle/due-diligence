@@ -71,42 +71,42 @@ frappe.ui.form.on("DD Request", {
 	refresh(frm) {
 		// ── Visibilité des sections selon rôle et état ──────────────────
 		const isInterne = !frappe.user.has_role("DD Client");
-		const isBrouillon = frm.doc.docstatus === 0;
+		// Sections que le CLIENT remplit sur le portail
+		const champsClientCaches = [
+			// Tiers évalué (garder client_user visible, cacher les détails)
+			"tiers_nom", "tiers_nom_commercial", "tiers_rccm", "tiers_nif",
+			"tiers_forme_juridique", "tiers_date_creation", "tiers_pays", "cb_tiers",
+			"tiers_adresse_siege", "tiers_pays_activites", "tiers_filiales_internationales", "tiers_appartient_groupe",
+			// Identification opérationnelle
+			"sb_id_operationnelle", "tiers_secteur", "tiers_description_activites", "tiers_nb_employes",
+			"cb_id_operationnelle", "tiers_principaux_clients", "tiers_marches_geographiques",
+			"tiers_secteurs_reglementes", "interaction_publique", "donnees_personnelles", "acces_si",
+			// Identification capitalistique
+			"sb_id_capitalistique", "tiers_actionnaires_principaux", "tiers_beneficiaires_effectifs",
+			"tiers_structure_actionnariat", "tiers_actionnaires_pep", "cb_id_capitalistique",
+			"tiers_responsables_publics_participations", "tiers_detenu_etat", "tiers_structures_offshore", "tiers_trusts_holdings",
+			// Risque géopolitique
+			"sb_risque_pays", "tiers_pays_risque_detecte", "tiers_nature_operations_pays_risque",
+			"tiers_flux_financiers_internationaux", "tiers_licences_reglementaires",
+			"tiers_relations_entites_publiques_locales", "tiers_risques_sanctions_secondaires",
+			"tiers_figure_listes_sanctions", "tiers_paiements_offshore",
+			// Questionnaire & documents
+			"sb_questionnaire", "answers", "sb_documents", "required_documents",
+			// Scoring & équipe (toujours cachées en brouillon)
+			"sb_evaluation", "score_brut", "score_pondere", "score_residuel", "score_reputationnel",
+			"resume_reputationnel", "sb_cyber_p2", "tiers_sans_mfa", "tiers_sans_pra_pca",
+			"tiers_incident_cyber", "cb_cyber_p2", "tiers_donnees_biometriques", "tiers_violation_rgpd",
+			"tiers_dpo_absent", "sb_attenuants", "tiers_certif_iso27001", "tiers_certif_iso37001",
+			"tiers_audit_big4", "cb_attenuants", "tiers_garantie_bancaire", "tiers_etats_certifies",
+			"tiers_solvabilite_forte", "categorie_risque", "justification_score_manuel", "detail_scoring",
+			"sb_score_history", "score_history", "circuit_workflow", "date_echeance_sla", "sla_depasse",
+			"niveau_escalade", "sb_decision", "decision_finale", "reserves", "cb_decision", "date_decision",
+			"sb_workflow_steps", "workflow_steps", "sb_workflow_events", "workflow_events",
+			"cb_evaluation", "analyste_assigne", "commentaire_interne", "sb_avis",
+		];
 
-		if (isInterne && isBrouillon) {
-			// Sections que le CLIENT remplit sur le portail : cachées pour l'interne en brouillon
-			const champsClientCaches = [
-				// Tiers évalué (garder client_user visible, cacher les détails)
-				"tiers_nom", "tiers_nom_commercial", "tiers_rccm", "tiers_nif",
-				"tiers_forme_juridique", "tiers_date_creation", "tiers_pays", "cb_tiers",
-				"tiers_adresse_siege", "tiers_pays_activites", "tiers_filiales_internationales", "tiers_appartient_groupe",
-				// Identification opérationnelle
-				"sb_id_operationnelle", "tiers_secteur", "tiers_description_activites", "tiers_nb_employes",
-				"cb_id_operationnelle", "tiers_principaux_clients", "tiers_marches_geographiques",
-				"tiers_secteurs_reglementes", "interaction_publique", "donnees_personnelles", "acces_si",
-				// Identification capitalistique
-				"sb_id_capitalistique", "tiers_actionnaires_principaux", "tiers_beneficiaires_effectifs",
-				"tiers_structure_actionnariat", "tiers_actionnaires_pep", "cb_id_capitalistique",
-				"tiers_responsables_publics_participations", "tiers_detenu_etat", "tiers_structures_offshore", "tiers_trusts_holdings",
-				// Risque géopolitique
-				"sb_risque_pays", "tiers_pays_risque_detecte", "tiers_nature_operations_pays_risque",
-				"tiers_flux_financiers_internationaux", "tiers_licences_reglementaires",
-				"tiers_relations_entites_publiques_locales", "tiers_risques_sanctions_secondaires",
-				"tiers_figure_listes_sanctions", "tiers_paiements_offshore",
-				// Questionnaire & documents
-				"sb_questionnaire", "answers", "sb_documents", "required_documents",
-				// Scoring & équipe (toujours cachées en brouillon)
-				"sb_evaluation", "score_brut", "score_pondere", "score_residuel", "score_reputationnel",
-				"resume_reputationnel", "sb_cyber_p2", "tiers_sans_mfa", "tiers_sans_pra_pca",
-				"tiers_incident_cyber", "cb_cyber_p2", "tiers_donnees_biometriques", "tiers_violation_rgpd",
-				"tiers_dpo_absent", "sb_attenuants", "tiers_certif_iso27001", "tiers_certif_iso37001",
-				"tiers_audit_big4", "cb_attenuants", "tiers_garantie_bancaire", "tiers_etats_certifies",
-				"tiers_solvabilite_forte", "categorie_risque", "justification_score_manuel", "detail_scoring",
-				"sb_score_history", "score_history", "circuit_workflow", "date_echeance_sla", "sla_depasse",
-				"niveau_escalade", "sb_decision", "decision_finale", "reserves", "cb_decision", "date_decision",
-				"sb_workflow_steps", "workflow_steps", "sb_workflow_events", "workflow_events",
-				"cb_evaluation", "analyste_assigne", "commentaire_interne", "sb_avis",
-			];
+		if (isInterne && frm.doc.workflow_state === "Brouillon") {
+			// Sections cachées tant que le client n'a pas encore soumis
 			champsClientCaches.forEach(f => frm.toggle_display(f, false));
 
 			// Bannière si pas encore de client assigné
@@ -121,6 +121,10 @@ frappe.ui.form.on("DD Request", {
 					"blue", true
 				);
 			}
+		} else if (isInterne) {
+			// Dossier soumis par le client : forcer l'affichage de toutes les sections
+			// (toggle_display persiste entre les refresh — il faut explicitement réafficher)
+			champsClientCaches.forEach(f => frm.toggle_display(f, true));
 		}
 
 		// Empêcher l'ajout/suppression de lignes dans le circuit de traitement
@@ -175,7 +179,7 @@ frappe.ui.form.on("DD Request", {
 		if (peutGenerer) {
 			frm.add_custom_button(__("Générer l'avis IA"), function () {
 				frappe.confirm(
-					__("Générer l'avis de l'IA pour ce dossier ? L'avis existant sera écrasé."),
+					__("Générer l'avis IA pour ce dossier ? Le contenu existant sera écrasé."),
 					function () {
 						frappe.call({
 							method: "due_diligence.due_diligence.doctype.dd_request.dd_request.generer_avis_ia",
@@ -184,13 +188,29 @@ frappe.ui.form.on("DD Request", {
 							freeze_message: __("Génération de l'avis IA en cours…"),
 							callback(r) {
 								if (r.message) {
-									frm.set_value("avis_ia", r.message);
-									frappe.show_alert({ message: __("Avis IA généré avec succès."), indicator: "green" });
+									frm.set_value("avis_ia", r.message.avis_ia);
+									frappe.show_alert({
+										message: __("Avis IA généré — ouverture du formulaire d'avis…"),
+										indicator: "green",
+									});
+									setTimeout(() => {
+										frappe.set_route("Form", "DD Avis Compliance", r.message.avis_name);
+									}, 1000);
 								}
 							},
 						});
 					}
 				);
+			}, __("Compliance"));
+
+			frm.add_custom_button(__("Rédiger mon avis"), function () {
+				frappe.new_doc("DD Avis Compliance", {
+					dd_request: frm.doc.name,
+					tiers_nom: frm.doc.tiers_nom,
+					dd_type: frm.doc.dd_type,
+					redige_par: frappe.session.user,
+					date_decision: frappe.datetime.get_today(),
+				});
 			}, __("Compliance"));
 		}
 

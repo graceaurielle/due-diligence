@@ -13,6 +13,7 @@ def get_dd_types():
         filters={"actif": 1},
         fields=["name", "type_name", "criticite_moyenne", "description_metier"],
         order_by="type_name asc",
+        ignore_permissions=True,
     )
 
 
@@ -23,6 +24,7 @@ def get_questions(dd_type):
         "DD Section",
         filters={"dd_type": dd_type},
         fields=["name", "section_label", "ordre"],
+        ignore_permissions=True,
     )
     section_map = {s.name: s for s in sections_raw}
 
@@ -35,6 +37,7 @@ def get_questions(dd_type):
             "question_parente", "demander_document", "label_document",
         ],
         order_by="idx asc",
+        ignore_permissions=True,
     )
     for q in questions:
         sec = section_map.get(q.get("etape") or "")
@@ -52,6 +55,7 @@ def get_required_documents(dd_type):
         filters={"parent": dd_type, "parenttype": "DD Type"},
         fields=["nom_document", "obligatoire"],
         order_by="idx asc",
+        ignore_permissions=True,
     )
     return docs
 
@@ -106,27 +110,29 @@ def check_country_risk(country):
 
     # Analyse contextuelle via IA pour les pays non couverts par les listes statiques
     try:
-        import anthropic
-        api_key = frappe.conf.get("anthropic_api_key", "")
+        import json as _json
+        import requests as _requests
+        api_key = frappe.conf.get("gemini_api_key", "")
         if not api_key:
             return {"risk_level": "faible", "reason": ""}
-        client = anthropic.Anthropic(api_key=api_key)
-        message = client.messages.create(
-            model="claude-opus-4-8",
-            max_tokens=300,
-            messages=[{
-                "role": "user",
-                "content": (
-                    f'Évalue le risque compliance/AML/sanctions du pays "{country}" pour une entreprise africaine.\n'
-                    "Réponds UNIQUEMENT avec un JSON valide (pas de markdown) :\n"
-                    '{"risk_level":"faible"|"modere"|"eleve"|"critique",'
-                    '"reason":"explication max 80 mots en français",'
-                    '"mesures":["mesure1","mesure2"]}'
-                ),
-            }],
+        resp = _requests.post(
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
+            headers={"X-goog-api-key": api_key, "Content-Type": "application/json"},
+            json={"contents": [{"parts": [{"text": (
+                f'Évalue le risque compliance/AML/sanctions du pays "{country}" pour une entreprise africaine.\n'
+                "Réponds UNIQUEMENT avec un JSON valide (pas de markdown) :\n"
+                '{"risk_level":"faible"|"modere"|"eleve"|"critique",'
+                '"reason":"explication max 80 mots en français",'
+                '"mesures":["mesure1","mesure2"]}'
+            )}]}]},
+            timeout=20,
         )
-        import json as _json
-        return _json.loads(message.content[0].text.strip())
+        resp.raise_for_status()
+        raw = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        # Gemini peut encapsuler dans ```json ... ```
+        if raw.startswith("```"):
+            raw = raw.split("```")[1].lstrip("json").strip()
+        return _json.loads(raw)
     except Exception:
         return {"risk_level": "faible", "reason": ""}
 
@@ -134,13 +140,21 @@ def check_country_risk(country):
 @frappe.whitelist()
 def get_dd_draft(dd_name):
     """Charge les données nécessaires au wizard pour compléter un DD existant."""
-    doc = frappe.get_doc("DD Request", dd_name)
-    if doc.client_user != frappe.session.user:
+    # frappe.db.get_value bypass les permissions Frappe pour les Website Users
+    result = frappe.db.get_value(
+        "DD Request",
+        dd_name,
+        ["client_user", "dd_type", "tiers_montant_contrat", "workflow_state"],
+        as_dict=True,
+    )
+    if not result:
+        frappe.throw(_("Demande introuvable."), frappe.DoesNotExistError)
+    if result.client_user != frappe.session.user:
         frappe.throw(_("Accès non autorisé."), frappe.PermissionError)
     return {
-        "dd_type": doc.dd_type or "",
-        "tiers_montant_contrat": doc.tiers_montant_contrat or 0,
-        "workflow_state": doc.workflow_state or "",
+        "dd_type": result.dd_type or "",
+        "tiers_montant_contrat": result.tiers_montant_contrat or 0,
+        "workflow_state": result.workflow_state or "",
     }
 
 
@@ -150,9 +164,16 @@ def complete_dd_request(dd_name, data):
     if isinstance(data, str):
         data = json.loads(data)
 
-    doc = frappe.get_doc("DD Request", dd_name)
-    if doc.client_user != frappe.session.user:
+    # frappe.db.get_value bypass les permissions pour vérifier le client_user
+    client_user = frappe.db.get_value("DD Request", dd_name, "client_user")
+    if client_user != frappe.session.user:
         frappe.throw(_("Accès non autorisé."), frappe.PermissionError)
+
+    frappe.flags.ignore_permissions = True
+    try:
+        doc = frappe.get_doc("DD Request", dd_name)
+    finally:
+        frappe.flags.ignore_permissions = False
 
     tiers_fields = [
         "tiers_nom", "tiers_nom_commercial", "tiers_rccm", "tiers_nif",
@@ -201,7 +222,24 @@ def complete_dd_request(dd_name, data):
         })
 
     doc.save(ignore_permissions=True)
-    apply_workflow(doc, "Soumettre le dossier")
+
+    # apply_workflow appelle doc.submit() → check_if_latest() recharge _doc_before_save
+    # sans ignore_permissions, ce qui cause une PermissionError pour les portal users.
+    # On patche load_doc_before_save sur l'instance pour auto-activer le flag.
+    _orig_ldbs = doc.load_doc_before_save
+    def _ldbs_ignore(*, raise_exception=False):
+        _orig_ldbs(raise_exception=raise_exception)
+        if doc._doc_before_save:
+            doc._doc_before_save.flags.ignore_permissions = True
+    doc.load_doc_before_save = _ldbs_ignore
+    try:
+        apply_workflow(doc, "Soumettre le dossier")
+    finally:
+        doc.load_doc_before_save = _orig_ldbs
+
+    # Génération automatique de l'avis IA (silencieuse — ne bloque pas la soumission)
+    _generer_avis_ia_auto(doc.name)
+
     return {"name": doc.name}
 
 
@@ -292,8 +330,87 @@ def create_dd_request(data):
         })
 
     doc.insert(ignore_permissions=True)
-    apply_workflow(doc, "Soumettre le dossier")
+
+    _orig_ldbs = doc.load_doc_before_save
+    def _ldbs_ignore(*, raise_exception=False):
+        _orig_ldbs(raise_exception=raise_exception)
+        if doc._doc_before_save:
+            doc._doc_before_save.flags.ignore_permissions = True
+    doc.load_doc_before_save = _ldbs_ignore
+    try:
+        apply_workflow(doc, "Soumettre le dossier")
+    finally:
+        doc.load_doc_before_save = _orig_ldbs
+
+    # Génération automatique de l'avis IA (silencieuse — ne bloque pas la soumission)
+    _generer_avis_ia_auto(doc.name)
+
     return {"name": doc.name}
+
+
+def _generer_avis_ia_auto(dd_request_name):
+    """Génère l'avis IA automatiquement après soumission. Silencieux en cas d'échec."""
+    try:
+        import time as _time
+        import requests as _requests
+
+        api_key = frappe.conf.get("gemini_api_key", "")
+        if not api_key:
+            return
+
+        doc = frappe.get_doc("DD Request", dd_request_name)
+        prompt = (
+            f"Tu es un analyste compliance senior. Rédige un avis compliance formel et structuré "
+            f"pour le dossier de due diligence suivant.\n\n"
+            f"Tiers évalué : {doc.tiers_nom or '—'}\n"
+            f"Type de DD : {doc.dd_type or '—'}\n"
+            f"Pays : {doc.tiers_pays or '—'}\n"
+            f"Secteur : {doc.tiers_secteur or '—'}\n"
+            f"Score brut : {doc.score_brut or 0}/100\n"
+            f"Score résiduel : {doc.score_residuel or 0}/100\n"
+            f"Catégorie de risque : {doc.categorie_risque or '—'}\n"
+            f"Résumé réputationnel : {doc.resume_reputationnel or 'Non disponible'}\n\n"
+            f"Rédige un avis en français de 200 à 300 mots structuré ainsi :\n"
+            f"1. Synthèse du profil de risque\n"
+            f"2. Points d'attention principaux\n"
+            f"3. Recommandation (GO / NO GO / GO sous réserve) avec conditions éventuelles\n\n"
+            f"Ton : formel, factuel, sans jargon excessif. Pas de markdown."
+        )
+
+        _MODELS = [
+            "gemini-flash-lite-latest",
+            "gemini-2.0-flash-lite",
+            "gemini-2.5-flash-lite",
+            "gemini-flash-latest",
+            "gemini-2.0-flash",
+        ]
+        _SKIP_CODES = {429, 503, 404}
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.2, "maxOutputTokens": 700},
+        }
+        _headers = {"X-goog-api-key": api_key, "Content-Type": "application/json"}
+
+        resp = None
+        for model in _MODELS:
+            url = (
+                "https://generativelanguage.googleapis.com/v1beta/models/"
+                f"{model}:generateContent"
+            )
+            for attempt in range(2):
+                resp = _requests.post(url, headers=_headers, json=payload, timeout=45)
+                if resp.status_code == 404 or resp.status_code not in {429, 503}:
+                    break
+                _time.sleep(2 ** attempt)
+            if resp.status_code not in _SKIP_CODES:
+                break
+
+        if resp and resp.status_code == 200:
+            avis = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+            frappe.db.set_value("DD Request", dd_request_name, "avis_ia", avis)
+            frappe.db.commit()
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "DD — avis IA auto (non-bloquant)")
 
 
 @frappe.whitelist()

@@ -847,28 +847,28 @@ def creer_avis_depuis_dossier(dd_request_name):
 
 @frappe.whitelist()
 def generer_avis_ia(dd_request_name):
-	"""Génère un avis compliance complet via Gemini Flash à partir des données du dossier."""
+	"""Génère un avis compliance complet via Gemini à partir des données du dossier."""
 	doc = frappe.get_doc("DD Request", dd_request_name)
 
 	api_key = frappe.conf.get("gemini_api_key", "")
 	if not api_key:
-		frappe.throw(_("Clé API Gemini non configurée (gemini_api_key)."))
+		frappe.throw(_("Clé API Gemini non configurée (gemini_api_key dans site_config.json)."))
 
 	try:
-		import json as _json
+		import time as _time
 		import requests as _requests
 
 		prompt = (
 			f"Tu es un analyste compliance senior. Rédige un avis compliance formel et structuré "
 			f"pour le dossier de due diligence suivant.\n\n"
-			f"**Tiers évalué :** {doc.tiers_nom or '—'}\n"
-			f"**Type de DD :** {doc.dd_type or '—'}\n"
-			f"**Pays :** {doc.tiers_pays or '—'}\n"
-			f"**Secteur :** {doc.tiers_secteur or '—'}\n"
-			f"**Score brut :** {doc.score_brut or 0}/100\n"
-			f"**Score résiduel :** {doc.score_residuel or 0}/100\n"
-			f"**Catégorie de risque :** {doc.categorie_risque or '—'}\n"
-			f"**Résumé réputationnel :** {doc.resume_reputationnel or 'Non disponible'}\n\n"
+			f"Tiers évalué : {doc.tiers_nom or '—'}\n"
+			f"Type de DD : {doc.dd_type or '—'}\n"
+			f"Pays : {doc.tiers_pays or '—'}\n"
+			f"Secteur : {doc.tiers_secteur or '—'}\n"
+			f"Score brut : {doc.score_brut or 0}/100\n"
+			f"Score résiduel : {doc.score_residuel or 0}/100\n"
+			f"Catégorie de risque : {doc.categorie_risque or '—'}\n"
+			f"Résumé réputationnel : {doc.resume_reputationnel or 'Non disponible'}\n\n"
 			f"Rédige un avis en français de 200 à 300 mots structuré ainsi :\n"
 			f"1. Synthèse du profil de risque\n"
 			f"2. Points d'attention principaux\n"
@@ -876,25 +876,74 @@ def generer_avis_ia(dd_request_name):
 			f"Ton : formel, factuel, sans jargon excessif. Pas de markdown."
 		)
 
-		url = (
-			"https://generativelanguage.googleapis.com/v1beta/models/"
-			f"gemini-2.5-flash-lite:generateContent?key={api_key}"
-		)
+		# Modèles disponibles sur cette clé (v1beta confirmés)
+		# Ordre : lite d'abord (quota gratuit plus élevé), puis flash complet
+		_MODELS = [
+			"gemini-flash-lite-latest",
+			"gemini-2.0-flash-lite",
+			"gemini-2.5-flash-lite",
+			"gemini-flash-latest",
+			"gemini-2.0-flash",
+			"gemini-2.5-flash",
+		]
+		_SKIP_CODES = {429, 503, 404}
 		payload = {
 			"contents": [{"parts": [{"text": prompt}]}],
-			"generationConfig": {
-				"temperature": 0.2,
-				"maxOutputTokens": 600,
-			},
+			"generationConfig": {"temperature": 0.2, "maxOutputTokens": 700},
 		}
-		resp = _requests.post(url, json=payload, timeout=30)
+		_headers = {"X-goog-api-key": api_key, "Content-Type": "application/json"}
+
+		resp = None
+		last_status = None
+		for model in _MODELS:
+			url = (
+				"https://generativelanguage.googleapis.com/v1beta/models/"
+				f"{model}:generateContent"
+			)
+			for attempt in range(3):
+				resp = _requests.post(url, headers=_headers, json=payload, timeout=60)
+				# 404 = modèle absent, inutile de retry
+				if resp.status_code == 404 or resp.status_code not in {429, 503}:
+					break
+				_time.sleep(2 ** attempt)  # 1 s, 2 s, 4 s
+			last_status = resp.status_code
+			if last_status not in _SKIP_CODES:
+				break  # succès ou erreur définitive non-skip
+
+		if last_status == 429:
+			frappe.throw(_("Quota Gemini dépassé pour tous les modèles. Réessayez dans quelques minutes."))
+		if last_status in {503, 404}:
+			frappe.throw(_("Service Gemini indisponible. Réessayez plus tard."))
+
 		resp.raise_for_status()
 		avis = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
+		# Sauvegarde sur DD Request
 		frappe.db.set_value("DD Request", dd_request_name, "avis_ia", avis)
-		frappe.db.commit()
-		return avis
 
+		# Injecter dans DD Avis Compliance (existant ou nouveau)
+		doc_req = frappe.get_doc("DD Request", dd_request_name)
+		avis_name = frappe.db.get_value("DD Avis Compliance", {"dd_request": dd_request_name}, "name")
+		if avis_name:
+			frappe.db.set_value("DD Avis Compliance", avis_name, "risques_identifies", avis)
+		else:
+			avis_doc = frappe.get_doc({
+				"doctype": "DD Avis Compliance",
+				"dd_request": dd_request_name,
+				"tiers_nom": doc_req.tiers_nom,
+				"dd_type": doc_req.dd_type,
+				"redige_par": frappe.session.user,
+				"date_decision": frappe.utils.today(),
+				"risques_identifies": avis,
+			})
+			avis_doc.insert(ignore_permissions=True)
+			avis_name = avis_doc.name
+
+		frappe.db.commit()
+		return {"avis_ia": avis, "avis_name": avis_name}
+
+	except frappe.ValidationError:
+		raise
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "DD — génération avis IA")
 		frappe.throw(_("Erreur lors de la génération de l'avis IA. Consultez les logs."))
