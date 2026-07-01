@@ -221,6 +221,11 @@ def complete_dd_request(dd_name, data):
             "statut": "Reçu" if req.get("fichier") else "Attendu",
         })
 
+    # Réinitialiser la catégorie pour qu'elle soit recalculée automatiquement depuis les réponses
+    # (évite un faux positif "modification manuelle" dans calculer_score si le score a changé)
+    doc.categorie_risque = None
+    doc.justification_score_manuel = None
+
     doc.save(ignore_permissions=True)
 
     # apply_workflow appelle doc.submit() → check_if_latest() recharge _doc_before_save
@@ -358,6 +363,9 @@ def _generer_avis_ia_auto(dd_request_name):
         if not api_key:
             return
 
+        if frappe.db.exists("DD Avis Compliance", {"dd_request": dd_request_name, "is_ia_avis": 1, "docstatus": 0}):
+            return
+
         doc = frappe.get_doc("DD Request", dd_request_name)
         prompt = (
             f"Tu es un analyste compliance senior. Rédige un avis compliance formel et structuré "
@@ -370,10 +378,14 @@ def _generer_avis_ia_auto(dd_request_name):
             f"Score résiduel : {doc.score_residuel or 0}/100\n"
             f"Catégorie de risque : {doc.categorie_risque or '—'}\n"
             f"Résumé réputationnel : {doc.resume_reputationnel or 'Non disponible'}\n\n"
-            f"Rédige un avis en français de 200 à 300 mots structuré ainsi :\n"
+            f"Commence ta réponse par EXACTEMENT une de ces trois lignes (rien d'autre sur cette ligne) :\n"
+            f"DECISION: GO\n"
+            f"DECISION: NO GO\n"
+            f"DECISION: GO sous réserve\n\n"
+            f"Puis rédige l'avis en français de 200 à 300 mots structuré ainsi :\n"
             f"1. Synthèse du profil de risque\n"
             f"2. Points d'attention principaux\n"
-            f"3. Recommandation (GO / NO GO / GO sous réserve) avec conditions éventuelles\n\n"
+            f"3. Conditions éventuelles (si GO sous réserve)\n\n"
             f"Ton : formel, factuel, sans jargon excessif. Pas de markdown."
         )
 
@@ -405,10 +417,31 @@ def _generer_avis_ia_auto(dd_request_name):
             if resp.status_code not in _SKIP_CODES:
                 break
 
-        if resp and resp.status_code == 200:
-            avis = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-            frappe.db.set_value("DD Request", dd_request_name, "avis_ia", avis)
-            frappe.db.commit()
+        if not (resp and resp.status_code == 200):
+            return
+
+        texte = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        lines = texte.split("\n")
+        first_line = lines[0].strip()
+        decisions_valides = {"GO", "NO GO", "GO sous réserve"}
+        decision = "GO"
+        motif = texte
+        if first_line.startswith("DECISION:"):
+            candidate = first_line[len("DECISION:"):].strip()
+            if candidate in decisions_valides:
+                decision = candidate
+                motif = "\n".join(lines[1:]).strip()
+
+        avis_doc = frappe.get_doc({
+            "doctype": "DD Avis Compliance",
+            "dd_request": dd_request_name,
+            "is_ia_avis": 1,
+            "decision": decision,
+            "motif_decision": motif,
+            "date_decision": frappe.utils.today(),
+        })
+        avis_doc.insert(ignore_permissions=True)
+        frappe.db.commit()
     except Exception:
         frappe.log_error(frappe.get_traceback(), "DD — avis IA auto (non-bloquant)")
 

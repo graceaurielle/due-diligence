@@ -279,6 +279,49 @@ input[type=file] { display: none; }
   .wizard-panel { padding: 14px 10px; }
   .wizard-body { padding: 8px; }
 }
+/* ── Multi-pays selector ── */
+.multi-pays-wrapper { position: relative; }
+.multi-pays-trigger {
+  width: 100%; padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
+  background: #fff; cursor: pointer; display: flex; justify-content: space-between;
+  align-items: center; font-size: 14px; color: #374151; user-select: none;
+  box-sizing: border-box;
+}
+.multi-pays-trigger:hover { border-color: #6366f1; }
+.multi-pays-dropdown {
+  position: absolute; z-index: 200; left: 0; right: 0; top: calc(100% + 4px);
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12); overflow: hidden;
+}
+.multi-pays-search {
+  width: 100%; padding: 8px 12px; border: none; border-bottom: 1px solid #e2e8f0;
+  outline: none; font-size: 13px; box-sizing: border-box;
+}
+.multi-pays-list {
+  max-height: 200px; overflow-y: auto; padding: 4px 0;
+}
+.multi-pays-list label {
+  display: flex; align-items: center; gap: 8px; padding: 6px 14px;
+  cursor: pointer; font-size: 13px; color: #374151;
+}
+.multi-pays-list label:hover { background: #f1f5f9; }
+.multi-pays-list input[type=checkbox] { accent-color: #6366f1; }
+.multi-pays-tags {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;
+}
+.multi-pays-tag {
+  background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 12px;
+  font-size: 12px; display: flex; align-items: center; gap: 4px;
+}
+.multi-pays-tag button {
+  background: none; border: none; cursor: pointer; color: #3730a3;
+  font-size: 14px; line-height: 1; padding: 0;
+}
+/* ── Calendrier composite ── */
+.calendrier-row { display: flex; gap: 8px; align-items: center; }
+.calendrier-row .field-input { flex: 1; }
+.calendrier-nb { width: 80px !important; flex: none !important; }
+.calendrier-unit { font-size: 13px; color: #64748b; white-space: nowrap; }
 </style>
 
 <div class="dd-layout">
@@ -772,7 +815,15 @@ input[type=file] { display: none; }
   </div><!-- dd-main -->
 </div>
 
+<script id="dd-ref-data" type="application/json">{"currencies":{{ currencies | tojson }},"countries":{{ countries | tojson }}}</script>
+
 <script>
+(function() {
+  const d = JSON.parse(document.getElementById('dd-ref-data').textContent);
+  window._refCurrencies = d.currencies;
+  window._refCountries  = d.countries;
+})();
+
 // ── State ──────────────────────────────────────────────────────────────
 const wizard = {
   currentStep: 1,
@@ -789,8 +840,11 @@ const wizard = {
   docFromAnswer: {},          // question_name → {nom_document, obligatoire:1} quand répondu "Oui"
   financialThreshold: null,   // 'faible'|'modere'|'eleve'|'critique' pour DD financière
   thresholdDocs: [],          // documents supplémentaires déclenchés par le seuil (tous optionnels)
-  financialAnswers: {},       // fin_qXX → valeur pour les questions financières
+  financialAnswers: {},       // questions financières → valeur
 };
+
+// Pré-chargement du cache Portail Commun dès le démarrage de la page
+setTimeout(() => _loadPortailCommun(), 0);
 
 // ── Stepper ────────────────────────────────────────────────────────────
 function goStep(n) {
@@ -1057,6 +1111,7 @@ function saveAndQuit() {
     tiers_pays_activites: (document.getElementById('f-tiers_pays_activites') || {}).value || '[]',
     tiers_secteur: (document.getElementById('f-tiers_secteur') || {}).value || '',
     tiers_description_activites: (document.getElementById('f-tiers_description_activites') || {}).value || '',
+    tiers_montant_contrat: wizard.montantContrat || 0,
     relation_description: (document.getElementById('f-relation_description') || {}).value || '',
     relation_objectif_metier: (document.getElementById('f-relation_objectif_metier') || {}).value || '',
   };
@@ -1322,87 +1377,152 @@ function renderQuestionCard(q, hidden) {
   return html;
 }
 
+// ── Cache questions Portail Commun ───────────────────────────────────
+let _portailCommun = null;
+
+async function _loadPortailCommun() {
+  if (_portailCommun) return _portailCommun;
+  try {
+    const res = await fetch(
+      '/api/resource/DD%20Question?filters=' + encodeURIComponent(JSON.stringify([['dd_type','=','Portail Commun']])) +
+      '&fields=' + encodeURIComponent(JSON.stringify(['name','question_label','field_type','options','obligatoire','question_parente','valeur_declenchante','etape'])) +
+      '&limit=100&order_by=etape%20asc%2C%20name%20asc&ignore_permissions=1',
+      { credentials: 'same-origin' }
+    );
+    const json = await res.json();
+    _portailCommun = json.data || [];
+  } catch(_) {
+    _portailCommun = [];
+  }
+  return _portailCommun;
+}
+
+function _renderPortailQuestion(q, isThreshold, revealBlockId) {
+  const req = q.obligatoire ? ' <span style="color:#dc2626;">*</span>' : '';
+  const cardStyle = isThreshold ? ' style="border-left:3px solid var(--warning);"' : '';
+  const id = q.name;
+  const ft = q.field_type;
+  let inputHtml = '';
+
+  if (ft === 'Check') {
+    const block = revealBlockId ? `'${revealBlockId}'` : 'null';
+    inputHtml = `
+      <input type="hidden" id="f-${id}" value="">
+      <div class="yn-btns">
+        <button class="yn-btn" id="btn-${id}-oui" onclick="answerFin('${id}','Oui',this,'btn-${id}-non',${block})">Oui</button>
+        <button class="yn-btn" id="btn-${id}-non" onclick="answerFin('${id}','Non',this,'btn-${id}-oui',${block})">Non</button>
+      </div>`;
+  } else if (ft === 'Select') {
+    const opts = (q.options || '').split('\n').filter(Boolean)
+      .map(o => `<option value="${o}">${o}</option>`).join('');
+    inputHtml = `<select class="field-input" id="f-${id}"><option value="">— Sélectionner —</option>${opts}</select>`;
+  } else if (ft === 'Devise') {
+    inputHtml = `<select class="field-input" id="f-${id}"><option value="">Chargement des devises…</option></select>`;
+  } else if (ft === 'Pays Multi') {
+    inputHtml = `
+      <div class="multi-pays-wrapper" id="${id}-wrapper">
+        <div class="multi-pays-trigger" onclick="togglePaysDropdown('${id}')">
+          <span id="${id}-trigger-label">Sélectionner un ou plusieurs pays…</span>
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M5.5 8l4.5 4.5L14.5 8z"/></svg>
+        </div>
+        <div class="multi-pays-dropdown" id="${id}-dropdown" style="display:none;">
+          <input class="multi-pays-search" type="text" placeholder="Rechercher un pays…" oninput="filterPays(this,'${id}-list')">
+          <div class="multi-pays-list" id="${id}-list"></div>
+        </div>
+      </div>
+      <div class="multi-pays-tags" id="${id}-tags"></div>
+      <input type="hidden" id="f-${id}">`;
+  } else if (ft === 'Pays') {
+    inputHtml = `
+      <div class="multi-pays-wrapper" id="${id}-wrapper">
+        <div class="multi-pays-trigger" onclick="togglePaysDropdown('${id}', true)">
+          <span id="${id}-trigger-label">Sélectionner un pays…</span>
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M5.5 8l4.5 4.5L14.5 8z"/></svg>
+        </div>
+        <div class="multi-pays-dropdown" id="${id}-dropdown" style="display:none;">
+          <input class="multi-pays-search" type="text" placeholder="Rechercher un pays…" oninput="filterPays(this,'${id}-list')">
+          <div class="multi-pays-list" id="${id}-list"></div>
+        </div>
+      </div>
+      <input type="hidden" id="f-${id}">`;
+  } else if (ft === 'Banque') {
+    inputHtml = `
+      <select class="field-input" id="f-${id}-select" onchange="updateBanque('${id}')">
+        <option value="">Chargement des établissements…</option>
+      </select>
+      <input type="text" id="f-${id}-autre" class="field-input" style="margin-top:6px;display:none;" placeholder="Nom de l'établissement bancaire" oninput="updateBanque('${id}')">
+      <input type="hidden" id="f-${id}">`;
+  } else if (ft === 'Calendrier') {
+    const periods = (q.options || '').split('\n').filter(Boolean)
+      .map(o => `<option value="${o}">${o}</option>`).join('');
+    inputHtml = `
+      <div class="calendrier-row">
+        <select class="field-input" id="f-${id}-period" onchange="updateCalendrier('${id}')">
+          <option value="">— Périodicité —</option>${periods}
+        </select>
+        <input type="number" id="f-${id}-nb" min="1" max="999" class="field-input calendrier-nb" placeholder="Nb" oninput="updateCalendrier('${id}')">
+        <span class="calendrier-unit">échéances</span>
+      </div>
+      <input type="hidden" id="f-${id}">`;
+  } else if (ft === 'Small Text') {
+    inputHtml = `<textarea class="field-textarea" id="f-${id}" rows="2" placeholder="Votre réponse…"></textarea>`;
+  } else {
+    const inputType = (ft === 'Currency' || ft === 'Int') ? 'number' : 'text';
+    inputHtml = `<input type="${inputType}" class="field-input" id="f-${id}" placeholder="Votre réponse…">`;
+  }
+
+  return `<div class="question-card" id="fin-qcard-${id}"${cardStyle}>
+  <div class="question-label">${q.question_label}${req}</div>
+  ${inputHtml}
+</div>`;
+}
+
 // ── Questionnaire financier ──────────────────────────────────────────
 function renderFinancialSection() {
-  // Si le type EST Financière, les questions viennent de renderQuestions() — pas de doublon
   if (!wizard.ddType || wizard.ddType.toLowerCase() === 'financière') return;
-  if (document.getElementById('fin-section-header')) return; // déjà injecté
-  const container = document.getElementById('questions-container');
-  container.insertAdjacentHTML('beforeend', `
-<div class="dd-section-header" id="fin-section-header">Flux Financiers &amp; Conditions de Paiement</div>
-<div class="question-card" id="fin-qcard-02">
-  <div class="question-label">Quelle devise sera utilisée&nbsp;? <span style="color:#dc2626;">*</span></div>
-  <input type="text" class="field-input" id="f-fin_q02" placeholder="Ex: FCFA, EUR, USD">
-</div>
-<div class="question-card" id="fin-qcard-03">
-  <div class="question-label">La relation implique-t-elle des paiements internationaux&nbsp;? <span style="color:#dc2626;">*</span></div>
-  <input type="hidden" id="f-fin_q03" value="">
-  <div class="yn-btns">
-    <button class="yn-btn" id="btn-fin-q03-oui" onclick="answerFin('fin_q03','Oui',this,'btn-fin-q03-non','fin-q04-block')">Oui</button>
-    <button class="yn-btn" id="btn-fin-q03-non" onclick="answerFin('fin_q03','Non',this,'btn-fin-q03-oui','fin-q04-block')">Non</button>
-  </div>
-</div>
-<div id="fin-q04-block" style="display:none;margin-left:24px;border-left:3px solid var(--primary);padding-left:4px;">
-  <div class="question-card" id="fin-qcard-04">
-    <div class="question-label">Quels pays recevront les paiements&nbsp;? <span style="color:#dc2626;">*</span></div>
-    <input type="text" class="field-input" id="f-fin_q04" placeholder="Ex: France, Sénégal">
-  </div>
-</div>
-<div class="question-card" id="fin-qcard-05">
-  <div class="question-label">Quel est le calendrier prévisionnel des paiements&nbsp;? <span style="color:#dc2626;">*</span></div>
-  <input type="text" class="field-input" id="f-fin_q05" placeholder="Ex: Mensuel sur 12 mois à compter de la signature">
-</div>
-<div class="question-card" id="fin-qcard-06">
-  <div class="question-label">Des avances sont-elles prévues&nbsp;? <span style="color:#dc2626;">*</span></div>
-  <input type="hidden" id="f-fin_q06" value="">
-  <div class="yn-btns">
-    <button class="yn-btn" id="btn-fin-q06-oui" onclick="answerFin('fin_q06','Oui',this,'btn-fin-q06-non',null)">Oui</button>
-    <button class="yn-btn" id="btn-fin-q06-non" onclick="answerFin('fin_q06','Non',this,'btn-fin-q06-oui',null)">Non</button>
-  </div>
-</div>
-<div class="question-card" id="fin-qcard-07">
-  <div class="question-label">Des commissions sont-elles prévues&nbsp;? <span style="color:#dc2626;">*</span></div>
-  <input type="hidden" id="f-fin_q07" value="">
-  <div class="yn-btns">
-    <button class="yn-btn" id="btn-fin-q07-oui" onclick="answerFin('fin_q07','Oui',this,'btn-fin-q07-non',null)">Oui</button>
-    <button class="yn-btn" id="btn-fin-q07-non" onclick="answerFin('fin_q07','Non',this,'btn-fin-q07-oui',null)">Non</button>
-  </div>
-</div>
-<div class="question-card" id="fin-qcard-08">
-  <div class="question-label">Existe-t-il des intermédiaires rémunérés&nbsp;? <span style="color:#dc2626;">*</span></div>
-  <input type="hidden" id="f-fin_q08" value="">
-  <div class="yn-btns">
-    <button class="yn-btn" id="btn-fin-q08-oui" onclick="answerFin('fin_q08','Oui',this,'btn-fin-q08-non',null)">Oui</button>
-    <button class="yn-btn" id="btn-fin-q08-non" onclick="answerFin('fin_q08','Non',this,'btn-fin-q08-oui',null)">Non</button>
-  </div>
-</div>
-<div class="question-card" id="fin-qcard-09">
-  <div class="question-label">Les paiements en espèces sont-ils autorisés&nbsp;? <span style="color:#dc2626;">*</span></div>
-  <input type="hidden" id="f-fin_q09" value="">
-  <div class="yn-btns">
-    <button class="yn-btn" id="btn-fin-q09-oui" onclick="answerFin('fin_q09','Oui',this,'btn-fin-q09-non',null)">Oui</button>
-    <button class="yn-btn" id="btn-fin-q09-non" onclick="answerFin('fin_q09','Non',this,'btn-fin-q09-oui',null)">Non</button>
-  </div>
-</div>
-<div class="question-card" id="fin-qcard-10">
-  <div class="question-label">Quel est le mode de facturation prévu&nbsp;? <span style="color:#dc2626;">*</span></div>
-  <input type="text" class="field-input" id="f-fin_q10" placeholder="Ex: Facture mensuelle, acompte à la commande…">
-</div>
-<div class="question-card" id="fin-qcard-11">
-  <div class="question-label">Quel est l'établissement bancaire principal du tiers&nbsp;? <span style="color:#dc2626;">*</span></div>
-  <input type="text" class="field-input" id="f-fin_q11" placeholder="Ex: Société Générale Côte d'Ivoire">
-</div>
-<div class="question-card" id="fin-qcard-12">
-  <div class="question-label">Dans quel pays est domiciliée la banque du tiers&nbsp;? <span style="color:#dc2626;">*</span></div>
-  <input type="text" class="field-input" id="f-fin_q12" placeholder="Ex: Côte d'Ivoire">
-</div>
-<div id="fin-threshold-block"></div>`);
+  if (document.getElementById('fin-section-header')) return;
+
+  if (!_portailCommun) {
+    // Cache pas encore prêt → charger puis re-déclencher
+    _loadPortailCommun().then(() => renderFinancialSection());
+    return;
+  }
+
+  const fluxQuestions = _portailCommun.filter(q => q.etape === 'PORT-FLUX-SEC-A');
+
+  // Séparer parents et enfants pour gérer l'affichage conditionnel
+  const childrenOf = {};
+  const roots = [];
+  fluxQuestions.forEach(q => {
+    if (q.question_parente) {
+      (childrenOf[q.question_parente] = childrenOf[q.question_parente] || []).push(q);
+    } else {
+      roots.push(q);
+    }
+  });
+
+  let html = `<div class="dd-section-header" id="fin-section-header">Flux Financiers &amp; Conditions de Paiement</div>`;
+  roots.forEach(q => {
+    const children = childrenOf[q.name] || [];
+    const revealBlockId = children.length ? `${children[0].name}-cond-block` : null;
+    html += _renderPortailQuestion(q, false, revealBlockId);
+    children.forEach(child => {
+      html += `<div id="${child.name}-cond-block" style="display:none;margin-left:24px;border-left:3px solid var(--primary);padding-left:4px;">`;
+      html += _renderPortailQuestion(child, false, null);
+      html += `</div>`;
+    });
+  });
+  html += `<div id="fin-threshold-block"></div>`;
+
+  document.getElementById('questions-container').insertAdjacentHTML('beforeend', html);
+  _loadFinancialRefData();
   detectFinancialThreshold();
 }
 
 function detectFinancialThreshold() {
   const montant = wizard.montantContrat || 0;
-  let level, label, controls, extraQuestions = [], extraDocs = [];
+  let level, label, controls, extraDocs = [];
+  let seuilSections = [];
 
   if (montant < 5000000) {
     level = 'faible';
@@ -1413,42 +1533,25 @@ function detectFinancialThreshold() {
     level = 'modere';
     label = 'SEUIL MODÉRÉ — 5 à 25 millions FCFA';
     controls = ['Revue Compliance simplifiée','Contrôle fiscal','Analyse financière simplifiée'];
-    extraQuestions = [
-      {id:'fin_m01', label:'Le tiers a-t-il déjà fait l\'objet de difficultés fiscales ?'},
-      {id:'fin_m02', label:'Le tiers dispose-t-il d\'états financiers récents ?'},
-      {id:'fin_m03', label:'Existe-t-il des dettes sociales ou fiscales connues ?'},
-    ];
+    seuilSections = ['PORT-SEUIL-M'];
   } else if (montant < 100000000) {
     level = 'eleve';
     label = 'SEUIL ÉLEVÉ — 25 à 100 millions FCFA';
     controls = ['Revue Compliance renforcée','Analyse réputationnelle','Contrôle bénéficiaire effectif','Analyse anti-corruption'];
-    extraQuestions = [
-      {id:'fin_m01', label:'Le tiers a-t-il déjà fait l\'objet de difficultés fiscales ?'},
-      {id:'fin_m02', label:'Le tiers dispose-t-il d\'états financiers récents ?'},
-      {id:'fin_m03', label:'Existe-t-il des dettes sociales ou fiscales connues ?'},
-      {id:'fin_e01', label:'Veuillez détailler la structure capitalistique complète du tiers.', type:'text'},
-      {id:'fin_e02', label:'Le tiers a-t-il déjà été impliqué dans des contentieux financiers ?'},
-      {id:'fin_e03', label:'Le tiers dépend-il économiquement d\'un nombre limité de clients ?'},
-      {id:'fin_e04', label:'Des audits externes sont-ils disponibles ?'},
-    ];
+    seuilSections = ['PORT-SEUIL-M', 'PORT-SEUIL-E'];
   } else {
     level = 'critique';
     label = 'SEUIL CRITIQUE — supérieur à 100 millions FCFA';
     controls = ['Validation CCO obligatoire','Validation Direction Générale','Analyse juridique approfondie','Revue cybersécurité','Revue DPO (si données personnelles)','Due Diligence renforcée obligatoire'];
-    extraQuestions = [
-      {id:'fin_m01', label:'Le tiers a-t-il déjà fait l\'objet de difficultés fiscales ?'},
-      {id:'fin_m02', label:'Le tiers dispose-t-il d\'états financiers récents ?'},
-      {id:'fin_m03', label:'Existe-t-il des dettes sociales ou fiscales connues ?'},
-      {id:'fin_e01', label:'Veuillez détailler la structure capitalistique complète du tiers.', type:'text'},
-      {id:'fin_e02', label:'Le tiers a-t-il déjà été impliqué dans des contentieux financiers ?'},
-      {id:'fin_e03', label:'Le tiers dépend-il économiquement d\'un nombre limité de clients ?'},
-      {id:'fin_e04', label:'Des audits externes sont-ils disponibles ?'},
-    ];
+    seuilSections = ['PORT-SEUIL-M', 'PORT-SEUIL-E'];
     extraDocs = [
       'Audits externes','Rapports de solvabilité','Attestations bancaires',
       'Rapports ESG','Historiques de contentieux','Audits cybersécurité',
     ];
   }
+
+  // Charger les questions de seuil depuis le cache Portail Commun
+  const extraQuestions = (_portailCommun || []).filter(q => seuilSections.includes(q.etape));
 
   wizard.financialThreshold = level;
   wizard.thresholdDocs = extraDocs.map(d => ({nom_document: d, obligatoire: 0}));
@@ -1461,22 +1564,7 @@ function renderThresholdAlert(level, label, controls, extraQuestions) {
 
   let qHtml = '';
   extraQuestions.forEach(q => {
-    const cardStyle = 'border-left:3px solid var(--warning);';
-    if (q.type === 'text') {
-      qHtml += `<div class="question-card" id="fin-qcard-${q.id}" style="${cardStyle}">
-        <div class="question-label">${q.label} <span style="color:#dc2626;">*</span></div>
-        <textarea class="field-textarea" id="f-${q.id}" rows="2" placeholder="Votre réponse…"></textarea>
-      </div>`;
-    } else {
-      qHtml += `<div class="question-card" id="fin-qcard-${q.id}" style="${cardStyle}">
-        <div class="question-label">${q.label} <span style="color:#dc2626;">*</span></div>
-        <input type="hidden" id="f-${q.id}" value="">
-        <div class="yn-btns">
-          <button class="yn-btn" id="btn-${q.id}-oui" onclick="answerFin('${q.id}','Oui',this,'btn-${q.id}-non',null)">Oui</button>
-          <button class="yn-btn" id="btn-${q.id}-non" onclick="answerFin('${q.id}','Non',this,'btn-${q.id}-oui',null)">Non</button>
-        </div>
-      </div>`;
-    }
+    qHtml += _renderPortailQuestion(q, true, null);
   });
 
   block.innerHTML = qHtml;
@@ -1835,7 +1923,7 @@ function shouldShowAnticorruption() {
   if (t === 'anticorruption') return false;
   if (t.includes('anticorrup') || t.includes('corrupt') || t.includes('intégrit') || t.includes('integrit')) return true;
   if ((document.getElementById('f-tiers_pays_risque_detecte') || {}).value === '1') return true;
-  const finQ08 = document.getElementById('f-fin_q08');
+  const finQ08 = document.getElementById('f-PORT-FIN-Q08');
   if (finQ08 && finQ08.value === 'Oui') return true;
   if ((wizard.montantContrat || 0) >= 25000000) return true;
   return false;
@@ -2183,8 +2271,9 @@ function buildRecap() {
   const strat = document.getElementById('f-relation_strategique').value || '—';
   const urg = document.getElementById('f-relation_urgence').value || '—';
   let relHtml = '';
-  relHtml += `<div class="recap-row"><span class="recap-key">Description :</span><span>${document.getElementById('f-relation_description').value || '—'}</span></div>`;
-  relHtml += `<div class="recap-row"><span class="recap-key">Objectif métier :</span><span>${document.getElementById('f-relation_objectif_metier').value || '—'}</span></div>`;
+  const montantVal = wizard.montantContrat || 0;
+  const montantFmt = montantVal > 0 ? montantVal.toLocaleString('fr-FR') + ' FCFA' : '—';
+  relHtml += `<div class="recap-row"><span class="recap-key">Montant du contrat :</span><span>${montantFmt}</span></div>`;
   relHtml += `<div class="recap-row"><span class="recap-key">Justification du choix :</span><span>${document.getElementById('f-relation_justification_choix').value || '—'}</span></div>`;
   relHtml += `<div class="recap-row"><span class="recap-key">Relation stratégique :</span><span>${strat}</span></div>`;
   if (strat === 'Oui') {
@@ -2225,33 +2314,12 @@ function submitRequest() {
     reponse: (wizard.answers[q.name] || {}).reponse || '',
     poids_applique: (wizard.answers[q.name] || {}).poids || 0,
   }));
-  // Ajouter les réponses financières spécifiques (questions du questionnaire financier)
-  if (wizard.ddType && wizard.ddType.toLowerCase().includes('financ')) {
-    const finQuestions = [
-      {id:'fin_q01', label:'Montant total estimé de la relation contractuelle'},
-      {id:'fin_q02', label:'Devise utilisée'},
-      {id:'fin_q03', label:'Paiements internationaux'},
-      {id:'fin_q04', label:'Pays recevant les paiements'},
-      {id:'fin_q05', label:'Calendrier prévisionnel des paiements'},
-      {id:'fin_q06', label:'Avances prévues'},
-      {id:'fin_q07', label:'Commissions prévues'},
-      {id:'fin_q08', label:'Intermédiaires rémunérés'},
-      {id:'fin_q09', label:'Paiements en espèces autorisés'},
-      {id:'fin_q10', label:'Mode de facturation prévu'},
-      {id:'fin_q11', label:'Établissement bancaire principal du tiers'},
-      {id:'fin_q12', label:'Pays de domiciliation de la banque du tiers'},
-      {id:'fin_m01', label:'Difficultés fiscales antérieures du tiers'},
-      {id:'fin_m02', label:'États financiers récents disponibles'},
-      {id:'fin_m03', label:'Dettes sociales ou fiscales connues'},
-      {id:'fin_e01', label:'Structure capitalistique complète du tiers'},
-      {id:'fin_e02', label:'Contentieux financiers antérieurs'},
-      {id:'fin_e03', label:'Dépendance économique envers un nombre limité de clients'},
-      {id:'fin_e04', label:'Audits externes disponibles'},
-    ];
-    finQuestions.forEach(q => {
-      const el = document.getElementById('f-' + q.id);
+  // Réponses aux questions Portail Commun (flux financiers + seuil) — tous types sauf Financière
+  if (wizard.ddType && wizard.ddType.toLowerCase() !== 'financière' && _portailCommun) {
+    _portailCommun.forEach(q => {
+      const el = document.getElementById('f-' + q.name);
       if (el && el.value && el.value.trim()) {
-        answers.push({ question: null, question_label: q.label, reponse: el.value.trim(), poids_applique: 0 });
+        answers.push({ question: null, question_label: q.question_label, reponse: el.value.trim(), poids_applique: 0 });
       }
     });
   }
@@ -2389,6 +2457,7 @@ function submitRequest() {
     tiers_risques_sanctions_secondaires: document.getElementById('f-tiers_risques_sanctions_secondaires').value,
     tiers_figure_listes_sanctions: document.getElementById('f-tiers_figure_listes_sanctions').value,
     tiers_paiements_offshore: document.getElementById('f-tiers_paiements_offshore').value,
+    tiers_montant_contrat: wizard.montantContrat || 0,
     relation_description: document.getElementById('f-relation_description').value,
     relation_objectif_metier: document.getElementById('f-relation_objectif_metier').value,
     relation_justification_choix: document.getElementById('f-relation_justification_choix').value,
@@ -2446,6 +2515,8 @@ frappe.ready(function() {
         if (r.message) {
           if (r.message.dd_type) wizard.ddType = r.message.dd_type;
           wizard.montantContrat = parseFloat(r.message.tiers_montant_contrat) || 0;
+          const montantInput = document.getElementById('f-tiers_montant_contrat');
+          if (montantInput && wizard.montantContrat) montantInput.value = wizard.montantContrat;
         }
         console.log('[DD] wizard.ddType après init:', wizard.ddType);
         updateStepper();
@@ -2463,5 +2534,158 @@ frappe.ready(function() {
     updateStepper();
   }
 });
+
+// ── Cache + chargement depuis l'API Frappe ─────────────────────────────────
+const _ddRefCache = {};
+
+async function _loadFrappeList(doctype, fields, extra = '') {
+  if (_ddRefCache[doctype]) return _ddRefCache[doctype];
+  try {
+    const res = await fetch(
+      `/api/resource/${encodeURIComponent(doctype)}?fields=${encodeURIComponent(JSON.stringify(fields))}&limit=500&order_by=${fields[0]}&ignore_permissions=1${extra}`,
+      { credentials: 'same-origin' }
+    );
+    const json = await res.json();
+    _ddRefCache[doctype] = json.data || [];
+  } catch (_) {
+    _ddRefCache[doctype] = [];
+  }
+  return _ddRefCache[doctype];
+}
+
+function _populateSelect(selectId, items, placeholder) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = `<option value="">${placeholder}</option>` +
+    items.map(v => `<option value="${v}">${v}</option>`).join('');
+}
+
+// Peuple les champs Devise/Pays/Banque depuis les données injectées par le serveur
+function _loadFinancialRefData() {
+  const deviseOpts = (window._refCurrencies || [])
+    .map(d => d.currency_name && d.currency_name !== d.name
+      ? `${d.currency_name} (${d.name})` : d.name)
+    .filter(Boolean);
+
+  const paysNoms = (window._refCountries || [])
+    .map(p => p.country_name).filter(Boolean);
+
+  (_portailCommun || []).forEach(q => {
+    if (q.field_type === 'Devise') {
+      _populateSelect('f-' + q.name, deviseOpts, '— Sélectionner une devise —');
+    } else if (q.field_type === 'Banque') {
+      const banqueOpts = (q.options || '').split('\n').filter(Boolean).concat(['Autre (préciser)']);
+      _populateSelect('f-' + q.name + '-select', banqueOpts, '— Sélectionner un établissement —');
+    } else if (q.field_type === 'Pays Multi') {
+      _initPaysSelector(q.name, paysNoms, false);
+    } else if (q.field_type === 'Pays') {
+      _initPaysSelector(q.name, paysNoms, true);
+    }
+  });
+}
+
+// ── Multi-pays selector ─────────────────────────────────────────────────────
+const _paysState = {};
+
+function _initPaysSelector(id, paysList, singleMode) {
+  _paysState[id] = new Set();
+  const listEl = document.getElementById(id + '-list');
+  if (!listEl) return;
+  listEl.innerHTML = paysList.map(p =>
+    `<label><input type="checkbox" value="${p}" onchange="_onPaysChange('${id}',this,${singleMode})"> ${p}</label>`
+  ).join('');
+  // Fermer si clic extérieur
+  document.addEventListener('click', function(e) {
+    const wrapper = document.getElementById(id + '-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      const dd = document.getElementById(id + '-dropdown');
+      if (dd) dd.style.display = 'none';
+    }
+  });
+}
+
+function togglePaysDropdown(id, singleMode) {
+  if (!_paysState[id]) _paysState[id] = new Set();
+  const dd = document.getElementById(id + '-dropdown');
+  if (!dd) return;
+  dd.style.display = (dd.style.display === 'none') ? 'block' : 'none';
+}
+
+function filterPays(input, listId) {
+  const q = input.value.toLowerCase();
+  document.querySelectorAll('#' + listId + ' label').forEach(lbl => {
+    lbl.style.display = lbl.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function _onPaysChange(id, checkbox, singleMode) {
+  if (!_paysState[id]) _paysState[id] = new Set();
+  if (singleMode) {
+    _paysState[id].clear();
+    document.querySelectorAll('#' + id + '-list input[type=checkbox]').forEach(cb => {
+      if (cb !== checkbox) cb.checked = false;
+    });
+    if (checkbox.checked) _paysState[id].add(checkbox.value);
+    const dd = document.getElementById(id + '-dropdown');
+    if (dd) dd.style.display = 'none';
+  } else {
+    if (checkbox.checked) _paysState[id].add(checkbox.value);
+    else _paysState[id].delete(checkbox.value);
+  }
+  _updatePaysDisplay(id, singleMode);
+}
+
+function removePays(id, val) {
+  if (_paysState[id]) _paysState[id].delete(val);
+  const cb = document.querySelector(`#${id}-list input[value="${val}"]`);
+  if (cb) cb.checked = false;
+  _updatePaysDisplay(id, false);
+}
+
+function _updatePaysDisplay(id, singleMode) {
+  const selected = [...(_paysState[id] || [])];
+  const hidden = document.getElementById('f-' + id);
+  if (hidden) hidden.value = selected.join(', ');
+
+  const label = document.getElementById(id + '-trigger-label');
+  if (singleMode) {
+    if (label) label.textContent = selected[0] || 'Sélectionner un pays…';
+  } else {
+    if (label) label.textContent = selected.length
+      ? `${selected.length} pays sélectionné${selected.length > 1 ? 's' : ''}`
+      : 'Sélectionner un ou plusieurs pays…';
+    const tags = document.getElementById(id + '-tags');
+    if (tags) tags.innerHTML = selected.map(p =>
+      `<span class="multi-pays-tag">${p}<button type="button" onclick="removePays('${id}','${p}')">×</button></span>`
+    ).join('');
+  }
+}
+
+// ── Calendrier prévisionnel ─────────────────────────────────────────────────
+function updateCalendrier(baseId) {
+  const period = (document.getElementById('f-' + baseId + '-period') || {}).value || '';
+  const nb = (document.getElementById('f-' + baseId + '-nb') || {}).value || '';
+  const hidden = document.getElementById('f-' + baseId);
+  if (!hidden) return;
+  const noNb = ['À la livraison', 'Paiement unique', 'Autre'];
+  hidden.value = (period && nb && !noNb.includes(period))
+    ? `${period} — ${nb} échéance(s)`
+    : period;
+}
+
+// ── Établissement bancaire ──────────────────────────────────────────────────
+function updateBanque(baseId) {
+  const sel = (document.getElementById('f-' + baseId + '-select') || {}).value || '';
+  const autreInput = document.getElementById('f-' + baseId + '-autre');
+  const hidden = document.getElementById('f-' + baseId);
+  if (!hidden) return;
+  if (sel === 'Autre (préciser)') {
+    if (autreInput) autreInput.style.display = 'block';
+    hidden.value = autreInput ? autreInput.value.trim() : '';
+  } else {
+    if (autreInput) autreInput.style.display = 'none';
+    hidden.value = sel;
+  }
+}
 </script>
 {% endblock %}

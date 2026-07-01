@@ -52,7 +52,7 @@
    "fieldname": "field_type",
    "fieldtype": "Select",
    "label": "Type de champ",
-   "options": "Data\nSelect\nCheck\nInt\nCurrency\nSmall Text",
+   "options": "Data\nSelect\nCheck\nInt\nCurrency\nSmall Text\nDevise\nPays\nPays Multi\nBanque\nCalendrier",
    "reqd": 1
   },
   {

@@ -32,7 +32,7 @@ def get_context(context):
         # DD Client : uniquement les avis soumis sur ses propres dossiers
         mes_dossiers = frappe.get_all(
             "DD Request",
-            filters={"owner": user},
+            filters={"client_user": user},
             pluck="name",
             ignore_permissions=True,
         )

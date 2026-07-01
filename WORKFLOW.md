@@ -1,7 +1,7 @@
 # Due Diligence — Workflow & Rôles
 
 **Projet :** Application Frappe `due_diligence` — Cabinet AMOAMAN & ASSOCIÉS  
-**Dernière mise à jour :** 2026-06-11
+**Dernière mise à jour :** 2026-07-01
 
 ---
 
@@ -194,3 +194,84 @@ Validation          Mgr Métier Mgr Comp Mgr Comp  Mgr Comp
 - **Champ `circuit_workflow`** doit être renseigné avant la préqualification pour que les transitions conditionnelles s'activent.
 - **États clôturés** ne sont éditables que par `System Manager` → aucune modification post-décision sans droits admin.
 - **`Sous surveillance continue`** n'est pas une clôture définitive : prévoir une logique de réévaluation périodique (non implémentée, voir PROGRESS.md).
+
+---
+
+## Actions disponibles dans le desk (DD Request)
+
+### Boutons du groupe « Compliance »
+
+| Bouton | Rôles | Disponibilité | Comportement |
+|---|---|---|---|
+| **Générer l'avis** | DD Analyste, DD Manager Compliance, DD Validateur, System Manager | États : En validation Manager, En validation Direction, Clôturé | Crée un `DD Avis Compliance` humain lié au dossier, ou ouvre le document existant |
+| **Générer l'avis IA** | DD Analyste, DD Manager Compliance, DD Validateur, System Manager | Tous états (rôles autorisés) | Appelle l'API Gemini, crée/met à jour un `DD Avis Compliance` avec `is_ia_avis = 1`, puis redirige vers ce document |
+| **Rédiger mon avis** | DD Analyste, DD Manager Compliance, DD Validateur, System Manager | Tous états (rôles autorisés) | Ouvre un nouveau formulaire `DD Avis Compliance` pré-rempli (dd_request, tiers, type, date) sans sauvegarder — l'utilisateur complète la décision et enregistre |
+
+### Génération automatique de l'avis IA
+
+À chaque soumission de dossier par le client (`on_submit`), l'avis IA est généré automatiquement et silencieusement :
+- Un document `DD Avis Compliance` avec `is_ia_avis = 1` est créé
+- La décision (GO / NO GO / GO sous réserve) est extraite automatiquement du texte Gemini
+- Si Gemini est indisponible → échec silencieux (la soumission n'est pas bloquée)
+- Visible dans la liste `DD Avis Compliance` du dossier
+
+---
+
+## Système de notifications (Notification Log + realtime)
+
+### Principe technique
+
+Toutes les notifications passent par deux canaux combinés :
+1. **`Notification Log`** (DocType Frappe) : persisté en base, visible dans la cloche du desk
+2. **`frappe.publish_realtime("notification", after_commit=True, user=...)`** : incrémente le badge numérique sur la cloche en temps réel
+
+> **Important :** Le payload doit être absent (pas de dict message). Le format correct est `frappe.publish_realtime("notification", after_commit=True, user=user)` — c'est le seul format que le client JS Frappe v16 reconnaît pour incrémenter le badge.
+
+### Événements notifiés
+
+| Événement | Destinataire | Canal |
+|---|---|---|
+| Dossier soumis par le client | Analyste assigné (`analyste_assigne`) | Notification Log + realtime + email |
+| Dossier passe à l'étape suivante | Prochain acteur désigné | Notification Log + realtime + email |
+| État → "En attente de documents" | Client (`doc.owner`) | Notification Log + realtime + email (liste des docs demandés + lien `/suivi`) |
+| Client dépose un document | Analyste assigné | Notification Log + realtime + email |
+| Tous les docs obligatoires fournis | Analyste assigné + tous DD Manager Compliance | Notification Log + realtime + email (bouton "Reprendre l'analyse →") |
+
+### Méthodes clés (`dd_request.py`)
+
+| Méthode | Rôle |
+|---|---|
+| `_notifier_prochain_acteur()` | Appelé sur `on_update` — identifie le destinataire selon `workflow_state` et crée le Notification Log |
+| `_notifier_client_docs_manquants()` | Appelé quand état → "En attente de documents" — notifie l'owner du dossier |
+| `_notifier_analyste_doc_fourni(doc, nom_document, tous_fournis)` | Module-level helper — notifie après chaque dépôt client ; notifie les managers si tous les obligatoires sont fournis |
+
+### Circuit "Documents complémentaires"
+
+```
+[DD Analyste — desk]
+    Remplit le tableau "Documents complémentaires" (child table DD Document Complementaire)
+    → déclenche "Demander des documents complémentaires"
+    → État : En analyse Compliance ──► En attente de documents
+
+[Système]
+    → Notification Log + email au client avec liste des docs + lien /suivi?name=...
+
+[DD Client — portail /suivi]
+    Voit la section "Documents complémentaires requis" (orange si en attente)
+    → Clique "Déposer" sur chaque ligne
+    → Upload via POST /api/method/upload_file (fichier privé)
+    → Appel POST fournir_document_complementaire → ligne marquée "Fourni"
+
+[Système]
+    → Notification Log + email à l'analyste ("document déposé")
+    → Si tous obligatoires fournis : notifie aussi les DD Manager Compliance
+    → Bouton "Reprendre l'analyse →" dans la notification
+
+[DD Analyste — desk]
+    Déclenche "Reprendre l'analyse"
+    → État : En attente de documents ──► En analyse Compliance
+```
+
+### Nota : email SMTP
+
+Les notifications email (`frappe.sendmail`) nécessitent un compte SMTP configuré dans **Tools > Email Account**. Sans configuration, chaque envoi génère un warning "Please setup default outgoing Email Account" visible dans le desk. Les `Notification Log` (cloche) fonctionnent indépendamment du SMTP.

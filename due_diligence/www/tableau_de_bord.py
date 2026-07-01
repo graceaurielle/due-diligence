@@ -18,8 +18,8 @@ def get_context(context):
     roles = frappe.get_roles(user)
     is_analyst = any(r in roles for r in ("DD Analyste", "DD Manager Compliance", "Administrator"))
 
-    # Scope: analystes voient tout, utilisateurs standard voient le leur
-    filters = {} if is_analyst else {"owner": user}
+    # Scope: analystes voient tout, DD Client voit ses propres dossiers
+    filters = {} if is_analyst else {"client_user": user}
 
     requests = frappe.get_all(
         "DD Request",

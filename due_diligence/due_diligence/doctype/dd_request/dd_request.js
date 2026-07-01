@@ -4,15 +4,6 @@ frappe.ui.form.on("DD Request", {
 			query: "due_diligence.due_diligence.doctype.dd_request.dd_request.get_dd_clients",
 		}));
 
-		// Auto-remplir Nom du demandeur et Email depuis le profil de l'utilisateur connecté
-		if (frm.is_new() && !frappe.user.has_role("DD Client")) {
-			frappe.db.get_value("User", frappe.session.user, ["full_name", "email"], (r) => {
-				if (r) {
-					if (!frm.doc.demandeur_nom && r.full_name) frm.set_value("demandeur_nom", r.full_name);
-					if (!frm.doc.email_contact && r.email)     frm.set_value("email_contact", r.email);
-				}
-			});
-		}
 	},
 
 	client_user(frm) {
@@ -37,8 +28,7 @@ frappe.ui.form.on("DD Request", {
 					fieldtype: "Link",
 					options: "User",
 					get_query: () => ({
-						query: "frappe.core.doctype.user.user.user_query",
-						filters: { role: "DD Client" },
+						query: "due_diligence.due_diligence.doctype.dd_request.dd_request.get_dd_clients",
 					}),
 					reqd: 1,
 					description: __("Le client sélectionné pourra compléter ce dossier depuis le portail."),
@@ -69,8 +59,21 @@ frappe.ui.form.on("DD Request", {
 	},
 
 	refresh(frm) {
-		// ── Visibilité des sections selon rôle et état ──────────────────
 		const isInterne = !frappe.user.has_role("DD Client");
+
+		// ── Auto-remplir demandeur_nom et email_contact sur nouveau formulaire ──
+		if (isInterne && frm.is_new()) {
+			if (!frm.doc.demandeur_nom) {
+				frm.doc.demandeur_nom = frappe.session.user_fullname || frappe.session.user;
+				frm.refresh_field("demandeur_nom");
+			}
+			if (!frm.doc.email_contact) {
+				frm.doc.email_contact = frappe.session.user;
+				frm.refresh_field("email_contact");
+			}
+		}
+
+		// ── Visibilité des sections selon rôle et état ──────────────────
 		// Sections que le CLIENT remplit sur le portail
 		const champsClientCaches = [
 			// Tiers évalué (garder client_user visible, cacher les détails)
@@ -102,14 +105,18 @@ frappe.ui.form.on("DD Request", {
 			"sb_score_history", "score_history", "circuit_workflow", "date_echeance_sla", "sla_depasse",
 			"niveau_escalade", "sb_decision", "decision_finale", "reserves", "cb_decision", "date_decision",
 			"sb_workflow_steps", "workflow_steps", "sb_workflow_events", "workflow_events",
-			"cb_evaluation", "analyste_assigne", "commentaire_interne", "sb_avis",
+			"cb_evaluation", "analyste_assigne", "commentaire_interne",
 		];
 
-		if (isInterne && frm.doc.workflow_state === "Brouillon") {
+		// Brouillon = état "Brouillon" (ou vide) ET le client n'a pas encore rempli tiers_nom
+		const etatBrouillon = !frm.doc.workflow_state || frm.doc.workflow_state === "Brouillon";
+		const clientNaPasEncore = !frm.doc.tiers_nom;
+		const estBrouillon = etatBrouillon && clientNaPasEncore;
+
+		if (isInterne && estBrouillon) {
 			// Sections cachées tant que le client n'a pas encore soumis
 			champsClientCaches.forEach(f => frm.toggle_display(f, false));
 
-			// Bannière si pas encore de client assigné
 			if (!frm.doc.client_user) {
 				frm.dashboard.add_comment(
 					__("Ce dossier n'est pas encore assigné à un client. Enregistrez pour choisir le client."),
@@ -117,13 +124,12 @@ frappe.ui.form.on("DD Request", {
 				);
 			} else {
 				frm.dashboard.add_comment(
-					__("Dossier assigné à {0} — en attente de complétion sur le portail client.", [frm.doc.client_user]),
+					__("Dossier assigné à {0} — en attente de complétion sur le portail client. Rechargez le formulaire après soumission du client.", [frm.doc.client_user]),
 					"blue", true
 				);
 			}
 		} else if (isInterne) {
-			// Dossier soumis par le client : forcer l'affichage de toutes les sections
-			// (toggle_display persiste entre les refresh — il faut explicitement réafficher)
+			// Dossier rempli par le client : afficher toutes les sections
 			champsClientCaches.forEach(f => frm.toggle_display(f, true));
 		}
 
@@ -179,7 +185,7 @@ frappe.ui.form.on("DD Request", {
 		if (peutGenerer) {
 			frm.add_custom_button(__("Générer l'avis IA"), function () {
 				frappe.confirm(
-					__("Générer l'avis IA pour ce dossier ? Le contenu existant sera écrasé."),
+					__("Générer l'avis IA pour ce dossier ? Un avis existant non soumis sera remplacé."),
 					function () {
 						frappe.call({
 							method: "due_diligence.due_diligence.doctype.dd_request.dd_request.generer_avis_ia",
@@ -188,14 +194,8 @@ frappe.ui.form.on("DD Request", {
 							freeze_message: __("Génération de l'avis IA en cours…"),
 							callback(r) {
 								if (r.message) {
-									frm.set_value("avis_ia", r.message.avis_ia);
-									frappe.show_alert({
-										message: __("Avis IA généré — ouverture du formulaire d'avis…"),
-										indicator: "green",
-									});
-									setTimeout(() => {
-										frappe.set_route("Form", "DD Avis Compliance", r.message.avis_name);
-									}, 1000);
+									frappe.show_alert({ message: __("Avis IA généré avec succès."), indicator: "green" });
+									frappe.set_route("Form", "DD Avis Compliance", r.message);
 								}
 							},
 						});

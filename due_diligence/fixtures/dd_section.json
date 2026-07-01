@@ -173,5 +173,26 @@
     "dd_type": "Réputationnelle",
     "section_label": "Analyse réputationnelle",
     "ordre": 10
+  },
+  {
+    "doctype": "DD Section",
+    "name": "PORT-FLUX-SEC-A",
+    "dd_type": "Portail Commun",
+    "section_label": "Flux Financiers & Conditions de Paiement",
+    "ordre": 10
+  },
+  {
+    "doctype": "DD Section",
+    "name": "PORT-SEUIL-M",
+    "dd_type": "Portail Commun",
+    "section_label": "Contrôles seuil modéré (5–25M FCFA)",
+    "ordre": 20
+  },
+  {
+    "doctype": "DD Section",
+    "name": "PORT-SEUIL-E",
+    "dd_type": "Portail Commun",
+    "section_label": "Contrôles seuil élevé (25–100M FCFA)",
+    "ordre": 30
   }
 ]

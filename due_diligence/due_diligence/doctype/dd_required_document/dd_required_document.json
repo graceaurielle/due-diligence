@@ -10,7 +10,11 @@
   "obligatoire",
   "statut",
   "fichier",
-  "hash_sha256"
+  "hash_sha256",
+  "ia_verification",
+  "ia_confiance",
+  "ia_motif",
+  "ia_infos_extraites"
  ],
  "fields": [
   {
@@ -46,11 +50,38 @@
    "fieldtype": "Data",
    "label": "Hash SHA-256",
    "read_only": 1
+  },
+  {
+   "default": "Non vérifié",
+   "fieldname": "ia_verification",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Vérification IA",
+   "options": "Non vérifié\nConforme\nNon conforme\nIncertain",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ia_confiance",
+   "fieldtype": "Int",
+   "label": "Confiance IA (%)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ia_motif",
+   "fieldtype": "Small Text",
+   "label": "Motif IA",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ia_infos_extraites",
+   "fieldtype": "Long Text",
+   "label": "Informations extraites (IA)",
+   "read_only": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-06-04 10:00:00.000000",
+ "modified": "2026-06-30 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Due Diligence",
  "name": "DD Required Document",

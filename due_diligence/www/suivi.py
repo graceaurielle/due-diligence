@@ -72,12 +72,25 @@ def get_context(context):
             as_dict=True,
         )
 
+    docs_comp = [
+        {
+            "name":        r.name,
+            "nom_document": r.nom_document,
+            "description": r.description or "",
+            "obligatoire": r.obligatoire,
+            "statut":      r.statut,
+            "fichier":     r.fichier or "",
+        }
+        for r in (doc.documents_complementaires or [])
+    ]
+
     context.update({
         "doc": doc,
         "etat": etat,
         "is_clos": is_clos,
         "etapes_etat": etapes_etat,
         "avis": avis,
+        "docs_comp": docs_comp,
         "active_page": "mes-suivis",
         "title": f"Suivi — {doc.tiers_nom} — AMOAMAN & ASSOCIÉS",
     })

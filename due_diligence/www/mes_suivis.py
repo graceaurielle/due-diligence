@@ -30,7 +30,7 @@ def get_context(context):
 
     requests_raw = frappe.get_all(
         "DD Request",
-        filters={"owner": user},
+        filters={"client_user": user},
         fields=["name", "tiers_nom", "dd_type", "workflow_state", "creation",
                 "categorie_risque", "decision_finale", "analyste_assigne"],
         order_by="creation desc",

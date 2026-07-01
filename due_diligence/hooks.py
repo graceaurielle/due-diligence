@@ -103,7 +103,7 @@ fixtures = [
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/due_diligence/css/due_diligence.css"
-# app_include_js = "/assets/due_diligence/js/due_diligence.js"
+app_include_js = "/assets/due_diligence/js/desk.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/due_diligence/css/due_diligence.css"
@@ -203,6 +203,11 @@ permission_query_conditions = {
 # Portail web : vérifie que le visiteur est bien le owner du dossier
 has_website_permission = {
 	"DD Request": "due_diligence.permissions.has_website_permission",
+}
+
+# Desk : DD Analyste (et rôles spécialistes) ne peut écrire que sur ses dossiers assignés
+has_permission = {
+	"DD Request": "due_diligence.permissions.has_permission",
 }
 
 # Document Events

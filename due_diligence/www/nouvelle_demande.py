@@ -33,3 +33,10 @@ def get_context(context):
         order_by="country_name asc",
         ignore_permissions=True,
     )
+    context.currencies = frappe.get_all(
+        "Currency",
+        fields=["name", "currency_name"],
+        filters={"enabled": 1},
+        order_by="name asc",
+        ignore_permissions=True,
+    )

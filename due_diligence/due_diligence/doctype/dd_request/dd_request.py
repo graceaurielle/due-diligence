@@ -128,10 +128,12 @@ class DDRequest(Document):
 
 	def on_update(self):
 		self._hash_documents()
+		self._analyser_documents_ia()
 		self._horodater_decision()
 		self._alerter_categorie_critique()
 		self._recalculer_circuit_si_changement()
 		self._alerter_ecart_score()
+		self._notifier_prochain_acteur()
 
 	def on_submit(self):
 		self._assigner_analyste()
@@ -181,6 +183,21 @@ class DDRequest(Document):
 			 if s.statut == "En attente" and s.role_validateur in roles_courants),
 			None,
 		)
+
+		# Accès exclusif : seul l'analyste assigné peut intervenir à l'étape analyste
+		_ROLES_SURPASSANTS = {"DD Manager Compliance", "DD CCO", "DD DG", "System Manager"}
+		if premiere_role and self.analyste_assigne:
+			if premiere_role.role_validateur == "DD Analyste":
+				if frappe.session.user != self.analyste_assigne:
+					if not (roles_courants & _ROLES_SURPASSANTS):
+						frappe.throw(
+							_(
+								"Ce dossier est assigné à l'analyste <b>{0}</b>. "
+								"Seul cet analyste (ou un Manager/Administrateur) peut y intervenir."
+							).format(self.analyste_assigne),
+							title=_("Accès exclusif"),
+						)
+
 		if premiere_role:
 			frappe.db.set_value("DD Workflow Step", premiere_role.name, {
 				"statut":          "Validé",
@@ -305,13 +322,17 @@ class DDRequest(Document):
 		ax_donnees = min(round(dp_raw * 100 / _MAX_DONNEES), 100)
 
 		# ── AXE DOCUMENTAIRE [5%] — spec §13 ─────────────────────────
+		# Doc obligatoire manquant OU fourni mais IA dit Non conforme → pénalisé
 		docs_manquants = sum(
 			1 for d in (self.required_documents or [])
-			if d.obligatoire and d.statut == "Attendu"
+			if d.obligatoire and (
+				d.statut == "Attendu"
+				or (d.fichier and d.ia_verification == "Non conforme")
+			)
 		)
 		doc_raw = min(docs_manquants * 15, _MAX_DOCUMENTAIRE)
 		if docs_manquants:
-			aggravants.append(f"{docs_manquants} document(s) obligatoire(s) manquant(s) (+{doc_raw})")
+			aggravants.append(f"{docs_manquants} document(s) obligatoire(s) manquant(s)/non conformes (+{doc_raw})")
 		ax_doc = min(round(doc_raw * 100 / _MAX_DOCUMENTAIRE), 100) if doc_raw else 0
 
 		# ── AXE RÉPUTATIONNEL [15%] — spec §12 — IA ──────────────────
@@ -353,6 +374,16 @@ class DDRequest(Document):
 			if getattr(self, champ, None):
 				attenuants_total += points
 				attenuants.append(f"{label} (-{points})")
+
+		# Docs optionnels fournis et vérifiés conformes par l'IA → atténuant
+		docs_opt_conformes = sum(
+			1 for d in (self.required_documents or [])
+			if not d.obligatoire and d.fichier and d.ia_verification == "Conforme"
+		)
+		if docs_opt_conformes:
+			pts_opt = min(docs_opt_conformes * 8, 20)
+			attenuants_total += pts_opt
+			attenuants.append(f"{docs_opt_conformes} document(s) optionnel(s) conforme(s) IA (-{pts_opt})")
 
 		# ── SCORE PONDÉRÉ = brut + questionnaire − atténuants ─────────
 		self.score_pondere = max(
@@ -563,23 +594,296 @@ class DDRequest(Document):
 					pass
 
 	# ------------------------------------------------------------------
+	# 4.7b  Vérification IA des documents (Gemini Vision)
+	# ------------------------------------------------------------------
+	def _analyser_documents_ia(self):
+		"""Pour chaque fichier nouvellement uploadé, vérifie via Gemini Vision :
+		1. Le document correspond-il au type demandé ?
+		2. Extrait les informations clés (dates, noms, numéros d'enregistrement).
+		"""
+		api_key = frappe.conf.get("gemini_api_key", "")
+		if not api_key:
+			return
+
+		for row in (self.required_documents or []):
+			if not row.fichier:
+				continue
+			# Sauter si déjà vérifié (hors "Non vérifié")
+			if row.ia_verification and row.ia_verification not in ("", "Non vérifié"):
+				continue
+			try:
+				_verifier_document_ia(row, api_key)
+				row.db_set("ia_verification", row.ia_verification, update_modified=False)
+				row.db_set("ia_confiance",    row.ia_confiance,    update_modified=False)
+				row.db_set("ia_motif",        row.ia_motif,        update_modified=False)
+				row.db_set("ia_infos_extraites", row.ia_infos_extraites, update_modified=False)
+				# Mettre à jour le statut si le doc est conforme et encore "Attendu"
+				if row.ia_verification == "Conforme" and row.statut == "Attendu":
+					row.db_set("statut", "Reçu", update_modified=False)
+			except Exception:
+				frappe.log_error(frappe.get_traceback(), f"DD — vérif IA doc '{row.nom_document}'")
+
+	# ------------------------------------------------------------------
 	# 4.8  On submit : assignation analyste + notifications email
 	# ------------------------------------------------------------------
 	def _assigner_analyste(self):
 		if self.analyste_assigne:
 			return
-		analystes = frappe.get_all(
+
+		# Liste triée des analystes actifs (tri alphab. pour un ordre stable)
+		analystes = sorted(frappe.get_all(
 			"Has Role",
 			filters={"role": "DD Analyste", "parenttype": "User"},
 			pluck="parent",
+		))
+		if not analystes:
+			return
+		if len(analystes) == 1:
+			self.db_set("analyste_assigne", analystes[0], update_modified=False)
+			return
+
+		# Round-robin : trouver le dernier analyste assigné parmi les analystes connus
+		dernier = frappe.db.get_value(
+			"DD Request",
+			filters={"analyste_assigne": ["in", analystes], "name": ["!=", self.name]},
+			fieldname="analyste_assigne",
+			order_by="creation desc",
+		)
+
+		if dernier and dernier in analystes:
+			idx = analystes.index(dernier)
+			prochain = analystes[(idx + 1) % len(analystes)]
+		else:
+			prochain = analystes[0]
+
+		self.db_set("analyste_assigne", prochain, update_modified=False)
+
+	# ------------------------------------------------------------------
+	# 4.8c  Notification automatique du prochain acteur après transition
+	# ------------------------------------------------------------------
+	def _notifier_prochain_acteur(self):
+		"""Quand l'état du dossier change, envoie cloche desk + email à chaque acteur
+		dont l'étape vient d'être activée (rôle → utilisateurs ciblés)."""
+		doc_before = self.get_doc_before_save()
+		if not doc_before:
+			return
+		if doc_before.workflow_state == self.workflow_state:
+			return
+
+		# Uniquement la prochaine étape "En attente" (moteur séquentiel)
+		# Toutes les étapes démarrent à "En attente" à la soumission — on prend
+		# seulement la première par ordre pour ne pas notifier les rôles futurs.
+		etapes_actives = frappe.get_all(
+			"DD Workflow Step",
+			filters={"parent": self.name, "parenttype": "DD Request",
+			         "statut": "En attente", "obligatoire": 1},
+			fields=["etape", "role_validateur", "ordre"],
+			order_by="ordre asc",
 			limit=1,
 		)
-		if analystes:
-			self.db_set("analyste_assigne", analystes[0], update_modified=False)
+		if not etapes_actives:
+			return
+
+		url_base = frappe.utils.get_url()
+		roles_traites = set()
+
+		for etape in etapes_actives:
+			role = etape.role_validateur
+			if role in roles_traites:
+				continue
+			roles_traites.add(role)
+
+			# DD Analyste → uniquement l'analyste assigné ; autres rôles → tous les membres actifs
+			if role == "DD Analyste" and self.analyste_assigne:
+				users = [self.analyste_assigne]
+			else:
+				membres = frappe.get_all(
+					"Has Role",
+					filters={"role": role, "parenttype": "User"},
+					pluck="parent",
+				)
+				users = (
+					frappe.get_all(
+						"User",
+						filters={"name": ["in", membres], "enabled": 1},
+						pluck="name",
+					)
+					if membres else []
+				)
+
+			if not users:
+				continue
+
+			sujet = _("Action requise — Dossier DD {0} · {1}").format(
+				self.name, self.tiers_nom or "—"
+			)
+			corps = (
+				"<p style='margin:0 0 12px;'>Le dossier Due Diligence ci-dessous requiert "
+				"votre intervention (rôle&nbsp;: <b>{role}</b>).</p>"
+				"<table style='border-collapse:collapse;width:100%;margin:0 0 20px;font-size:14px;'>"
+				"<tr style='border-bottom:1px solid #e2e8f0;'>"
+				"<td style='padding:7px 12px;font-weight:600;color:#64748b;width:35%;'>Référence</td>"
+				"<td style='padding:7px 12px;'>{name}</td></tr>"
+				"<tr style='border-bottom:1px solid #e2e8f0;'>"
+				"<td style='padding:7px 12px;font-weight:600;color:#64748b;'>Tiers évalué</td>"
+				"<td style='padding:7px 12px;'>{tiers}</td></tr>"
+				"<tr style='border-bottom:1px solid #e2e8f0;'>"
+				"<td style='padding:7px 12px;font-weight:600;color:#64748b;'>Étape à traiter</td>"
+				"<td style='padding:7px 12px;font-weight:600;color:#0d1b2a;'>{etape}</td></tr>"
+				"<tr style='border-bottom:1px solid #e2e8f0;'>"
+				"<td style='padding:7px 12px;font-weight:600;color:#64748b;'>État du dossier</td>"
+				"<td style='padding:7px 12px;'>{etat}</td></tr>"
+				"<tr style='border-bottom:1px solid #e2e8f0;'>"
+				"<td style='padding:7px 12px;font-weight:600;color:#64748b;'>Circuit</td>"
+				"<td style='padding:7px 12px;'>{circuit}</td></tr>"
+				"<tr>"
+				"<td style='padding:7px 12px;font-weight:600;color:#64748b;'>Score résiduel</td>"
+				"<td style='padding:7px 12px;font-weight:700;'>{score} / 100</td></tr>"
+				"</table>"
+				"<p><a href='{url}/app/dd-request/{name}' "
+				"style='background:#0d1b2a;color:#fff;padding:10px 22px;"
+				"border-radius:6px;text-decoration:none;font-weight:600;'>"
+				"Ouvrir le dossier →</a></p>"
+			).format(
+				role=role,
+				name=self.name,
+				tiers=self.tiers_nom or "—",
+				etape=etape.etape,
+				etat=self.workflow_state,
+				circuit=self.circuit_workflow or "—",
+				score=self.score_residuel or 0,
+				url=url_base,
+			)
+
+			# ── Cloche desk + push realtime par utilisateur ──
+			for user in users:
+				try:
+					frappe.get_doc({
+						"doctype":       "Notification Log",
+						"subject":       sujet,
+						"email_content": corps,
+						"for_user":      user,
+						"from_user":     frappe.session.user,
+						"document_type": "DD Request",
+						"document_name": self.name,
+						"type":          "Alert",
+					}).insert(ignore_permissions=True)
+
+					frappe.publish_realtime(
+						"notification",
+						after_commit=True,
+						user=user,
+					)
+				except Exception:
+					frappe.log_error(
+						frappe.get_traceback(),
+						f"DD — cloche notification {user} ({role})",
+					)
+
+			# ── Email groupé pour le rôle (name = email dans Frappe) ──
+			try:
+				frappe.sendmail(
+					recipients=users,
+					subject=sujet,
+					message=corps,
+					now=True,
+				)
+			except Exception:
+				frappe.log_error(
+					frappe.get_traceback(),
+					f"DD — email notification rôle {role}",
+				)
+
+		# ── Cas spécial : "En attente de documents" → notifier le client ──
+		if self.workflow_state == "En attente de documents":
+			self._notifier_client_docs_manquants()
+
+	def _notifier_client_docs_manquants(self):
+		"""Notifie le client (owner du dossier) qu'il doit fournir des documents."""
+		client = self.owner
+		if not client or client == "Administrator":
+			return
+		url_base = frappe.utils.get_url()
+		sujet = _("Action requise — Documents à fournir pour votre dossier {0}").format(self.name)
+		docs_demandes = [
+			row.nom_document for row in (self.documents_complementaires or [])
+			if row.statut == "En attente"
+		]
+		liste_docs = "".join(
+			f"<li style='padding:4px 0;'>{d}</li>" for d in docs_demandes
+		) if docs_demandes else "<li>Voir le détail dans votre espace</li>"
+
+		corps = (
+			f"<p>Le cabinet AMOAMAN &amp; ASSOCIÉS vous demande de fournir des documents "
+			f"complémentaires pour votre dossier <b>{self.name}</b>.</p>"
+			f"<ul style='margin:12px 0;padding-left:20px;'>{liste_docs}</ul>"
+			f"<p><a href='{url_base}/suivi?name={self.name}' "
+			f"style='background:#0d1b2a;color:#fff;padding:10px 22px;"
+			f"border-radius:6px;text-decoration:none;font-weight:600;'>"
+			f"Déposer mes documents →</a></p>"
+		)
+		try:
+			frappe.get_doc({
+				"doctype":       "Notification Log",
+				"subject":       sujet,
+				"email_content": corps,
+				"for_user":      client,
+				"from_user":     frappe.session.user,
+				"document_type": "DD Request",
+				"document_name": self.name,
+				"type":          "Alert",
+			}).insert(ignore_permissions=True)
+			frappe.publish_realtime("notification", after_commit=True, user=client)
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), f"DD — notification client docs manquants {self.name}")
+
+		if self.email_contact:
+			try:
+				frappe.sendmail(
+					recipients=[self.email_contact],
+					subject=sujet,
+					message=corps,
+					now=True,
+				)
+			except Exception:
+				frappe.log_error(frappe.get_traceback(), "DD — email client docs manquants")
 
 	def _notifier_soumission(self):
 		try:
-			destinataires_equipe = _emails_role("DD Analyste") + _emails_role("DD Manager Compliance")
+			# ── Cloche desk : notification ciblée vers l'analyste assigné ──
+			if self.analyste_assigne:
+				sujet = _("Nouveau dossier DD soumis — {0} ({1})").format(self.name, self.tiers_nom or "")
+				contenu = _(
+					"<p>Le dossier <b>{0}</b> concernant <b>{1}</b> vient d'être soumis "
+					"par le client et vous a été assigné.</p>"
+					"<ul>"
+					"<li><b>Type DD :</b> {2}</li>"
+					"<li><b>Demandeur :</b> {3}</li>"
+					"</ul>"
+				).format(self.name, self.tiers_nom, self.dd_type, self.demandeur_nom)
+
+				frappe.get_doc({
+					"doctype": "Notification Log",
+					"subject": sujet,
+					"email_content": contenu,
+					"for_user": self.analyste_assigne,
+					"from_user": self.client_user or frappe.session.user,
+					"document_type": "DD Request",
+					"document_name": self.name,
+					"type": "Alert",
+				}).insert(ignore_permissions=True)
+
+				frappe.publish_realtime(
+					"notification",
+					after_commit=True,
+					user=self.analyste_assigne,
+				)
+
+			# ── Email vers l'analyste assigné uniquement (pas toute l'équipe) ──
+			destinataires_equipe = (
+				[self.analyste_assigne] if self.analyste_assigne
+				else _emails_role("DD Analyste") + _emails_role("DD Manager Compliance")
+			)
 			if destinataires_equipe:
 				frappe.sendmail(
 					recipients=destinataires_equipe,
@@ -621,10 +925,11 @@ class DDRequest(Document):
 		api_key = frappe.conf.get("gemini_api_key", "")
 		if not api_key:
 			return
-		if self.avis_ia:
-			return  # déjà généré (ne pas écraser)
+		# Ne pas régénérer si un avis IA non soumis existe déjà
+		if frappe.db.exists("DD Avis Compliance", {"dd_request": self.name, "is_ia_avis": 1, "docstatus": 0}):
+			return
 		try:
-			import json as _json
+			import time as _time
 			import requests as _requests
 
 			prompt = (
@@ -638,27 +943,68 @@ class DDRequest(Document):
 				f"Score résiduel : {self.score_residuel or 0}/100\n"
 				f"Catégorie de risque : {self.categorie_risque or '—'}\n"
 				f"Résumé réputationnel : {self.resume_reputationnel or 'Non disponible'}\n\n"
-				f"Rédige un avis en français de 200 à 300 mots structuré ainsi :\n"
+				f"Commence ta réponse par EXACTEMENT une de ces trois lignes (rien d'autre sur cette ligne) :\n"
+				f"DECISION: GO\n"
+				f"DECISION: NO GO\n"
+				f"DECISION: GO sous réserve\n\n"
+				f"Puis rédige l'avis en français de 200 à 300 mots structuré ainsi :\n"
 				f"1. Synthèse du profil de risque\n"
 				f"2. Points d'attention principaux\n"
-				f"3. Recommandation (GO / NO GO / GO sous réserve) avec conditions éventuelles\n\n"
+				f"3. Conditions éventuelles (si GO sous réserve)\n\n"
 				f"Ton : formel, factuel, sans jargon excessif. Pas de markdown."
 			)
-			url = (
-				"https://generativelanguage.googleapis.com/v1beta/models/"
-				f"gemini-2.5-flash-lite:generateContent?key={api_key}"
-			)
+			_MODELS = [
+				"gemini-flash-lite-latest",
+				"gemini-2.0-flash-lite",
+				"gemini-2.5-flash-lite",
+				"gemini-flash-latest",
+				"gemini-2.0-flash",
+			]
+			_SKIP_CODES = {429, 503, 404}
 			payload = {
 				"contents": [{"parts": [{"text": prompt}]}],
-				"generationConfig": {
-					"temperature": 0.2,
-					"maxOutputTokens": 600,
-				},
+				"generationConfig": {"temperature": 0.2, "maxOutputTokens": 700},
 			}
-			resp = _requests.post(url, json=payload, timeout=30)
-			resp.raise_for_status()
-			avis = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-			frappe.db.set_value("DD Request", self.name, "avis_ia", avis)
+			_headers = {"X-goog-api-key": api_key, "Content-Type": "application/json"}
+			resp = None
+			for model in _MODELS:
+				url = (
+					"https://generativelanguage.googleapis.com/v1beta/models/"
+					f"{model}:generateContent"
+				)
+				for attempt in range(2):
+					resp = _requests.post(url, headers=_headers, json=payload, timeout=45)
+					if resp.status_code == 404 or resp.status_code not in {429, 503}:
+						break
+					_time.sleep(2 ** attempt)
+				if resp.status_code not in _SKIP_CODES:
+					break
+
+			if not (resp and resp.status_code == 200):
+				return
+
+			texte = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+			lines = texte.split("\n")
+			first_line = lines[0].strip()
+			decisions_valides = {"GO", "NO GO", "GO sous réserve"}
+			decision = "GO"
+			motif = texte
+			if first_line.startswith("DECISION:"):
+				candidate = first_line[len("DECISION:"):].strip()
+				if candidate in decisions_valides:
+					decision = candidate
+					motif = "\n".join(lines[1:]).strip()
+
+			avis_doc = frappe.get_doc({
+				"doctype": "DD Avis Compliance",
+				"dd_request": self.name,
+				"is_ia_avis": 1,
+				"decision": decision,
+				"motif_decision": motif,
+				"date_decision": frappe.utils.today(),
+			})
+			avis_doc.insert(ignore_permissions=True)
+			frappe.db.commit()
 		except Exception:
 			frappe.log_error(frappe.get_traceback(), "DD — génération avis IA (auto submit)")
 
@@ -869,15 +1215,17 @@ def generer_avis_ia(dd_request_name):
 			f"Score résiduel : {doc.score_residuel or 0}/100\n"
 			f"Catégorie de risque : {doc.categorie_risque or '—'}\n"
 			f"Résumé réputationnel : {doc.resume_reputationnel or 'Non disponible'}\n\n"
-			f"Rédige un avis en français de 200 à 300 mots structuré ainsi :\n"
+			f"Commence ta réponse par EXACTEMENT une de ces trois lignes (rien d'autre sur cette ligne) :\n"
+			f"DECISION: GO\n"
+			f"DECISION: NO GO\n"
+			f"DECISION: GO sous réserve\n\n"
+			f"Puis rédige l'avis en français de 200 à 300 mots structuré ainsi :\n"
 			f"1. Synthèse du profil de risque\n"
 			f"2. Points d'attention principaux\n"
-			f"3. Recommandation (GO / NO GO / GO sous réserve) avec conditions éventuelles\n\n"
+			f"3. Conditions éventuelles (si GO sous réserve)\n\n"
 			f"Ton : formel, factuel, sans jargon excessif. Pas de markdown."
 		)
 
-		# Modèles disponibles sur cette clé (v1beta confirmés)
-		# Ordre : lite d'abord (quota gratuit plus élevé), puis flash complet
 		_MODELS = [
 			"gemini-flash-lite-latest",
 			"gemini-2.0-flash-lite",
@@ -902,13 +1250,12 @@ def generer_avis_ia(dd_request_name):
 			)
 			for attempt in range(3):
 				resp = _requests.post(url, headers=_headers, json=payload, timeout=60)
-				# 404 = modèle absent, inutile de retry
 				if resp.status_code == 404 or resp.status_code not in {429, 503}:
 					break
-				_time.sleep(2 ** attempt)  # 1 s, 2 s, 4 s
+				_time.sleep(2 ** attempt)
 			last_status = resp.status_code
 			if last_status not in _SKIP_CODES:
-				break  # succès ou erreur définitive non-skip
+				break
 
 		if last_status == 429:
 			frappe.throw(_("Quota Gemini dépassé pour tous les modèles. Réessayez dans quelques minutes."))
@@ -916,31 +1263,45 @@ def generer_avis_ia(dd_request_name):
 			frappe.throw(_("Service Gemini indisponible. Réessayez plus tard."))
 
 		resp.raise_for_status()
-		avis = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+		texte = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
-		# Sauvegarde sur DD Request
-		frappe.db.set_value("DD Request", dd_request_name, "avis_ia", avis)
+		# Extraire la décision de la première ligne
+		lines = texte.split("\n")
+		first_line = lines[0].strip()
+		decisions_valides = {"GO", "NO GO", "GO sous réserve"}
+		decision = "GO"
+		motif = texte
+		if first_line.startswith("DECISION:"):
+			candidate = first_line[len("DECISION:"):].strip()
+			if candidate in decisions_valides:
+				decision = candidate
+				motif = "\n".join(lines[1:]).strip()
 
-		# Injecter dans DD Avis Compliance (existant ou nouveau)
-		doc_req = frappe.get_doc("DD Request", dd_request_name)
-		avis_name = frappe.db.get_value("DD Avis Compliance", {"dd_request": dd_request_name}, "name")
-		if avis_name:
-			frappe.db.set_value("DD Avis Compliance", avis_name, "risques_identifies", avis)
+		# Créer ou mettre à jour le DD Avis Compliance IA
+		existant = frappe.db.get_value(
+			"DD Avis Compliance",
+			{"dd_request": dd_request_name, "is_ia_avis": 1, "docstatus": 0},
+			"name",
+		)
+		if existant:
+			avis_doc = frappe.get_doc("DD Avis Compliance", existant)
+			avis_doc.decision = decision
+			avis_doc.motif_decision = motif
+			avis_doc.date_decision = frappe.utils.today()
+			avis_doc.save(ignore_permissions=True)
 		else:
 			avis_doc = frappe.get_doc({
 				"doctype": "DD Avis Compliance",
 				"dd_request": dd_request_name,
-				"tiers_nom": doc_req.tiers_nom,
-				"dd_type": doc_req.dd_type,
-				"redige_par": frappe.session.user,
+				"is_ia_avis": 1,
+				"decision": decision,
+				"motif_decision": motif,
 				"date_decision": frappe.utils.today(),
-				"risques_identifies": avis,
 			})
 			avis_doc.insert(ignore_permissions=True)
-			avis_name = avis_doc.name
 
 		frappe.db.commit()
-		return {"avis_ia": avis, "avis_name": avis_name}
+		return avis_doc.name
 
 	except frappe.ValidationError:
 		raise
@@ -997,6 +1358,207 @@ def _sha256_fichier(file_url):
 		for chunk in iter(lambda: f.read(65536), b""):
 			h.update(chunk)
 	return h.hexdigest()
+
+
+def _verifier_document_ia(row, api_key):
+	"""Envoie le fichier à Gemini Vision pour vérifier sa conformité et extraire les infos clés.
+
+	Remplit row.ia_verification, row.ia_confiance, row.ia_motif, row.ia_infos_extraites.
+	Ne lève pas d'exception — les erreurs sont absorbées par l'appelant.
+	"""
+	import base64 as _b64
+	import json as _json
+	import mimetypes as _mime
+	import requests as _requests
+
+	# ── Charger le fichier ────────────────────────────────────────────
+	try:
+		file_doc = frappe.get_doc("File", {"file_url": row.fichier})
+		file_path = file_doc.get_full_path()
+	except Exception:
+		return
+
+	with open(file_path, "rb") as fh:
+		data = fh.read()
+
+	# Limiter à 5 Mo (Gemini inline limit)
+	if len(data) > 5 * 1024 * 1024:
+		row.ia_verification = "Incertain"
+		row.ia_motif = "Fichier trop volumineux pour la vérification IA (> 5 Mo)."
+		return
+
+	mime = _mime.guess_type(file_path)[0] or "application/octet-stream"
+	# Gemini Vision accepte : image/jpeg, image/png, image/webp, image/heic, application/pdf
+	_MIMES_OK = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "application/pdf"}
+	if mime not in _MIMES_OK:
+		row.ia_verification = "Incertain"
+		row.ia_motif = f"Format non analysable par l'IA ({mime})."
+		return
+
+	b64_data = _b64.b64encode(data).decode()
+
+	# ── Prompt ───────────────────────────────────────────────────────
+	prompt = (
+		f"Tu es un expert en conformité documentaire. Analyse ce document et réponds UNIQUEMENT "
+		f"avec un JSON valide (sans markdown, sans commentaires).\n\n"
+		f"Document attendu : « {row.nom_document} »\n\n"
+		f"Tâches :\n"
+		f"1. Détermine si ce document est bien un « {row.nom_document} » (ou un document équivalent).\n"
+		f"2. Extrait les informations importantes : dates (création, expiration, signature), "
+		f"noms de personnes ou d'entreprises, numéros d'identification/enregistrement, "
+		f"montants, adresses, tout autre élément pertinent.\n\n"
+		f"Format de réponse JSON strict :\n"
+		f'{{"conforme": true/false, "confiance": 0-100, "motif": "explication courte max 80 mots", '
+		f'"infos": {{"dates": [], "noms": [], "numeros": [], "autres": []}}}}'
+	)
+
+	payload = {
+		"contents": [{
+			"parts": [
+				{"inline_data": {"mime_type": mime, "data": b64_data}},
+				{"text": prompt},
+			]
+		}],
+		"generationConfig": {
+			"temperature": 0.1,
+			"maxOutputTokens": 600,
+			"responseMimeType": "application/json",
+		},
+	}
+
+	# ── Appel API — fallback sur plusieurs modèles Vision ────────────
+	_MODELS_VISION = [
+		"gemini-2.5-flash-lite",
+		"gemini-2.0-flash-lite",
+		"gemini-2.5-flash",
+		"gemini-2.0-flash",
+	]
+	headers = {"X-goog-api-key": api_key, "Content-Type": "application/json"}
+	resp = None
+	for model in _MODELS_VISION:
+		url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+		resp = _requests.post(url, headers=headers, json=payload, timeout=60)
+		if resp.status_code not in {404, 429, 503}:
+			break
+
+	if not resp or resp.status_code != 200:
+		row.ia_verification = "Incertain"
+		row.ia_motif = f"Service IA indisponible (HTTP {resp.status_code if resp else '?'})."
+		return
+
+	# ── Parser la réponse ─────────────────────────────────────────────
+	try:
+		text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+		result = _json.loads(text)
+	except Exception:
+		row.ia_verification = "Incertain"
+		row.ia_motif = "Réponse IA non parseable."
+		return
+
+	conforme  = result.get("conforme", False)
+	confiance = max(0, min(int(result.get("confiance", 0)), 100))
+	motif     = (result.get("motif") or "")[:500]
+	infos     = result.get("infos", {})
+
+	row.ia_verification  = "Conforme" if conforme else ("Incertain" if confiance >= 40 else "Non conforme")
+	row.ia_confiance     = confiance
+	row.ia_motif         = motif
+	row.ia_infos_extraites = _json.dumps(infos, ensure_ascii=False) if infos else ""
+
+
+@frappe.whitelist()
+def fournir_document_complementaire(request_name, row_name, file_url):
+	"""Le client dépose un fichier contre une ligne de document complémentaire."""
+	doc = frappe.get_doc("DD Request", request_name)
+
+	# Seul le propriétaire du dossier (client) peut déposer
+	if frappe.session.user != doc.owner and not frappe.has_permission("DD Request", "write"):
+		frappe.throw(_("Vous n'êtes pas autorisé à déposer des documents sur ce dossier."))
+
+	row = next((r for r in doc.documents_complementaires if r.name == row_name), None)
+	if not row:
+		frappe.throw(_("Ligne de document introuvable."))
+	if row.statut == "Fourni":
+		frappe.throw(_("Ce document a déjà été fourni."))
+
+	row.fichier    = file_url
+	row.statut     = "Fourni"
+	row.date_fourni = frappe.utils.now_datetime()
+	doc.save(ignore_permissions=True)
+	frappe.db.commit()
+
+	# Vérifie si tous les docs obligatoires sont fournis
+	tous_fournis = all(
+		r.statut == "Fourni"
+		for r in doc.documents_complementaires
+		if r.obligatoire
+	)
+	_notifier_analyste_doc_fourni(doc, row.nom_document, tous_fournis)
+
+	return {"tous_fournis": tous_fournis}
+
+
+def _notifier_analyste_doc_fourni(doc, nom_document, tous_fournis):
+	"""Notifie l'analyste (et les managers si tout est fourni) qu'un document a été déposé."""
+	url_base = frappe.utils.get_url()
+
+	if tous_fournis:
+		sujet = _("Tous les documents fournis — Dossier {0} prêt pour reprise").format(doc.name)
+		corps = (
+			f"<p>Le client a fourni tous les documents complémentaires demandés "
+			f"pour le dossier <b>{doc.name}</b> ({doc.tiers_nom or '—'}).</p>"
+			f"<p>Vous pouvez reprendre l'analyse.</p>"
+			f"<p><a href='{url_base}/app/dd-request/{doc.name}' "
+			f"style='background:#16a34a;color:#fff;padding:10px 22px;"
+			f"border-radius:6px;text-decoration:none;font-weight:600;'>"
+			f"Reprendre l'analyse →</a></p>"
+		)
+		# Notifier l'analyste + les managers compliance
+		destinataires = []
+		if doc.analyste_assigne:
+			destinataires.append(doc.analyste_assigne)
+		managers = frappe.get_all(
+			"Has Role",
+			filters={"role": "DD Manager Compliance", "parenttype": "User"},
+			pluck="parent",
+		)
+		destinataires += frappe.get_all(
+			"User", filters={"name": ["in", managers], "enabled": 1}, pluck="name"
+		) if managers else []
+	else:
+		sujet = _("Document fourni — Dossier {0} · {1}").format(doc.name, nom_document)
+		corps = (
+			f"<p>Le client a déposé le document <b>{nom_document}</b> "
+			f"sur le dossier <b>{doc.name}</b> ({doc.tiers_nom or '—'}).</p>"
+			f"<p>Des documents restent encore en attente.</p>"
+			f"<p><a href='{url_base}/app/dd-request/{doc.name}' "
+			f"style='background:#0d1b2a;color:#fff;padding:10px 22px;"
+			f"border-radius:6px;text-decoration:none;font-weight:600;'>"
+			f"Voir le dossier →</a></p>"
+		)
+		destinataires = [doc.analyste_assigne] if doc.analyste_assigne else []
+
+	for user in destinataires:
+		try:
+			frappe.get_doc({
+				"doctype":       "Notification Log",
+				"subject":       sujet,
+				"email_content": corps,
+				"for_user":      user,
+				"from_user":     "Administrator",
+				"document_type": "DD Request",
+				"document_name": doc.name,
+				"type":          "Alert",
+			}).insert(ignore_permissions=True)
+			frappe.publish_realtime("notification", after_commit=True, user=user)
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), f"DD — notif analyste doc fourni {user}")
+
+	if destinataires:
+		try:
+			frappe.sendmail(recipients=destinataires, subject=sujet, message=corps, now=True)
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), "DD — email analyste doc fourni")
 
 
 @frappe.whitelist()

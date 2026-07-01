@@ -131,7 +131,8 @@
 
   {% set _u_email = frappe.session.user %}
   {% set _u_full = frappe.db.get_value("User", _u_email, "full_name") or _u_email.split("@")[0] %}
-  {% set _u_initials = (_u_full.split(" ")[0][0] + (_u_full.split(" ")[1][0] if _u_full.split(" ")|length > 1 else "")) | upper %}
+  {% set _u_parts = _u_full.split(" ") | select | list %}
+  {% set _u_initials = ((_u_parts[0][0] if _u_parts|length > 0 else "?") + (_u_parts[1][0] if _u_parts|length > 1 else "")) | upper %}
   <div class="dd-sidebar-bottom">
     <div class="dd-user-widget" id="dd-user-widget">
       <div class="dd-user-avatar">{{ _u_initials }}</div>

@@ -194,6 +194,15 @@
  },
  {
   "doctype": "DD Type",
+  "name": "Portail Commun",
+  "type_name": "Portail Commun",
+  "description_metier": "Questions financières et de flux de paiement communes à toutes les due diligences portail client.",
+  "objectifs_controle": "Collecter les informations sur la devise, les paiements internationaux, le calendrier, le mode de facturation et la banque du tiers.",
+  "criticite_moyenne": "Modéré",
+  "actif": 1
+ },
+ {
+  "doctype": "DD Type",
   "name": "Réputationnelle",
   "type_name": "Réputationnelle",
   "description_metier": "Évaluation des risques réputationnels liés à l'association avec le tiers.",

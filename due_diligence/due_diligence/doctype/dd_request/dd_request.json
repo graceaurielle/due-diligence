@@ -23,6 +23,7 @@
   "sb_type",
   "dd_type",
   "sb_relation",
+  "tiers_montant_contrat",
   "relation_description",
   "relation_objectif_metier",
   "relation_justification_choix",
@@ -52,7 +53,6 @@
   "tiers_secteur",
   "tiers_description_activites",
   "tiers_nb_employes",
-  "tiers_montant_contrat",
   "cb_id_operationnelle",
   "tiers_principaux_clients",
   "tiers_marches_geographiques",
@@ -125,7 +125,9 @@
   "decision_finale",
   "reserves",
   "cb_decision",
-  "date_decision"
+  "date_decision",
+  "sb_docs_complementaires",
+  "documents_complementaires"
  ],
  "fields": [
   {
@@ -211,11 +213,6 @@
    "fieldtype": "Select",
    "label": "Niveau hiérarchique du demandeur",
    "options": "\nDirection Générale\nDirection\nManagement\nCadre\nTechnicien / Agent"
-  },
-  {
-   "fieldname": "tiers_montant_contrat",
-   "fieldtype": "Currency",
-   "label": "Montant du contrat (FCFA)"
   },
   {
    "fieldname": "sb_type",
@@ -498,6 +495,12 @@
    "fieldname": "sb_relation",
    "fieldtype": "Section Break",
    "label": "Nature de votre relation avec nous"
+  },
+  {
+   "fieldname": "tiers_montant_contrat",
+   "fieldtype": "Currency",
+   "label": "Montant du contrat (FCFA)",
+   "reqd": 1
   },
   {
    "fieldname": "relation_description",
@@ -953,22 +956,16 @@
    "permlevel": 1
   },
   {
-   "fieldname": "sb_avis",
+   "fieldname": "sb_docs_complementaires",
    "fieldtype": "Section Break",
-   "label": "Avis"
+   "label": "Documents complémentaires",
+   "collapsible": 1
   },
   {
-   "fieldname": "avis_ia",
-   "fieldtype": "Long Text",
-   "label": "Avis de l'IA",
-   "read_only": 1,
-   "description": "Synthèse compliance générée par l'IA"
-  },
-  {
-   "fieldname": "avis_analyste",
-   "fieldtype": "Long Text",
-   "label": "Avis de l'analyste",
-   "description": "Avis formel rédigé par l'analyste compliance"
+   "fieldname": "documents_complementaires",
+   "fieldtype": "Table",
+   "label": "Documents demandés",
+   "options": "DD Document Complementaire"
   }
  ],
  "is_submittable": 1,

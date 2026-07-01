@@ -126,8 +126,8 @@ Cumul max théorique : −90 pts. Le score pondéré ne peut pas descendre en de
 
 #### Axe Réputationnel — IA (spec §12, §18)
 
-- Appel **Claude Haiku** (`claude-haiku-4-5-20251001`) via Anthropic API
-- Clé configurée dans `frappe.conf["anthropic_api_key"]`
+- Appel **Gemini** via API REST Google (`X-goog-api-key`, modèle `gemini-flash-latest`)
+- Clé configurée dans `frappe.conf["gemini_api_key"]` (`sites/compliance/site_config.json`)
 - Analyse : presse négative, scandales financiers, corruption, contentieux, sanctions
 - Score 0-100 stocké dans `score_reputationnel`, résumé textuel dans `resume_reputationnel`
 - **Cache** : l'IA n'est appelée qu'une fois (si `resume_reputationnel` est vide)
@@ -141,6 +141,8 @@ Section **Cybersécurité & Données** : `tiers_sans_mfa`, `tiers_sans_pra_pca`,
 Section **Atténuants** : `tiers_certif_iso27001`, `tiers_certif_iso37001`, `tiers_audit_big4`, `tiers_garantie_bancaire`, `tiers_etats_certifies`, `tiers_solvabilite_forte`
 
 Champs IA : `score_reputationnel` (Int), `resume_reputationnel` (Small Text)
+
+> **Note :** L'axe réputationnel utilise l'API Gemini (`check_country_risk` dans `api.py`). Aucune dépendance Anthropic dans l'application.
 
 ### Impact métier
 
@@ -205,7 +207,7 @@ DD Request (validate)
        ├─ [calcul 7 axes]
        ├─ [formule pondérée]
        ├─ [atténuants]
-       ├─ _score_reputationnel_ia()   ← Anthropic Haiku (cache)
+       ├─ _score_reputationnel_ia()   ← Gemini REST (cache)
        └─ _enregistrer_historique_score()   ← DD Score History (si changement)
 
 DD Request (on_update)
@@ -222,26 +224,60 @@ DD Request (on_update)
 
 ## Récapitulatif technique
 
-| Composant | Phase 1 | Phase 2 | Phase 3 |
-|---|---|---|---|
-| Axes actifs | 6 (réput. = 0) | 7 (réput. IA) | 7 |
-| Atténuants | — | 6 (−90 pts max) | configurables |
-| Catégories | 5 | 5 | seuils configurables |
-| Historique | — | — | DD Score History |
-| Config dynamique | — | — | DD Scoring Config |
-| Alertes | — | — | email Critique/Interdit |
-| IA | — | Haiku (réputation) | Haiku (réputation) |
+| Composant | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
+|---|---|---|---|---|
+| Axes actifs | 6 (réput. = 0) | 7 (réput. IA) | 7 | 7 |
+| Atténuants | — | 6 (−90 pts max) | configurables | + docs optionnels conformes (−8/doc, max −20) |
+| Catégories | 5 | 5 | seuils configurables | seuils configurables |
+| Historique | — | — | DD Score History | DD Score History |
+| Config dynamique | — | — | DD Scoring Config | DD Scoring Config |
+| Alertes | — | — | email Critique/Interdit | email Critique/Interdit |
+| IA | — | Gemini (réputation) | Gemini (réputation + avis compliance) | Gemini Vision (vérif docs) |
+| Axe Documentaire | docs manquants | docs manquants | docs manquants | docs manquants OU non conformes IA | Gemini Vision (vérif docs) |
 
 ## Variables d'environnement
 
 | Clé `frappe.conf` | Rôle | Requis |
 |---|---|---|
-| `anthropic_api_key` | Clé API Anthropic pour l'axe réputationnel | Non (fallback = 0) |
+| `gemini_api_key` | Clé API Google Gemini — axe réputationnel + génération avis IA | Non (fallback = 0 / avis non générés) |
+
+## Phase 4 — Vérification documentaire IA (Gemini Vision)
+
+**Fichiers modifiés :** `dd_request.py`, `dd_required_document.json`
+
+### Ce qui a été implémenté
+
+#### Champs IA sur `DD Required Document`
+
+| Champ | Type | Rôle |
+|---|---|---|
+| `ia_verification` | Select | Non vérifié / Conforme / Non conforme / Incertain |
+| `ia_confiance` | Int | Score de confiance 0-100% |
+| `ia_motif` | Small Text | Explication décision IA |
+| `ia_infos_extraites` | Long Text | JSON : dates, noms, numéros, autres |
+
+#### Déclenchement automatique
+
+`on_update()` → `_analyser_documents_ia()` → `_verifier_document_ia(row, api_key)` pour chaque fichier nouvellement uploadé (ia_verification vide ou "Non vérifié").
+
+#### Gemini Vision
+
+- Formats : image/jpeg, png, webp, heic, heif, application/pdf (limite 5 Mo)
+- Prompt JSON structuré : vérification type document + extraction infos clés
+- Fallback chain : `gemini-2.5-flash-lite` → `gemini-2.0-flash-lite` → `gemini-2.5-flash` → `gemini-2.0-flash`
+- Seuil "Incertain" : `confiance >= 40` mais non conforme
+
+#### Impact scoring
+
+- **Axe Documentaire** : doc uploadé mais `ia_verification="Non conforme"` → pénalisé comme manquant (+15 pts)
+- **Atténuants** : doc optionnel `ia_verification="Conforme"` → −8 pts, max −20 pts au total
+
+---
 
 ## Prochaines évolutions possibles
 
 - **Questionnaire par axe** : mapper chaque question DD au bon axe (cyber → ax_cyber, anticorruption → ax_corr) plutôt que contribution flat +20 max
-- **Axe Documentaire Phase 2** : document expiré (+10), incohérence (+25), falsification suspectée (+50)
+- **Axe Documentaire Phase 5** : document expiré (utiliser `ia_infos_extraites.dates`), incohérence (+25), falsification suspectée (+50)
 - **Score résiduel décorrélé** : mesures de maîtrise post-DD (plan d'action, suivi périodique) réduisant le score résiduel indépendamment du score pondéré
 - **Screening automatique** : intégration APIs World-Check / Dow Jones Risk & Compliance pour l'axe Corruption
 - **Tableau de bord Compliance** : évolution des scores par portefeuille, alertes expirations, suivi des atténuants
